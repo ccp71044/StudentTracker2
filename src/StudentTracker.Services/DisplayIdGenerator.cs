@@ -31,10 +31,11 @@ public class DisplayIdGenerator
 
     public string NextDisplayId<T>(string prefix) where T : class, IDisplayId
     {
-        var existing = _context.Set<T>().AsNoTracking().Where(x => x.DisplayId != null).Select(x => x.DisplayId!).ToList();
+        var existing = _context.Set<T>().Where(x => x.DisplayId != null).Select(x => x.DisplayId!).ToList();
         var local = _context.ChangeTracker.Entries<T>()
             .Select(e => e.Entity.DisplayId)
             .Where(id => !string.IsNullOrEmpty(id))
+            .Select(id => id!)
             .ToList();
         existing.AddRange(local);
 
