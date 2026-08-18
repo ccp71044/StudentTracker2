@@ -1,0 +1,94 @@
+<UserControl x:Class="StudentTracker.Wpf.Views.StudentEditView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             MinWidth="450" MinHeight="420">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="{Binding Title}" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="First name:" VerticalAlignment="Center" Margin="0,4" Grid.Row="0" Grid.Column="0" />
+                <TextBox Text="{Binding FirstName}" Grid.Row="0" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Middle name:" VerticalAlignment="Center" Margin="0,4" Grid.Row="1" Grid.Column="0" />
+                <TextBox Text="{Binding MiddleName}" Grid.Row="1" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Last name:" VerticalAlignment="Center" Margin="0,4" Grid.Row="2" Grid.Column="0" />
+                <TextBox Text="{Binding LastName}" Grid.Row="2" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Preferred name:" VerticalAlignment="Center" Margin="0,4" Grid.Row="3" Grid.Column="0" />
+                <TextBox Text="{Binding PreferredName}" Grid.Row="3" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Date of birth:" VerticalAlignment="Center" Margin="0,4" Grid.Row="4" Grid.Column="0" />
+                <DatePicker SelectedDate="{Binding DateOfBirth}" Grid.Row="4" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Email:" VerticalAlignment="Center" Margin="0,4" Grid.Row="5" Grid.Column="0" />
+                <TextBox Text="{Binding Email}" Grid.Row="5" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Phone:" VerticalAlignment="Center" Margin="0,4" Grid.Row="6" Grid.Column="0" />
+                <TextBox Text="{Binding Phone}" Grid.Row="6" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Employer:" VerticalAlignment="Center" Margin="0,4" Grid.Row="7" Grid.Column="0" />
+                <TextBox Text="{Binding Employer}" Grid.Row="7" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Work group:" VerticalAlignment="Center" Margin="0,4" Grid.Row="8" Grid.Column="0" />
+                <TextBox Text="{Binding WorkGroup}" Grid.Row="8" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Employee number:" VerticalAlignment="Center" Margin="0,4" Grid.Row="9" Grid.Column="0" />
+                <TextBox Text="{Binding EmployeeNumber}" Grid.Row="9" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="USI:" VerticalAlignment="Center" Margin="0,4" Grid.Row="10" Grid.Column="0" />
+                <TextBox Text="{Binding Usi}" Grid.Row="10" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Status:" VerticalAlignment="Center" Margin="0,4" Grid.Row="11" Grid.Column="0" />
+                <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding Status}" Grid.Row="11" Grid.Column="1" Margin="8,4" VerticalContentAlignment="Center" />
+
+                <TextBlock Text="Manager:" VerticalAlignment="Center" Margin="0,4" Grid.Row="12" Grid.Column="0" />
+                <TextBox Text="{Binding Manager}" Grid.Row="12" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Emergency contact:" VerticalAlignment="Center" Margin="0,4" Grid.Row="13" Grid.Column="0" />
+                <TextBox Text="{Binding EmergencyContact}" Grid.Row="13" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Emergency phone:" VerticalAlignment="Center" Margin="0,4" Grid.Row="14" Grid.Column="0" />
+                <TextBox Text="{Binding EmergencyPhone}" Grid.Row="14" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Group / tag:" VerticalAlignment="Center" Margin="0,4" Grid.Row="15" Grid.Column="0" />
+                <TextBox Text="{Binding GroupTag}" Grid.Row="15" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Notes:" VerticalAlignment="Top" Margin="0,4" Grid.Row="16" Grid.Column="0" />
+                <TextBox Text="{Binding Notes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Grid.Row="16" Grid.Column="1" Margin="8,4" />
+            </Grid>
+        </ScrollViewer>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2" Margin="0,10,0,0">
+            <Button Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveCommand}" />
+            <Button Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

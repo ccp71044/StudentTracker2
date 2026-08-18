@@ -1,0 +1,71 @@
+﻿<Window x:Class="StudentTracker.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:StudentTracker.Wpf.ViewModels"
+        xmlns:v="clr-namespace:StudentTracker.Wpf.Views"
+        mc:Ignorable="d"
+        Title="Student Tracker" Height="700" Width="1200"
+        Background="{StaticResource BackgroundBrush}">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+            <v:DashboardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:StudentsViewModel}">
+            <v:StudentsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CoursesViewModel}">
+            <v:CoursesView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DeliveriesViewModel}">
+            <v:DeliveriesView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AllocationsViewModel}">
+            <v:AllocationsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CertificatesViewModel}">
+            <v:CertificatesView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CreditsBudgetsViewModel}">
+            <v:CreditsBudgetsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DocumentsViewModel}">
+            <v:DocumentsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ReportsViewModel}">
+            <v:ReportsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ImportExportViewModel}">
+            <v:ImportExportView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <v:SettingsView />
+        </DataTemplate>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+            <StackPanel Margin="0">
+                <TextBlock Text="Student Tracker" FontSize="18" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Margin="15,15,15,5" />
+                <Button Content="Dashboard" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="DashboardButton" Command="{Binding ShowDashboardCommand}" />
+                <Button Content="Students" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="StudentsButton" Command="{Binding ShowStudentsCommand}" />
+                <Button Content="Courses" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="CoursesButton" Command="{Binding ShowCoursesCommand}" />
+                <Button Content="Deliveries" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="DeliveriesButton" Command="{Binding ShowDeliveriesCommand}" />
+                <Button Content="Allocations" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="AllocationsButton" Command="{Binding ShowAllocationsCommand}" />
+                <Button Content="Certificates" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="CertificatesButton" Command="{Binding ShowCertificatesCommand}" />
+                <Button Content="Credits &amp; Budgets" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="CreditsBudgetsButton" Command="{Binding ShowCreditsBudgetsCommand}" />
+                <Button Content="Documents" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="DocumentsButton" Command="{Binding ShowDocumentsCommand}" />
+                <Button Content="Reports" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="ReportsButton" Command="{Binding ShowReportsCommand}" />
+                <Button Content="Import / Export" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="ImportExportButton" Command="{Binding ShowImportExportCommand}" />
+                <Button Content="Settings" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="SettingsButton" Command="{Binding ShowSettingsCommand}" />
+            </StackPanel>
+        </Border>
+        <Border Grid.Column="1" Background="{StaticResource BackgroundBrush}">
+            <ContentControl AutomationProperties.AutomationId="MainContentArea" Content="{Binding CurrentViewModel}" />
+        </Border>
+    </Grid>
+</Window>

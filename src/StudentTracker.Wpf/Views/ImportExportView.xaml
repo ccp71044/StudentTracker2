@@ -1,0 +1,20 @@
+<UserControl x:Class="StudentTracker.Wpf.Views.ImportExportView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             AutomationProperties.AutomationId="ImportExportView">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="Import / Export &amp; Backup" AutomationProperties.AutomationId="ImportExportHeader" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
+        <StackPanel Grid.Row="1" Margin="10" Orientation="Vertical">
+            <Button Content="Create Backup" Style="{StaticResource ActionButtonStyle}" Command="{Binding CreateBackupCommand}" HorizontalAlignment="Left" Width="180" />
+            <Button Content="Restore Backup" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreBackupCommand}" HorizontalAlignment="Left" Width="180" />
+            <Button Content="Export Invoicer Batch" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportInvoicerCommand}" HorizontalAlignment="Left" Width="180" />
+            <Button Content="Import Migration Package" Style="{StaticResource ActionButtonStyle}" Command="{Binding ImportMigrationPackageCommand}" HorizontalAlignment="Left" Width="180" />
+        </StackPanel>
+        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="10" Grid.Row="2" />
+    </Grid>
+</UserControl>

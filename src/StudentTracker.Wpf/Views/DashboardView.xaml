@@ -1,0 +1,51 @@
+<UserControl x:Class="StudentTracker.Wpf.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             AutomationProperties.AutomationId="DashboardView">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+            <TextBlock Text="Student Tracker Dashboard" AutomationProperties.AutomationId="DashboardHeader" Style="{StaticResource ViewHeaderStyle}" />
+            <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,20" />
+
+            <UniformGrid Columns="3" Margin="0,0,0,20">
+                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="0,4,0,0" CornerRadius="4" Padding="15" Margin="5">
+                    <StackPanel>
+                        <TextBlock Text="Students" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
+                        <TextBlock Text="{Binding StudentCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryDarkBrush}" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="0,4,0,0" CornerRadius="4" Padding="15" Margin="5">
+                    <StackPanel>
+                        <TextBlock Text="Active Courses" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
+                        <TextBlock Text="{Binding CourseCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryDarkBrush}" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="0,4,0,0" CornerRadius="4" Padding="15" Margin="5">
+                    <StackPanel>
+                        <TextBlock Text="Deliveries" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
+                        <TextBlock Text="{Binding DeliveryCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryDarkBrush}" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="0,4,0,0" CornerRadius="4" Padding="15" Margin="5">
+                    <StackPanel>
+                        <TextBlock Text="Allocations" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
+                        <TextBlock Text="{Binding AllocationCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="0,4,0,0" CornerRadius="4" Padding="15" Margin="5">
+                    <StackPanel>
+                        <TextBlock Text="Certificate Orders" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
+                        <TextBlock Text="{Binding PendingCertificateCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <TextBlock Text="Quick actions" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10" />
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Add Student" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddStudentCommand}" />
+                <Button Content="Add Course" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddCourseCommand}" />
+                <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
