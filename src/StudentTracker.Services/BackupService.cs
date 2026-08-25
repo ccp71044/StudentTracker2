@@ -19,10 +19,16 @@ public class BackupService
 
     public string CreateBackup(string? label = null)
     {
+        if (!File.Exists(_dataLocation.DatabasePath))
+            throw new InvalidOperationException($"No database to back up at {_dataLocation.DatabasePath}.");
+
         Directory.CreateDirectory(_dataLocation.BackupsPath);
         var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
-        var fileName = $"StudentTracker-backup-{timestamp}{(label != null ? "-" + label : "")}.zip";
-        var path = Path.Combine(_dataLocation.BackupsPath, fileName);
+        var suffix = label != null ? "-" + label : "";
+        var path = Path.Combine(_dataLocation.BackupsPath, $"StudentTracker-backup-{timestamp}{suffix}.zip");
+        // Two backups within the same second must not overwrite each other.
+        for (var attempt = 2; File.Exists(path); attempt++)
+            path = Path.Combine(_dataLocation.BackupsPath, $"StudentTracker-backup-{timestamp}{suffix}-{attempt}.zip");
 
         using (var archive = ZipFile.Open(path, ZipArchiveMode.Create))
         {
@@ -48,7 +54,12 @@ public class BackupService
 
     public void RestoreBackup(string backupPath)
     {
-        CreateBackup("pre-restore");
+        if (!File.Exists(backupPath))
+            throw new FileNotFoundException("Backup not found", backupPath);
+
+        // Always capture the current state first so a restore can itself be undone.
+        if (File.Exists(_dataLocation.DatabasePath)) CreateBackup("pre-restore");
+
         using var archive = ZipFile.OpenRead(backupPath);
         var temp = Path.Combine(Path.GetTempPath(), $"st-restore-{Guid.NewGuid()}");
         Directory.CreateDirectory(temp);
@@ -66,6 +77,8 @@ public class BackupService
             Directory.CreateDirectory(_dataLocation.DocumentsPath);
             CopyDirectory(docsSource, _dataLocation.DocumentsPath);
         }
+
+        Directory.Delete(temp, true);
 
         _audit.Record("BackupRestored", "System", Guid.Empty);
         _context.SaveChanges();

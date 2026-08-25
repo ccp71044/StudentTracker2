@@ -16,6 +16,8 @@ public sealed class TestHarness : IDisposable
     public AllocationService Allocations { get; }
     public CertificateService Certificates { get; }
     public ReportService Reports { get; }
+    public DocumentService Documents { get; }
+    public BackupService Backups { get; }
 
     /// <summary>Isolated data root so document tests never touch the real profile.</summary>
     public string DataRoot { get; }
@@ -24,7 +26,12 @@ public sealed class TestHarness : IDisposable
     {
         Context = TestDbContextFactory.Create();
         DataRoot = Path.Combine(Path.GetTempPath(), "student-tracker-tests", Guid.NewGuid().ToString("N"));
-        var settings = new AppSettings { DataRootPath = DataRoot };
+        var settings = new AppSettings
+        {
+            DataRootPath = DataRoot,
+            BackupLocation = Path.Combine(DataRoot, "Backups"),
+            InvoicerExchangeLocation = Path.Combine(DataRoot, "Integration", "InvoicerExport")
+        };
         Context.AppSettings.Add(settings);
         Context.SaveChanges();
 
@@ -34,8 +41,10 @@ public sealed class TestHarness : IDisposable
         Budgets = new BudgetService(Context, ids, audit);
         Allocations = new AllocationService(Context, ids, audit, Credits, Budgets);
         Certificates = new CertificateService(Context, ids, Credits, audit);
-        var documents = new DocumentService(Context, new DataLocationService(settings), ids, audit);
-        Reports = new ReportService(Context, Credits, Budgets, documents);
+        var dataLocation = new DataLocationService(settings);
+        Documents = new DocumentService(Context, dataLocation, ids, audit);
+        Backups = new BackupService(dataLocation, Context, audit);
+        Reports = new ReportService(Context, Credits, Budgets, Documents);
     }
 
     public Task<CertificateCreditPool> CreditPoolAsync(string name = "Credits") =>

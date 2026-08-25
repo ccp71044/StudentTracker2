@@ -106,19 +106,77 @@ public class DocumentService
         }
     }
 
+    /// <summary>
+    /// Stores <paramref name="sourcePath"/> as the next version of an existing document. The
+    /// previous version is kept and marked <see cref="DocumentStatus.Superseded"/>, and every link
+    /// it carried is repointed at the new version so screens show the current file by default.
+    /// </summary>
+    public async Task<Document> AddVersionAsync(Guid existingDocumentId, string sourcePath, string? description = null)
+    {
+        var previous = await _context.Documents.FindAsync(existingDocumentId)
+            ?? throw new InvalidOperationException("Document not found.");
+
+        var categoryFolder = Path.GetDirectoryName(previous.RelativePath) ?? string.Empty;
+        var next = await AddDocumentAsync(sourcePath, categoryFolder, previous.DisplayName, description ?? previous.Description);
+        next.Version = previous.Version + 1;
+        next.SupersedesDocumentId = previous.Id;
+        previous.Status = DocumentStatus.Superseded;
+
+        var links = await _context.DocumentLinks.Where(l => l.DocumentId == previous.Id).ToListAsync();
+        foreach (var link in links)
+        {
+            link.DocumentId = next.Id;
+        }
+
+        await _context.SaveChangesAsync();
+        _audit.Record("Superseded", "Document", previous.Id, previous.DisplayId, null, new { NewVersionId = next.Id, next.Version });
+        await _context.SaveChangesAsync();
+        return next;
+    }
+
     public string GetFullPath(Document document) => Path.Combine(_dataLocation.DocumentsPath, document.RelativePath);
 
-    public async Task CheckMissingFilesAsync()
+    /// <summary>
+    /// Reconciles the managed store against the database: files that have gone are flagged
+    /// <see cref="DocumentStatus.Missing"/>, and a file that reappears with its original checksum
+    /// is returned to <see cref="DocumentStatus.Active"/>. Report 22 reads the resulting statuses.
+    /// </summary>
+    public async Task<List<Document>> CheckMissingFilesAsync()
     {
-        var docs = await _context.Documents.Where(d => d.Status == DocumentStatus.Active).ToListAsync();
+        var docs = await _context.Documents
+            .Where(d => d.Status == DocumentStatus.Active || d.Status == DocumentStatus.Missing)
+            .ToListAsync();
+
+        var missing = new List<Document>();
         foreach (var doc in docs)
         {
             if (!File.Exists(GetFullPath(doc)))
             {
                 doc.Status = DocumentStatus.Missing;
+                missing.Add(doc);
+            }
+            else if (doc.Status == DocumentStatus.Missing)
+            {
+                doc.Status = DocumentStatus.Active;
             }
         }
+
         await _context.SaveChangesAsync();
+        return missing;
+    }
+
+    /// <summary>
+    /// Returns true when the stored file still matches the checksum recorded at upload. A false
+    /// result means the managed copy was edited or replaced outside the application.
+    /// </summary>
+    public async Task<bool> VerifyChecksumAsync(Guid documentId)
+    {
+        var doc = await _context.Documents.FindAsync(documentId)
+            ?? throw new InvalidOperationException("Document not found.");
+
+        var path = GetFullPath(doc);
+        if (!File.Exists(path) || doc.Sha256 is null) return false;
+        return string.Equals(await ComputeSha256Async(path), doc.Sha256, StringComparison.OrdinalIgnoreCase);
     }
 
     private static async Task<string> ComputeSha256Async(string path)

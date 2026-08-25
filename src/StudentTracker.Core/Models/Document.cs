@@ -17,6 +17,12 @@ public class Document : EntityBase, IDisplayId
     public string? DisplayName { get; set; }
     public string? Description { get; set; }
     public int Version { get; set; } = 1;
+
+    /// <summary>
+    /// The document this one replaces. Superseded versions keep their file and links so the
+    /// history of what was actually signed or received is never lost.
+    /// </summary>
+    public Guid? SupersedesDocumentId { get; set; }
     public DocumentStatus Status { get; set; } = DocumentStatus.Active;
     public string? Confidentiality { get; set; }
     public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
