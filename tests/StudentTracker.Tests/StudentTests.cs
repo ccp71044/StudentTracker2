@@ -7,7 +7,7 @@ namespace StudentTracker.Tests;
 public class StudentTests
 {
     [Fact]
-    public void CreateStudent_AssignsDisplayId()
+    public async Task CreateStudent_AssignsDisplayId()
     {
         using var context = TestDbContextFactory.Create();
         context.AppSettings.Add(new());
@@ -16,14 +16,14 @@ public class StudentTests
         var audit = new AuditService(context);
         var service = new StudentService(context, gen, audit);
 
-        var student = service.CreateAsync(new Student { FirstName = "Alex", LastName = "Sample", Email = "a@example.com" }).Result;
+        var student = await service.CreateAsync(new Student { FirstName = "Alex", LastName = "Sample", Email = "a@example.com" });
 
         Assert.NotNull(student.DisplayId);
         Assert.StartsWith("STU-", student.DisplayId);
     }
 
     [Fact]
-    public void DuplicateName_FlagsPotentialDuplicate()
+    public async Task DuplicateName_FlagsPotentialDuplicate()
     {
         using var context = TestDbContextFactory.Create();
         context.AppSettings.Add(new());
@@ -32,8 +32,8 @@ public class StudentTests
         var audit = new AuditService(context);
         var service = new StudentService(context, gen, audit);
 
-        service.CreateAsync(new Student { FirstName = "Alex", LastName = "Sample", Email = "a@example.com" }).Wait();
-        var second = service.CreateAsync(new Student { FirstName = "Alex", LastName = "Sample", Email = "b@example.com" }).Result;
+        await service.CreateAsync(new Student { FirstName = "Alex", LastName = "Sample", Email = "a@example.com" });
+        var second = await service.CreateAsync(new Student { FirstName = "Alex", LastName = "Sample", Email = "b@example.com" });
 
         Assert.True(second.PotentialDuplicate);
     }
