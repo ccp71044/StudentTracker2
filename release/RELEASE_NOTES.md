@@ -46,5 +46,5 @@ The build is not code-signed, so Windows SmartScreen may warn on first run.
 ### Known Limitations
 
 - The generic migration-package importer is configured for common column names (Students, CourseDefinitions, Deliveries, Allocations, CreditPools, BudgetPools) and may need mapping adjustments if the supplied workbook layout differs.
-- The legacy `Student Tracker.xlsx` single-sheet register importer is tested against the real workbook.
+- The legacy `Student Tracker.xlsx` single-sheet register importer is tested against the real workbook, which is kept out of the repository because it contains personal data (see `tests/README.md`).
 - Some advanced report filters and the CSV entity importer are still stub-level and can be expanded as specific formats are finalised.
