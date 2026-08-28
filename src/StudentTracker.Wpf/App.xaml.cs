@@ -132,7 +132,9 @@ public partial class App : Application
         services.AddScoped<StudentsViewModel>();
         services.AddScoped<CoursesViewModel>();
         services.AddScoped<DeliveriesViewModel>();
+        services.AddScoped<DeliveryEditViewModel>();
         services.AddScoped<AllocationsViewModel>();
+        services.AddScoped<AllocationEditViewModel>();
         services.AddScoped<CertificatesViewModel>();
         services.AddScoped<CreditsBudgetsViewModel>();
         services.AddScoped<DocumentsViewModel>();

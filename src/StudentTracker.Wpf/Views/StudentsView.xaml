@@ -17,7 +17,8 @@
             <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditStudentCommand}" />
             <Button Content="Archive" Style="{StaticResource ActionButtonStyle}" Command="{Binding DeleteStudentCommand}" ToolTip="Mark the selected student as archived." />
         </StackPanel>
-        <DataGrid ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True">
+        <DataGrid ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True" 
+                 MouseDoubleClick="DataGrid_MouseDoubleClick">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Student ID" Binding="{Binding DisplayId}" Width="100" />
                 <DataGridTextColumn Header="First Name" Binding="{Binding FirstName}" Width="120" />

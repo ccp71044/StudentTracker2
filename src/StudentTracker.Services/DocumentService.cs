@@ -108,6 +108,34 @@ public class DocumentService
 
     public string GetFullPath(Document document) => Path.Combine(_dataLocation.DocumentsPath, document.RelativePath);
 
+    public string GetDocumentPath(Guid documentId)
+    {
+        var doc = _context.Documents.Find(documentId);
+        return doc != null ? GetFullPath(doc) : string.Empty;
+    }
+
+    public async Task DeleteDocumentAsync(Guid documentId)
+    {
+        var doc = await _context.Documents.FindAsync(documentId);
+        if (doc == null) return;
+
+        var filePath = GetFullPath(doc);
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+
+        // Remove any links
+        var links = await _context.DocumentLinks.Where(l => l.DocumentId == documentId).ToListAsync();
+        _context.DocumentLinks.RemoveRange(links);
+
+        // Remove document
+        _context.Documents.Remove(doc);
+        await _context.SaveChangesAsync();
+        _audit.Record("Deleted", "Document", documentId, doc.DisplayId);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task CheckMissingFilesAsync()
     {
         var docs = await _context.Documents.Where(d => d.Status == DocumentStatus.Active).ToListAsync();

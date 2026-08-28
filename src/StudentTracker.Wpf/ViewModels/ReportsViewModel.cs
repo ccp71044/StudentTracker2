@@ -18,6 +18,21 @@ public partial class ReportsViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<Allocation> _awaitingOrder = new();
 
+    [ObservableProperty]
+    private ObservableCollection<Allocation> _withdrawnStudents = new();
+
+    [ObservableProperty]
+    private ObservableCollection<Allocation> _nonCompletions = new();
+
+    [ObservableProperty]
+    private ObservableCollection<Allocation> _awaitingDelivery = new();
+
+    [ObservableProperty]
+    private ObservableCollection<Allocation> _certificatesDelivered = new();
+
+    [ObservableProperty]
+    private bool _includeCostsInWithdrawn = true;
+
     public ReportsViewModel(ReportService reportService)
     {
         _reportService = reportService;
@@ -28,6 +43,10 @@ public partial class ReportsViewModel : ViewModelBase
     {
         CompletedStudents = new ObservableCollection<Allocation>(await _reportService.GetCompletedStudentsAsync());
         AwaitingOrder = new ObservableCollection<Allocation>(await _reportService.GetCertificatesAwaitingOrderAsync());
+        WithdrawnStudents = new ObservableCollection<Allocation>(await _reportService.GetWithdrawnStudentsAsync(IncludeCostsInWithdrawn));
+        NonCompletions = new ObservableCollection<Allocation>(await _reportService.GetNonCompletionsAsync());
+        AwaitingDelivery = new ObservableCollection<Allocation>(await _reportService.GetCertificatesAwaitingDeliveryAsync());
+        CertificatesDelivered = new ObservableCollection<Allocation>(await _reportService.GetCertificatesDeliveredAsync());
     }
 
     [RelayCommand]
@@ -42,8 +61,57 @@ public partial class ReportsViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task ExportWithdrawnCsv()
+    {
+        var dialog = new SaveFileDialog { Filter = "CSV files (*.csv)|*.csv", FileName = "withdrawn-students.csv" };
+        if (dialog.ShowDialog() == true)
+        {
+            var bytes = await _reportService.ExportCsvAsync(WithdrawnStudents.ToList());
+            await File.WriteAllBytesAsync(dialog.FileName, bytes);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportNonCompletionsCsv()
+    {
+        var dialog = new SaveFileDialog { Filter = "CSV files (*.csv)|*.csv", FileName = "non-completions.csv" };
+        if (dialog.ShowDialog() == true)
+        {
+            var bytes = await _reportService.ExportCsvAsync(NonCompletions.ToList());
+            await File.WriteAllBytesAsync(dialog.FileName, bytes);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportAwaitingDeliveryCsv()
+    {
+        var dialog = new SaveFileDialog { Filter = "CSV files (*.csv)|*.csv", FileName = "awaiting-delivery.csv" };
+        if (dialog.ShowDialog() == true)
+        {
+            var bytes = await _reportService.ExportCsvAsync(AwaitingDelivery.ToList());
+            await File.WriteAllBytesAsync(dialog.FileName, bytes);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportDeliveredCsv()
+    {
+        var dialog = new SaveFileDialog { Filter = "CSV files (*.csv)|*.csv", FileName = "certificates-delivered.csv" };
+        if (dialog.ShowDialog() == true)
+        {
+            var bytes = await _reportService.ExportCsvAsync(CertificatesDelivered.ToList());
+            await File.WriteAllBytesAsync(dialog.FileName, bytes);
+        }
+    }
+
+    [RelayCommand]
     private async Task Refresh()
     {
         await LoadAsync();
+    }
+
+    partial void OnIncludeCostsInWithdrawnChanged(bool value)
+    {
+        LoadAsync().ConfigureAwait(false);
     }
 }

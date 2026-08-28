@@ -14,7 +14,8 @@
             <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditCourseCommand}" />
             <Button Content="Delete" Style="{StaticResource ActionButtonStyle}" Command="{Binding DeleteCourseCommand}" ToolTip="Deactivate the selected course." />
         </StackPanel>
-        <DataGrid ItemsSource="{Binding Courses}" SelectedItem="{Binding SelectedCourse}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True">
+        <DataGrid ItemsSource="{Binding Courses}" SelectedItem="{Binding SelectedCourse}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True" 
+                 MouseDoubleClick="DataGrid_MouseDoubleClick">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Code" Binding="{Binding CourseCode}" Width="120" />
                 <DataGridTextColumn Header="Title" Binding="{Binding CourseTitle}" Width="300" />
