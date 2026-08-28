@@ -37,12 +37,15 @@ public class LegacyImportTests
         _output.WriteLine($"ReviewQueue: {context.ImportReviewQueues.Count()}");
 
         Assert.True(result.Success, result.Message);
-        Assert.Equal(20, context.Students.Count());
-        Assert.Equal(18, context.CourseDefinitions.Count());
-        Assert.Equal(29, context.CourseDeliveries.Count());
-        Assert.Equal(36, context.Allocations.Count());
+        Assert.Equal(22, context.Students.Count());
+        Assert.Equal(20, context.CourseDefinitions.Count());
+        Assert.Equal(32, context.CourseDeliveries.Count());
+        Assert.Equal(39, context.Allocations.Count());
         Assert.Equal(8, context.BudgetTransactions.Count());
-        Assert.True(!context.ImportReviewQueues.Any() || context.ImportReviewQueues.All(r => r.Status == "Pending"), "Unexpected review queue state.");
+
+        // Register rows that carry a cost but no course cannot become allocations and are queued for review.
+        Assert.Equal(6, context.ImportReviewQueues.Count());
+        Assert.All(context.ImportReviewQueues, r => Assert.Equal("Pending", r.Status));
     }
 
     private static string FindWorkbook()

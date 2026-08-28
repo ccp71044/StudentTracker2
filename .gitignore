@@ -4,7 +4,10 @@ obj/
 
 # Publish / release artifacts
 release/StudentTracker-win-x64/
-release/StudentTracker-win-x64.zip
+release/StudentTracker-win-x64*.zip
+
+# WPF temporary project files
+*_wpftmp.csproj
 
 # User-specific files
 *.user
