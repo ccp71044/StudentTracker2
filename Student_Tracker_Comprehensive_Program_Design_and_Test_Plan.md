@@ -3,7 +3,7 @@
 
 **Document status:** Build-ready  
 **Application type:** Local, offline, single-user Windows desktop application  
-**Primary user:** Alex Gillam  
+**Primary user:** Single administrator  
 **Currency:** Australian dollars (AUD)  
 **Date format:** DD/MM/YYYY  
 **Related application:** Invoicer  
@@ -145,7 +145,7 @@ The replacement must follow these rules:
 - Forecast budget balance
 - Funding sources
 - Invoice references
-- Alex personal-fund references
+- Owner personal-fund references
 - Course Delivery Completion Sign-Off PDFs
 - Historical sign-off storage
 - Standard reports
@@ -802,7 +802,7 @@ Seed non-completion reasons:
 - Type:
   - Invoice
   - Company
-  - AlexPersonal
+  - OwnerPersonal
   - Reimbursement
   - Grant
   - Other
@@ -2317,7 +2317,7 @@ Enterprise-scale optimisation is not required, but normal local use must be resp
 
 # 28. User Acceptance Tests
 
-The application is accepted when Alex can:
+The application is accepted when the operator can:
 
 1. import supplied historical data;
 2. open any student and see course history;
@@ -2415,4 +2415,4 @@ Do not silently discard, merge, reinterpret or overwrite historical data.
 
 Where a record is uncertain, preserve it and require user review.
 
-The final result must be a practical local tool that Alex can install and use, not an enterprise platform and not a demonstration.
+The final result must be a practical local tool that the operator can install and use, not an enterprise platform and not a demonstration.

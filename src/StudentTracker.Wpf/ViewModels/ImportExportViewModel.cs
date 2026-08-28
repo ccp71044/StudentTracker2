@@ -64,4 +64,26 @@ public partial class ImportExportViewModel : ViewModelBase
             Status = result.Message ?? "Import complete.";
         }
     }
+
+    [RelayCommand]
+    private Task ImportCompletionPricing() => ImportCsv("CompletionPricing", "provider price list");
+
+    [RelayCommand]
+    private Task ImportCreditHistory() => ImportCsv("CreditHistory", "provider credit history");
+
+    private async Task ImportCsv(string entityType, string description)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = $"Select the {description} CSV",
+            Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*"
+        };
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        await using var stream = File.OpenRead(dialog.FileName);
+        var result = await _importService.ImportCsvAsync(entityType, stream);
+        Status = result.Message ?? "Import complete.";
+    }
 }

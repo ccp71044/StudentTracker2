@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,7 @@ public partial class DashboardViewModel : ViewModelBase
     private readonly StudentService _studentService;
     private readonly CourseService _courseService;
     private readonly IDialogService _dialogService;
+    private readonly BudgetSummaryService _budgetSummary;
 
     [ObservableProperty]
     private int _studentCount;
@@ -33,12 +35,23 @@ public partial class DashboardViewModel : ViewModelBase
     [ObservableProperty]
     private string _status = "Ready";
 
-    public DashboardViewModel(StudentTrackerDbContext context, StudentService studentService, CourseService courseService, IDialogService dialogService)
+    [ObservableProperty]
+    private string _reconciliationStatus = string.Empty;
+
+    [ObservableProperty]
+    private bool _hasNegativePool;
+
+    public ObservableCollection<PoolSummary> Pools { get; } = new();
+
+    public ObservableCollection<CompletionsRemaining> CompletionsRemaining { get; } = new();
+
+    public DashboardViewModel(StudentTrackerDbContext context, StudentService studentService, CourseService courseService, IDialogService dialogService, BudgetSummaryService budgetSummary)
     {
         _context = context;
         _studentService = studentService;
         _courseService = courseService;
         _dialogService = dialogService;
+        _budgetSummary = budgetSummary;
         Refresh().ConfigureAwait(false);
     }
 
@@ -52,6 +65,21 @@ public partial class DashboardViewModel : ViewModelBase
         PendingCertificateCount = await _context.Allocations
             .CountAsync(a => a.CertificateOrderStatus == Core.Enums.CertificateOrderStatus.Ready || a.CertificateOrderStatus == Core.Enums.CertificateOrderStatus.Ordered);
         Status = $"{StudentCount} students, {DeliveryCount} deliveries";
+
+        Pools.Clear();
+        foreach (var pool in await _budgetSummary.GetPoolSummariesAsync())
+            Pools.Add(pool);
+
+        HasNegativePool = Pools.Any(p => p.Free < 0);
+
+        CompletionsRemaining.Clear();
+        foreach (var course in (await _budgetSummary.GetCompletionsRemainingAsync()).Take(10))
+            CompletionsRemaining.Add(course);
+
+        var reconciliation = await _budgetSummary.ReconcileTopUpsAsync();
+        ReconciliationStatus = reconciliation.IsBalanced
+            ? "Register and provider ledger agree."
+            : $"{reconciliation.Discrepancies.Count} unreconciled top-up(s); provider ledger differs by {reconciliation.Difference:C}.";
     }
 
     [RelayCommand]

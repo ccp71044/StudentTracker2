@@ -1,3 +1,4 @@
+using StudentTracker.Core.Models;
 using StudentTracker.Services;
 using Xunit;
 using Xunit.Abstractions;
@@ -41,7 +42,18 @@ public class LegacyImportTests
         Assert.Equal(20, context.CourseDefinitions.Count());
         Assert.Equal(32, context.CourseDeliveries.Count());
         Assert.Equal(39, context.Allocations.Count());
-        Assert.Equal(8, context.BudgetTransactions.Count());
+        // 8 top-ups plus one commitment or expense per costed allocation.
+        Assert.Equal(40, context.BudgetTransactions.Count());
+
+        var scjv = context.BudgetPools.Single(p => p.Name == PoolNames.Scjv);
+        var general = context.BudgetPools.Single(p => p.Name == PoolNames.General);
+        _output.WriteLine($"SCJV transactions: {context.BudgetTransactions.Count(t => t.PoolId == scjv.Id)}");
+        _output.WriteLine($"General transactions: {context.BudgetTransactions.Count(t => t.PoolId == general.Id)}");
+
+        // The register's "SCJV n" tags must survive the import, otherwise the two pools cannot be told apart.
+        Assert.Contains(context.Allocations, a => a.LegacyReference != null && a.LegacyReference.StartsWith(PoolNames.Scjv));
+        Assert.All(context.Allocations, a => Assert.NotNull(a.BudgetPoolId));
+        Assert.True(context.BudgetTransactions.Any(t => t.PoolId == scjv.Id), "No spending was attributed to the SCJV pool.");
 
         // Register rows that carry a cost but no course cannot become allocations and are queued for review.
         Assert.Equal(6, context.ImportReviewQueues.Count());

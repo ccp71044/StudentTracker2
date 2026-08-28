@@ -112,6 +112,10 @@ public partial class App : Application
         services.AddScoped<AllocationService>();
         services.AddScoped<CreditService>();
         services.AddScoped<BudgetService>();
+        services.AddScoped<PricingService>();
+        services.AddScoped<BudgetSummaryService>();
+        services.AddScoped<CompletionPricingImporter>();
+        services.AddScoped<ProviderCreditHistoryImporter>();
         services.AddScoped<CertificateService>();
         services.AddScoped<SignOffService>();
         services.AddScoped<DocumentService>();

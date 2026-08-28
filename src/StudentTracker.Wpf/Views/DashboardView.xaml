@@ -2,6 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              AutomationProperties.AutomationId="DashboardView">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="20">
             <TextBlock Text="Student Tracker Dashboard" AutomationProperties.AutomationId="DashboardHeader" Style="{StaticResource ViewHeaderStyle}" />
@@ -39,6 +42,40 @@
                     </StackPanel>
                 </Border>
             </UniformGrid>
+
+            <TextBlock Text="Budget pools" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10" />
+            <DataGrid ItemsSource="{Binding Pools}" AutomationProperties.AutomationId="DashboardPoolsGrid"
+                      AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                      CanUserAddRows="False" Margin="0,0,0,20" MaxHeight="160">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Pool" Binding="{Binding Name}" Width="*" />
+                    <DataGridTextColumn Header="Topped up" Binding="{Binding FundsAdded, StringFormat=C}" Width="120" />
+                    <DataGridTextColumn Header="Spent" Binding="{Binding Spent, StringFormat=C}" Width="120" />
+                    <DataGridTextColumn Header="Committed" Binding="{Binding Committed, StringFormat=C}" Width="120" />
+                    <DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat=C}" Width="120" />
+                    <DataGridTextColumn Header="Free" Binding="{Binding Free, StringFormat=C}" Width="120" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <TextBlock Text="A pool is overdrawn — top it up before committing more students."
+                       AutomationProperties.AutomationId="DashboardLowBalanceWarning"
+                       Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" Margin="0,0,0,15"
+                       Visibility="{Binding HasNegativePool, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+            <TextBlock Text="Completions remaining" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10" />
+            <DataGrid ItemsSource="{Binding CompletionsRemaining}" AutomationProperties.AutomationId="DashboardCompletionsGrid"
+                      AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                      CanUserAddRows="False" Margin="0,0,0,10" MaxHeight="220">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Course" Binding="{Binding CourseCode}" Width="120" />
+                    <DataGridTextColumn Header="Title" Binding="{Binding CourseTitle}" Width="*" />
+                    <DataGridTextColumn Header="Price" Binding="{Binding CompletionPrice, StringFormat=C}" Width="100" />
+                    <DataGridTextColumn Header="Remaining" Binding="{Binding Remaining}" Width="100" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <TextBlock Text="{Binding ReconciliationStatus}" AutomationProperties.AutomationId="DashboardReconciliationStatus"
+                       Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,20" />
 
             <TextBlock Text="Quick actions" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10" />
             <StackPanel Orientation="Horizontal">

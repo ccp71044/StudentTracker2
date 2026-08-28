@@ -9,6 +9,7 @@ public class StudentTrackerDbContext : DbContext
 
     public DbSet<Student> Students => Set<Student>();
     public DbSet<CourseDefinition> CourseDefinitions => Set<CourseDefinition>();
+    public DbSet<CoursePrice> CoursePrices => Set<CoursePrice>();
     public DbSet<CourseDelivery> CourseDeliveries => Set<CourseDelivery>();
     public DbSet<Allocation> Allocations => Set<Allocation>();
     public DbSet<OutcomeReason> OutcomeReasons => Set<OutcomeReason>();
@@ -49,9 +50,13 @@ public class StudentTrackerDbContext : DbContext
         modelBuilder.Entity<FundingSource>().Property(f => f.Type).HasConversion<string>();
         modelBuilder.Entity<CertificateCreditPool>().Property(p => p.UnitType).HasConversion<string>();
         modelBuilder.Entity<CertificateCreditTransaction>().Property(t => t.SourceType).HasConversion<string>();
+        modelBuilder.Entity<CoursePrice>().Property(p => p.SourceType).HasConversion<string>();
 
         modelBuilder.Entity<Allocation>().HasIndex(a => new { a.StudentId, a.CourseDeliveryId });
         modelBuilder.Entity<DocumentLink>().HasIndex(l => new { l.EntityType, l.EntityId });
         modelBuilder.Entity<AuditLog>().HasIndex(a => a.EntityType);
+        modelBuilder.Entity<CourseDefinition>().HasIndex(c => c.MatchKey);
+        modelBuilder.Entity<CoursePrice>().HasIndex(p => new { p.CourseDefinitionId, p.EffectiveFrom });
+        modelBuilder.Entity<CertificateCreditTransaction>().HasIndex(t => t.ExternalTransactionId);
     }
 }
