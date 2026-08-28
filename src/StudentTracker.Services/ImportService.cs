@@ -78,18 +78,36 @@ public class ImportService
 
         try
         {
-            var isLegacy = IsLegacyStudentRegisterFormat(xlsxPath);
-            if (isLegacy)
+            switch (DetectFormat(xlsxPath))
             {
-                var importer = new LegacyStudentRegisterImporter(_context, _idGenerator, _audit);
-                result = importer.Import(xlsxPath);
-                reviewQueue = importer.ReviewQueue;
-            }
-            else
-            {
-                var importer = new MigrationPackageImporter(_context, _idGenerator, _audit);
-                result = importer.ImportWorkbook(xlsxPath);
-                reviewQueue = importer.ReviewQueue;
+                case WorkbookFormat.LegacyStudentRegister:
+                {
+                    var importer = new LegacyStudentRegisterImporter(_context, _idGenerator, _audit);
+                    result = importer.Import(xlsxPath);
+                    reviewQueue = importer.ReviewQueue;
+                    break;
+                }
+                case WorkbookFormat.ProviderStudentList:
+                {
+                    var importer = new ProviderStudentListImporter(_context, _idGenerator, _audit);
+                    result = importer.Import(xlsxPath);
+                    reviewQueue = importer.ReviewQueue;
+                    break;
+                }
+                case WorkbookFormat.ProviderCourseList:
+                {
+                    var importer = new ProviderCourseListImporter(_context, _idGenerator, _audit);
+                    result = importer.Import(xlsxPath);
+                    reviewQueue = importer.ReviewQueue;
+                    break;
+                }
+                default:
+                {
+                    var importer = new MigrationPackageImporter(_context, _idGenerator, _audit);
+                    result = importer.ImportWorkbook(xlsxPath);
+                    reviewQueue = importer.ReviewQueue;
+                    break;
+                }
             }
         }
         catch (Exception ex)
@@ -111,15 +129,38 @@ public class ImportService
 
     private static ImportResult Failed(string message) => new() { Success = false, Message = message, Errors = { message } };
 
-    private static bool IsLegacyStudentRegisterFormat(string xlsxPath)
+    private enum WorkbookFormat
+    {
+        MigrationPackage,
+        LegacyStudentRegister,
+        ProviderStudentList,
+        ProviderCourseList
+    }
+
+    /// <summary>
+    /// Single-sheet workbooks are told apart by their headers, so the operator picks a file rather
+    /// than a file and a format.
+    /// </summary>
+    private static WorkbookFormat DetectFormat(string xlsxPath)
     {
         using var workbook = new ClosedXML.Excel.XLWorkbook(xlsxPath);
         var firstSheet = workbook.Worksheets.FirstOrDefault();
-        if (firstSheet == null) return false;
+        if (firstSheet == null || workbook.Worksheets.Count > 1)
+            return WorkbookFormat.MigrationPackage;
 
-        // Legacy format is a single worksheet that contains the student-register column headers.
-        if (workbook.Worksheets.Count > 1) return false;
+        // The provider's headers must sit together on one row; matching them anywhere in the sheet
+        // would let a stray cell in another export choose the wrong importer.
+        if (ProviderSheet.FindHeaderRow(firstSheet, "Course ID", "Course Type") > 0)
+            return WorkbookFormat.ProviderCourseList;
 
+        if (ProviderSheet.FindHeaderRow(firstSheet, "ID", "First name", "Email") > 0)
+            return WorkbookFormat.ProviderStudentList;
+
+        return IsLegacyStudentRegisterFormat(firstSheet) ? WorkbookFormat.LegacyStudentRegister : WorkbookFormat.MigrationPackage;
+    }
+
+    private static bool IsLegacyStudentRegisterFormat(ClosedXML.Excel.IXLWorksheet firstSheet)
+    {
         var usedText = firstSheet.CellsUsed()
             .Select(c => c.GetString().Trim())
             .ToHashSet(StringComparer.OrdinalIgnoreCase);

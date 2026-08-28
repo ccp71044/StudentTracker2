@@ -75,7 +75,7 @@ message fails the test — that is exactly the failure being guarded against.
 | Import/Export | Create Backup | Zip appears in the backups folder; `Status` names it |
 | Import/Export | Restore Backup | Data returns to the backed-up state |
 | Import/Export | Export for Invoicer | Batch file written, or "No billable items to export." |
-| Import/Export | Import migration package / pricing / credit history | Row counts increase; `Status` reports the result |
+| Import/Export | Import Workbook / price list / credit history | Row counts increase; `Status` names the format detected and the result |
 | Settings | Compact Database | "Database compacted." and the database file still opens |
 
 File dialogs (`OpenFileDialog`/`SaveFileDialog`) are OS windows, not part of the app's visual tree.
@@ -117,10 +117,27 @@ forecast available must match the ledger arithmetic in the design plan, not just
 
 ### 5. Data-heavy behaviour
 
-- Import the real historical workbook, then assert the review queue holds the ambiguous rows rather
-  than silently importing them.
-- Re-import the same provider credit export twice and assert the second run adds nothing.
+The realistic run loads the provider's own exports through **Import/Export → Import Workbook**, in
+this order, and checks each screen afterwards:
+
+1. `Student List (unique).xlsx` → 35 students on the Students screen, 36 rows in, one provider
+   number appearing under two clients.
+2. `Course List - Completed Allens.xlsx` → 35 deliveries, 24 courses, every start date populated.
+3. `credit-transaction-history-<date>.csv` → credit pool available balance 82.
+4. `Student Tracker.xlsx` (the legacy register) → the allocations and budget history.
+
+Assertions specific to this data:
+
+- The Students grid shows the two students with no surname rather than dropping them.
+- The three near-identical "Prince" records are all present and flagged as potential duplicates —
+  never merged.
+- The review queue holds the rows the import could not resolve (the truncated course set, the
+  student under two clients, the missing surnames) rather than silently importing them.
+- Re-importing any of the four files adds nothing the second time.
 - Load a database with ~5,000 allocations and assert each screen renders within 3 seconds.
+
+These files name real people, so they live in the git-ignored `testdata/` folder (see
+`tests/README.md`) and the tests skip when they are absent.
 
 ## Evidence and triage
 
