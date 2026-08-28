@@ -313,6 +313,9 @@ namespace StudentTracker.Data.Migrations
                     b.Property<string>("Reason")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("ReversesTransactionId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("TEXT");
 
@@ -408,6 +411,9 @@ namespace StudentTracker.Data.Migrations
 
                     b.Property<Guid?>("InvoiceId")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsCreditLoss")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsReconciled")
                         .HasColumnType("INTEGER");
@@ -647,6 +653,9 @@ namespace StudentTracker.Data.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ProviderCourseId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("TEXT");
 
@@ -760,6 +769,9 @@ namespace StudentTracker.Data.Migrations
 
                     b.Property<string>("StoredFileName")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("SupersedesDocumentId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -1245,6 +1257,9 @@ namespace StudentTracker.Data.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<string>("PreferredName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProviderStudentId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Status")

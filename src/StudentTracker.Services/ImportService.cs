@@ -29,56 +29,91 @@ public class ImportService
         IReadOnlyList<ImportReviewQueue> reviewQueue;
         ImportResult result;
 
-        switch (entityType)
+        try
         {
-            case "CompletionPricing":
+            switch (entityType)
             {
-                var importer = new CompletionPricingImporter(_context, _idGenerator, _audit);
-                result = importer.Import(reader, entityType);
-                reviewQueue = importer.ReviewQueue;
-                break;
-            }
-            case "CreditHistory":
-            {
-                var importer = new ProviderCreditHistoryImporter(_context, _idGenerator, _audit);
-                result = importer.Import(reader, entityType);
-                reviewQueue = importer.ReviewQueue;
-                break;
-            }
-            default:
-                return Task.FromResult(new ImportResult
+                case "CompletionPricing":
                 {
-                    Success = false,
-                    Message = $"Unsupported CSV type '{entityType}'. Expected 'CompletionPricing' or 'CreditHistory'."
-                });
-        }
+                    var importer = new CompletionPricingImporter(_context, _idGenerator, _audit);
+                    result = importer.Import(reader, entityType);
+                    reviewQueue = importer.ReviewQueue;
+                    break;
+                }
+                case "CreditHistory":
+                {
+                    var importer = new ProviderCreditHistoryImporter(_context, _idGenerator, _audit);
+                    result = importer.Import(reader, entityType);
+                    reviewQueue = importer.ReviewQueue;
+                    break;
+                }
+                default:
+                    return Task.FromResult(new ImportResult
+                    {
+                        Success = false,
+                        Message = $"Unsupported CSV type '{entityType}'. Expected 'CompletionPricing' or 'CreditHistory'."
+                    });
+            }
 
-        if (reviewQueue.Any())
+            if (reviewQueue.Any())
+            {
+                _context.ImportReviewQueues.AddRange(reviewQueue);
+                _context.SaveChanges();
+            }
+
+            return Task.FromResult(result);
+        }
+        catch (Exception ex)
         {
-            _context.ImportReviewQueues.AddRange(reviewQueue);
-            _context.SaveChanges();
+            // A malformed export must not take the application down: log it and report the reason.
+            OperationLog.Failure("ImportCsv", ex, new { EntityType = entityType });
+            return Task.FromResult(Failed($"The {entityType} CSV could not be imported: {ex.Message}"));
         }
-
-        return Task.FromResult(result);
     }
 
     public Task<ImportResult> ImportMigrationPackageAsync(string xlsxPath)
     {
-        var isLegacy = IsLegacyStudentRegisterFormat(xlsxPath);
         IReadOnlyList<ImportReviewQueue> reviewQueue;
         ImportResult result;
 
-        if (isLegacy)
+        try
         {
-            var importer = new LegacyStudentRegisterImporter(_context, _idGenerator, _audit);
-            result = importer.Import(xlsxPath);
-            reviewQueue = importer.ReviewQueue;
+            switch (DetectFormat(xlsxPath))
+            {
+                case WorkbookFormat.LegacyStudentRegister:
+                {
+                    var importer = new LegacyStudentRegisterImporter(_context, _idGenerator, _audit);
+                    result = importer.Import(xlsxPath);
+                    reviewQueue = importer.ReviewQueue;
+                    break;
+                }
+                case WorkbookFormat.ProviderStudentList:
+                {
+                    var importer = new ProviderStudentListImporter(_context, _idGenerator, _audit);
+                    result = importer.Import(xlsxPath);
+                    reviewQueue = importer.ReviewQueue;
+                    break;
+                }
+                case WorkbookFormat.ProviderCourseList:
+                {
+                    var importer = new ProviderCourseListImporter(_context, _idGenerator, _audit);
+                    result = importer.Import(xlsxPath);
+                    reviewQueue = importer.ReviewQueue;
+                    break;
+                }
+                default:
+                {
+                    var importer = new MigrationPackageImporter(_context, _idGenerator, _audit);
+                    result = importer.ImportWorkbook(xlsxPath);
+                    reviewQueue = importer.ReviewQueue;
+                    break;
+                }
+            }
         }
-        else
+        catch (Exception ex)
         {
-            var importer = new MigrationPackageImporter(_context, _idGenerator, _audit);
-            result = importer.ImportWorkbook(xlsxPath);
-            reviewQueue = importer.ReviewQueue;
+            OperationLog.Failure("ImportMigrationPackage", ex, new { Path = xlsxPath });
+            return Task.FromResult(Failed($"The workbook could not be imported: {ex.Message}"));
         }
 
         if (reviewQueue.Any())
@@ -92,15 +127,40 @@ public class ImportService
         return Task.FromResult(result);
     }
 
-    private static bool IsLegacyStudentRegisterFormat(string xlsxPath)
+    private static ImportResult Failed(string message) => new() { Success = false, Message = message, Errors = { message } };
+
+    private enum WorkbookFormat
+    {
+        MigrationPackage,
+        LegacyStudentRegister,
+        ProviderStudentList,
+        ProviderCourseList
+    }
+
+    /// <summary>
+    /// Single-sheet workbooks are told apart by their headers, so the operator picks a file rather
+    /// than a file and a format.
+    /// </summary>
+    private static WorkbookFormat DetectFormat(string xlsxPath)
     {
         using var workbook = new ClosedXML.Excel.XLWorkbook(xlsxPath);
         var firstSheet = workbook.Worksheets.FirstOrDefault();
-        if (firstSheet == null) return false;
+        if (firstSheet == null || workbook.Worksheets.Count > 1)
+            return WorkbookFormat.MigrationPackage;
 
-        // Legacy format is a single worksheet that contains the student-register column headers.
-        if (workbook.Worksheets.Count > 1) return false;
+        // The provider's headers must sit together on one row; matching them anywhere in the sheet
+        // would let a stray cell in another export choose the wrong importer.
+        if (ProviderSheet.FindHeaderRow(firstSheet, "Course ID", "Course Type") > 0)
+            return WorkbookFormat.ProviderCourseList;
 
+        if (ProviderSheet.FindHeaderRow(firstSheet, "ID", "First name", "Email") > 0)
+            return WorkbookFormat.ProviderStudentList;
+
+        return IsLegacyStudentRegisterFormat(firstSheet) ? WorkbookFormat.LegacyStudentRegister : WorkbookFormat.MigrationPackage;
+    }
+
+    private static bool IsLegacyStudentRegisterFormat(ClosedXML.Excel.IXLWorksheet firstSheet)
+    {
         var usedText = firstSheet.CellsUsed()
             .Select(c => c.GetString().Trim())
             .ToHashSet(StringComparer.OrdinalIgnoreCase);

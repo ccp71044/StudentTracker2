@@ -37,6 +37,7 @@
             <CheckBox IsChecked="{Binding IsActive}" Grid.Row="4" Grid.Column="1" Margin="8,4" VerticalAlignment="Center" />
         </Grid>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2" Margin="0,10,0,0">
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B00020" TextWrapping="Wrap" MaxWidth="320" VerticalAlignment="Center" Margin="0,0,10,0" />
             <Button Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveCommand}" />
             <Button Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" />
         </StackPanel>

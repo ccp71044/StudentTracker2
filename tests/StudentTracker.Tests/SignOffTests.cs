@@ -7,7 +7,7 @@ namespace StudentTracker.Tests;
 public class SignOffTests
 {
     [Fact]
-    public void GenerateSignOff_CreatesParticipants()
+    public async Task GenerateSignOff_CreatesParticipants()
     {
         using var context = TestDbContextFactory.Create();
         context.AppSettings.Add(new());
@@ -26,7 +26,7 @@ public class SignOffTests
         context.Allocations.Add(alloc);
         context.SaveChanges();
 
-        var signOff = service.GenerateDraftAsync(delivery.Id, new List<Guid> { alloc.Id }, "Trainer").Result;
+        var signOff = await service.GenerateDraftAsync(delivery.Id, new List<Guid> { alloc.Id }, "Trainer");
 
         Assert.Single(signOff.Participants);
         Assert.Equal("S A", signOff.Participants[0].StudentDisplayName);

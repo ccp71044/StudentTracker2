@@ -5,6 +5,8 @@ namespace StudentTracker.Core.Models;
 public class Student : EntityBase, IDisplayId
 {
     public string? DisplayId { get; set; }
+    /// <summary>The provider's own student number, used to match a student across provider exports.</summary>
+    public string? ProviderStudentId { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string? MiddleName { get; set; }
     public string LastName { get; set; } = string.Empty;

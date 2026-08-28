@@ -15,6 +15,7 @@
             <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditBudgetPoolCommand}" />
             <Button Content="Add Funds" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddFundsCommand}" ToolTip="Top up the selected budget pool." />
             <Button Content="Archive" Style="{StaticResource ActionButtonStyle}" Command="{Binding ArchiveBudgetPoolCommand}" ToolTip="Deactivate the selected budget pool." />
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B00020" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
         </StackPanel>
         <TabControl Grid.Row="2" Margin="10">
             <TabItem Header="Certificate Credit Pools">

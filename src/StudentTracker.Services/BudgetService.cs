@@ -115,8 +115,30 @@ public class BudgetService
         return tx;
     }
 
+    /// <summary>
+    /// Converts a pending commitment into actual expenditure. Any outstanding commitment for the
+    /// allocation is retired first so that the amount is not subtracted from forecast twice
+    /// (design section 10.2).
+    /// </summary>
     public async Task<BudgetTransaction> RecogniseExpenseAsync(Guid poolId, Guid allocationId, decimal amount, string? reason = null)
     {
+        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+
+        var outstandingCommitment = await GetOutstandingCommitmentAsync(poolId, allocationId);
+        if (outstandingCommitment > 0m)
+        {
+            _context.BudgetTransactions.Add(new BudgetTransaction
+            {
+                DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+                PoolId = poolId,
+                AllocationId = allocationId,
+                TransactionType = BudgetTransactionType.CommitmentReleased,
+                Amount = outstandingCommitment,
+                Reason = "Commitment converted to actual expenditure",
+                TransactionDate = DateTime.UtcNow
+            });
+        }
+
         var tx = new BudgetTransaction
         {
             DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
@@ -128,7 +150,6 @@ public class BudgetService
             TransactionDate = DateTime.UtcNow
         };
         _context.BudgetTransactions.Add(tx);
-        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
         allocation.CashCommitmentStatus = CashCommitmentStatus.Spent;
         allocation.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
@@ -137,19 +158,112 @@ public class BudgetService
         return tx;
     }
 
-    public async Task<decimal> GetFundsAddedAsync(Guid poolId) =>
-        await _context.BudgetTransactions.Where(t => t.PoolId == poolId && t.TransactionType == BudgetTransactionType.FundsAdded).SumAsync(t => t.Amount);
+    /// <summary>
+    /// Reverses a previously recognised expense, returning the money to actual available.
+    /// </summary>
+    public async Task<BudgetTransaction> ReverseExpenseAsync(Guid budgetTransactionId, string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new ArgumentException("A reason is required to reverse an expense.", nameof(reason));
 
-    public async Task<decimal> GetActualExpenditureAsync(Guid poolId) =>
-        -await _context.BudgetTransactions.Where(t => t.PoolId == poolId && t.TransactionType == BudgetTransactionType.ExpenseRecognised).SumAsync(t => t.Amount);
+        var original = await _context.BudgetTransactions.FindAsync(budgetTransactionId)
+            ?? throw new ArgumentException("Budget transaction not found");
+        if (original.TransactionType != BudgetTransactionType.ExpenseRecognised)
+            throw new InvalidOperationException("Only recognised expenses can be reversed.");
 
-    public async Task<decimal> GetPendingCommitmentsAsync(Guid poolId) =>
-        -await _context.BudgetTransactions
-            .Where(t => t.PoolId == poolId && (t.TransactionType == BudgetTransactionType.CommitmentCreated || t.TransactionType == BudgetTransactionType.CommitmentReleased))
-            .SumAsync(t => t.Amount);
+        var alreadyReversed = await _context.BudgetTransactions
+            .AnyAsync(t => t.TransactionType == BudgetTransactionType.Reversal && t.ReversesTransactionId == original.Id);
+        if (alreadyReversed)
+            throw new InvalidOperationException($"Transaction {original.DisplayId} has already been reversed.");
 
-    public async Task<decimal> GetActualAvailableAsync(Guid poolId) => await GetFundsAddedAsync(poolId) - await GetActualExpenditureAsync(poolId);
-    public async Task<decimal> GetForecastAvailableAsync(Guid poolId) => await GetActualAvailableAsync(poolId) - await GetPendingCommitmentsAsync(poolId);
+        var tx = new BudgetTransaction
+        {
+            DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+            PoolId = original.PoolId,
+            AllocationId = original.AllocationId,
+            TransactionType = BudgetTransactionType.Reversal,
+            Amount = -original.Amount,
+            Reason = reason,
+            ReversesTransactionId = original.Id,
+            TransactionDate = DateTime.UtcNow
+        };
+        _context.BudgetTransactions.Add(tx);
+
+        if (original.AllocationId.HasValue)
+        {
+            var allocation = await _context.Allocations.FindAsync(original.AllocationId.Value);
+            if (allocation is not null)
+            {
+                allocation.CashCommitmentStatus = CashCommitmentStatus.None;
+                allocation.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        _audit.Record("ExpenseReversed", "BudgetTransaction", original.Id, original.DisplayId, null, new { Reason = reason });
+        await _context.SaveChangesAsync();
+        return tx;
+    }
+
+    /// <summary>
+    /// The still-pending commitment for a single allocation.
+    /// </summary>
+    public async Task<decimal> GetOutstandingCommitmentAsync(Guid poolId, Guid allocationId)
+    {
+        // Summed in memory: SQLite cannot aggregate decimal server-side.
+        var amounts = await _context.BudgetTransactions
+            .Where(t => t.PoolId == poolId && t.AllocationId == allocationId
+                        && (t.TransactionType == BudgetTransactionType.CommitmentCreated || t.TransactionType == BudgetTransactionType.CommitmentReleased))
+            .Select(t => t.Amount)
+            .ToListAsync();
+        return Math.Max(0m, -amounts.Sum());
+    }
+
+    /// <summary>
+    /// Calculates the pool balance from its transactions (design section 10.2).
+    /// </summary>
+    public async Task<BudgetPoolBalance> GetBalanceAsync(Guid poolId)
+    {
+        var rows = await _context.BudgetTransactions
+            .Where(t => t.PoolId == poolId)
+            .Select(t => new { t.TransactionType, t.Amount })
+            .ToListAsync();
+
+        decimal fundsAdded = 0m, expenditure = 0m, commitments = 0m;
+        foreach (var row in rows)
+        {
+            switch (row.TransactionType)
+            {
+                case BudgetTransactionType.FundsAdded:
+                case BudgetTransactionType.Reimbursement:
+                    fundsAdded += Math.Abs(row.Amount);
+                    break;
+                case BudgetTransactionType.Adjustment:
+                    fundsAdded += row.Amount;
+                    break;
+                case BudgetTransactionType.ExpenseRecognised:
+                    expenditure += Math.Abs(row.Amount);
+                    break;
+                case BudgetTransactionType.Reversal:
+                    expenditure -= Math.Abs(row.Amount);
+                    break;
+                case BudgetTransactionType.CommitmentCreated:
+                    commitments += Math.Abs(row.Amount);
+                    break;
+                case BudgetTransactionType.CommitmentReleased:
+                    commitments -= Math.Abs(row.Amount);
+                    break;
+            }
+        }
+
+        return new BudgetPoolBalance(fundsAdded, expenditure, Math.Max(0m, commitments));
+    }
+
+    public async Task<decimal> GetFundsAddedAsync(Guid poolId) => (await GetBalanceAsync(poolId)).FundsAdded;
+    public async Task<decimal> GetActualExpenditureAsync(Guid poolId) => (await GetBalanceAsync(poolId)).ActualExpenditure;
+    public async Task<decimal> GetPendingCommitmentsAsync(Guid poolId) => (await GetBalanceAsync(poolId)).PendingCommitments;
+    public async Task<decimal> GetActualAvailableAsync(Guid poolId) => (await GetBalanceAsync(poolId)).ActualAvailable;
+    public async Task<decimal> GetForecastAvailableAsync(Guid poolId) => (await GetBalanceAsync(poolId)).ForecastAvailable;
 
     public async Task<List<BudgetTransaction>> GetTransactionsAsync(Guid poolId) =>
         await _context.BudgetTransactions.Where(t => t.PoolId == poolId).OrderByDescending(t => t.TransactionDate).ToListAsync();

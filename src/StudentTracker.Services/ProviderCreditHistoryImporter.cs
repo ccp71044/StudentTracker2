@@ -64,6 +64,19 @@ public partial class ProviderCreditHistoryImporter
         csv.Read();
         csv.ReadHeader();
 
+        // Without these columns every row would import as an unusable blank rather than failing.
+        var header = csv.HeaderRecord ?? Array.Empty<string>();
+        var missing = new[] { "id", "credit", "debit" }
+            .Where(c => !header.Any(h => string.Equals(h?.Trim(), c, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+        if (missing.Count > 0)
+        {
+            var message = $"This does not look like a provider credit export: missing column(s) {string.Join(", ", missing)}.";
+            OperationLog.Failure("ImportProviderCreditHistory",
+                new InvalidDataException(message), new { Source = sourceFileName });
+            return new ImportResult { Success = false, Message = message, Errors = { message } };
+        }
+
         var topUps = 0;
         var consumptions = 0;
         var skipped = 0;

@@ -17,12 +17,21 @@ public class BackupService
         _audit = audit;
     }
 
-    public string CreateBackup(string? label = null)
+    public string CreateBackup(string? label = null) =>
+        OperationLog.Run("CreateBackup", () => CreateBackupCore(label), new { Label = label });
+
+    private string CreateBackupCore(string? label)
     {
+        if (!File.Exists(_dataLocation.DatabasePath))
+            throw new InvalidOperationException($"No database to back up at {_dataLocation.DatabasePath}.");
+
         Directory.CreateDirectory(_dataLocation.BackupsPath);
         var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
-        var fileName = $"StudentTracker-backup-{timestamp}{(label != null ? "-" + label : "")}.zip";
-        var path = Path.Combine(_dataLocation.BackupsPath, fileName);
+        var suffix = label != null ? "-" + label : "";
+        var path = Path.Combine(_dataLocation.BackupsPath, $"StudentTracker-backup-{timestamp}{suffix}.zip");
+        // Two backups within the same second must not overwrite each other.
+        for (var attempt = 2; File.Exists(path); attempt++)
+            path = Path.Combine(_dataLocation.BackupsPath, $"StudentTracker-backup-{timestamp}{suffix}-{attempt}.zip");
 
         using (var archive = ZipFile.Open(path, ZipArchiveMode.Create))
         {
@@ -46,25 +55,43 @@ public class BackupService
         }
     }
 
-    public void RestoreBackup(string backupPath)
+    public void RestoreBackup(string backupPath) =>
+        OperationLog.Run("RestoreBackup", () => RestoreBackupCore(backupPath), new { Path = backupPath });
+
+    private void RestoreBackupCore(string backupPath)
     {
-        CreateBackup("pre-restore");
+        if (!File.Exists(backupPath))
+            throw new FileNotFoundException("Backup not found", backupPath);
+
+        // Always capture the current state first so a restore can itself be undone.
+        if (File.Exists(_dataLocation.DatabasePath)) CreateBackup("pre-restore");
+
         using var archive = ZipFile.OpenRead(backupPath);
         var temp = Path.Combine(Path.GetTempPath(), $"st-restore-{Guid.NewGuid()}");
         Directory.CreateDirectory(temp);
-        archive.ExtractToDirectory(temp, true);
 
-        var dbSource = Path.Combine(temp, "Database", "student-tracker.db");
-        if (File.Exists(dbSource))
+        try
         {
-            File.Copy(dbSource, _dataLocation.DatabasePath, overwrite: true);
+            archive.ExtractToDirectory(temp, true);
+
+            var dbSource = Path.Combine(temp, "Database", "student-tracker.db");
+            if (File.Exists(dbSource))
+            {
+                File.Copy(dbSource, _dataLocation.DatabasePath, overwrite: true);
+            }
+
+            var docsSource = Path.Combine(temp, "Documents");
+            if (Directory.Exists(docsSource))
+            {
+                Directory.CreateDirectory(_dataLocation.DocumentsPath);
+                CopyDirectory(docsSource, _dataLocation.DocumentsPath);
+            }
         }
-
-        var docsSource = Path.Combine(temp, "Documents");
-        if (Directory.Exists(docsSource))
+        finally
         {
-            Directory.CreateDirectory(_dataLocation.DocumentsPath);
-            CopyDirectory(docsSource, _dataLocation.DocumentsPath);
+            // A restore that fails half way must not leave the extracted copy behind.
+            try { Directory.Delete(temp, true); }
+            catch (Exception ex) { OperationLog.Failure("RestoreBackupCleanup", ex, new { Temp = temp }); }
         }
 
         _audit.Record("BackupRestored", "System", Guid.Empty);
@@ -99,7 +126,8 @@ public class BackupService
 
         foreach (var f in files.Where(f => !keep.Contains(f.FullName)))
         {
-            try { f.Delete(); } catch { }
+            try { f.Delete(); }
+            catch (Exception ex) { OperationLog.Failure("CleanupOldBackups", ex, new { File = f.FullName }); }
         }
     }
 }

@@ -19,18 +19,14 @@ public partial class AllocationsViewModel : ViewModelBase
     public AllocationsViewModel(AllocationService allocationService)
     {
         _allocationService = allocationService;
-        LoadAsync().ConfigureAwait(false);
     }
 
-    private async Task LoadAsync()
+    protected override async Task InitialiseAsync()
     {
         var list = await _allocationService.GetAllocationsAsync();
         Allocations = new ObservableCollection<Allocation>(list);
     }
 
     [RelayCommand]
-    private async Task Refresh()
-    {
-        await LoadAsync();
-    }
+    private Task Refresh() => GuardAsync("Refresh", InitialiseAsync);
 }

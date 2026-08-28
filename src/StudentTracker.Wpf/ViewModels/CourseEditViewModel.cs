@@ -62,8 +62,14 @@ public partial class CourseEditViewModel : ViewModelBase, ICloseable
     }
 
     [RelayCommand]
-    private async Task Save()
+    private Task Save() => GuardAsync("Save", async () =>
     {
+        if (string.IsNullOrWhiteSpace(CourseCode) || string.IsNullOrWhiteSpace(CourseTitle))
+        {
+            ErrorMessage = "Course code and title are required.";
+            return;
+        }
+
         _course.CourseCode = CourseCode;
         _course.CourseTitle = CourseTitle;
         _course.Category = Category;
@@ -84,7 +90,7 @@ public partial class CourseEditViewModel : ViewModelBase, ICloseable
         }
 
         RequestClose?.Invoke(true);
-    }
+    });
 
     [RelayCommand]
     private void Cancel()

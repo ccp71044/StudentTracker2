@@ -25,6 +25,12 @@ public class CertificateCreditTransaction : EntityBase, IDisplayId
     public string? Reason { get; set; }
     public string? Notes { get; set; }
     public bool IsReconciled { get; set; }
+
+    /// <summary>
+    /// Marks credit that was lost rather than spent on a certificate, for example a withdrawal
+    /// with insufficient notice to reallocate the position. Reported as "unavailable".
+    /// </summary>
+    public bool IsCreditLoss { get; set; }
 }
 
 public enum CreditSourceType

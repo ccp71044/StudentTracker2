@@ -19,18 +19,14 @@ public partial class CertificatesViewModel : ViewModelBase
     public CertificatesViewModel(CertificateService certificateService)
     {
         _certificateService = certificateService;
-        LoadAsync().ConfigureAwait(false);
     }
 
-    private async Task LoadAsync()
+    protected override async Task InitialiseAsync()
     {
         var list = await _certificateService.GetOrdersAsync();
         Orders = new ObservableCollection<CertificateOrder>(list);
     }
 
     [RelayCommand]
-    private async Task Refresh()
-    {
-        await LoadAsync();
-    }
+    private Task Refresh() => GuardAsync("Refresh", InitialiseAsync);
 }

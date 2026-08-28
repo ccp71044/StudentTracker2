@@ -51,7 +51,7 @@ public partial class StudentViewViewModel : ViewModelBase, ICloseable
     }
 
     [RelayCommand]
-    private void EditStudent()
+    private void EditStudent() => Guard("EditStudent", () =>
     {
         var vm = new StudentEditViewModel(Student, _studentService, isNew: false);
         if (_dialogService.ShowDialog(vm) == true)
@@ -59,7 +59,7 @@ public partial class StudentViewViewModel : ViewModelBase, ICloseable
             Title = Student.FullName;
             OnPropertyChanged(nameof(Student));
         }
-    }
+    });
 
     [RelayCommand]
     private void Close()
