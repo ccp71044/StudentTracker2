@@ -4,7 +4,7 @@ public enum FundingSourceType
 {
     Invoice,
     Company,
-    AlexPersonal,
+    OwnerPersonal,
     Reimbursement,
     Grant,
     Other

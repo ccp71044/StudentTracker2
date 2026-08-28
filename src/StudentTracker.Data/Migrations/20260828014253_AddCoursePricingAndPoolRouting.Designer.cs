@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StudentTracker.Data;
 
@@ -10,9 +11,11 @@ using StudentTracker.Data;
 namespace StudentTracker.Data.Migrations
 {
     [DbContext(typeof(StudentTrackerDbContext))]
-    partial class StudentTrackerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260828014253_AddCoursePricingAndPoolRouting")]
+    partial class AddCoursePricingAndPoolRouting
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.5");
@@ -313,9 +316,6 @@ namespace StudentTracker.Data.Migrations
                     b.Property<string>("Reason")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("ReversesTransactionId")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("TEXT");
 
@@ -411,9 +411,6 @@ namespace StudentTracker.Data.Migrations
 
                     b.Property<Guid?>("InvoiceId")
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsCreditLoss")
-                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsReconciled")
                         .HasColumnType("INTEGER");
@@ -766,9 +763,6 @@ namespace StudentTracker.Data.Migrations
 
                     b.Property<string>("StoredFileName")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid?>("SupersedesDocumentId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("UpdatedAt")

@@ -16,11 +16,50 @@ public class ImportService
         _audit = audit;
     }
 
+    /// <summary>
+    /// Supported entity types are "CompletionPricing" (the provider's course price list) and
+    /// "CreditHistory" (the provider's credit transaction export).
+    /// </summary>
     public Task<ImportResult> ImportCsvAsync(string entityType, Stream csvStream)
     {
         _audit.Record("ImportStarted", "Import", Guid.NewGuid());
         _context.SaveChanges();
-        return Task.FromResult(new ImportResult { Success = true, RowsProcessed = 0, Message = "CSV import stub - implement parsing per entity type." });
+
+        using var reader = new StreamReader(csvStream);
+        IReadOnlyList<ImportReviewQueue> reviewQueue;
+        ImportResult result;
+
+        switch (entityType)
+        {
+            case "CompletionPricing":
+            {
+                var importer = new CompletionPricingImporter(_context, _idGenerator, _audit);
+                result = importer.Import(reader, entityType);
+                reviewQueue = importer.ReviewQueue;
+                break;
+            }
+            case "CreditHistory":
+            {
+                var importer = new ProviderCreditHistoryImporter(_context, _idGenerator, _audit);
+                result = importer.Import(reader, entityType);
+                reviewQueue = importer.ReviewQueue;
+                break;
+            }
+            default:
+                return Task.FromResult(new ImportResult
+                {
+                    Success = false,
+                    Message = $"Unsupported CSV type '{entityType}'. Expected 'CompletionPricing' or 'CreditHistory'."
+                });
+        }
+
+        if (reviewQueue.Any())
+        {
+            _context.ImportReviewQueues.AddRange(reviewQueue);
+            _context.SaveChanges();
+        }
+
+        return Task.FromResult(result);
     }
 
     public Task<ImportResult> ImportMigrationPackageAsync(string xlsxPath)

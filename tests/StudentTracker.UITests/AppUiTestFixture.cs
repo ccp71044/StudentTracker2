@@ -22,7 +22,7 @@ public class AppUiTestFixture : IDisposable
         if (string.IsNullOrEmpty(exePath) || !File.Exists(exePath))
             throw new FileNotFoundException("Could not locate StudentTracker.Wpf.exe. Run 'dotnet publish' first.", "StudentTracker.Wpf.exe");
 
-        var startInfo = new ProcessStartInfo(exePath)
+        var startInfo = new ProcessStartInfo(exePath, "--sample-data")
         {
             UseShellExecute = false,
             WorkingDirectory = Path.GetDirectoryName(exePath)!,

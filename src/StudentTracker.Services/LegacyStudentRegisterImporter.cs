@@ -1,5 +1,6 @@
 using System.Globalization;
 using ClosedXML.Excel;
+using StudentTracker.Core.Common;
 using StudentTracker.Core.Enums;
 using StudentTracker.Core.Models;
 using StudentTracker.Data;
@@ -32,7 +33,7 @@ public class LegacyStudentRegisterImporter
             return new ImportResult { Success = false, Message = "Could not locate the header row. Expected 'First Name' and 'Last Name' columns." };
 
         var map = BuildColumnMap(worksheet, headerRow);
-        var budgetPool = EnsureBudgetPool();
+        var pools = new Pools(EnsureBudgetPool(PoolNames.General), EnsureBudgetPool(PoolNames.Scjv));
 
         var lastRow = worksheet.LastRowUsed()?.RowNumber() ?? headerRow;
         for (int rowNumber = headerRow + 1; rowNumber <= lastRow; rowNumber++)
@@ -40,7 +41,7 @@ public class LegacyStudentRegisterImporter
             var row = worksheet.Row(rowNumber);
             try
             {
-                ProcessRow(row, map, budgetPool);
+                ProcessRow(row, map, pools);
             }
             catch (Exception ex)
             {
@@ -104,12 +105,12 @@ public class LegacyStudentRegisterImporter
         return map;
     }
 
-    private void ProcessRow(IXLRow row, ColumnMap map, BudgetPool budgetPool)
+    private void ProcessRow(IXLRow row, ColumnMap map, Pools pools)
     {
         var firstName = GetString(row, map, "firstname");
         var lastName = GetString(row, map, "lastname");
 
-        ProcessTopUp(row, map, budgetPool);
+        ProcessTopUp(row, map, pools);
 
         if (string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName))
             return;
@@ -128,10 +129,12 @@ public class LegacyStudentRegisterImporter
             return;
         }
 
-        var (courseCode, courseTitle) = SplitCourse(courseRaw);
+        var (courseCode, courseTitle) = CourseKey.Split(courseRaw);
         var student = EnsureStudent(firstName, lastName, email, phone, group);
-        var course = EnsureCourseDefinition(courseCode, courseTitle, cost);
+        var course = EnsureCourseDefinition(courseCode, courseTitle, CourseKey.Build(courseRaw), cost);
         var delivery = EnsureDelivery(course, date);
+        var isScjv = IsScjvReference(group);
+        var pool = isScjv ? pools.Scjv : pools.General;
 
         var allocation = new Allocation
         {
@@ -141,6 +144,8 @@ public class LegacyStudentRegisterImporter
             AllocatedAt = date ?? DateTime.UtcNow,
             CertificateCost = cost,
             OutcomeNotes = notes,
+            LegacyReference = isScjv ? group : null,
+            BudgetPoolId = pool.Id,
             AllocationStatus = AllocationStatus.Enrolled,
             OutcomeStatus = InferOutcome(notes),
             AttendanceStatus = AttendanceStatus.NotRecorded,
@@ -155,7 +160,39 @@ public class LegacyStudentRegisterImporter
             allocation.CertificateOrderStatus = CertificateOrderStatus.Ready;
 
         _context.Allocations.Add(allocation);
+        RecordSpend(allocation, pool, date);
     }
+
+    /// <summary>
+    /// A delivered course has already cost the money; a course with a cost but no delivery date is
+    /// still only committed.
+    /// </summary>
+    private void RecordSpend(Allocation allocation, BudgetPool pool, DateTime? deliveryDate)
+    {
+        var cost = allocation.CertificateCost.GetValueOrDefault();
+        if (cost <= 0 || allocation.OutcomeStatus is OutcomeStatus.Cancelled or OutcomeStatus.Withdrawn)
+            return;
+
+        var delivered = deliveryDate.HasValue && deliveryDate.Value.Date <= DateTime.UtcNow.Date;
+
+        _context.BudgetTransactions.Add(new BudgetTransaction
+        {
+            DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+            PoolId = pool.Id,
+            Pool = pool,
+            Allocation = allocation,
+            TransactionType = delivered ? BudgetTransactionType.ExpenseRecognised : BudgetTransactionType.CommitmentCreated,
+            Amount = -cost,
+            TransactionDate = deliveryDate ?? DateTime.UtcNow,
+            Reason = delivered ? "Imported delivered course" : "Imported scheduled course"
+        });
+
+        allocation.CashCommitmentStatus = delivered ? CashCommitmentStatus.Spent : CashCommitmentStatus.Pending;
+    }
+
+    /// <summary>Register rows tagged "SCJV 8" are funded from the SCJV pool.</summary>
+    private static bool IsScjvReference(string? group) =>
+        !string.IsNullOrWhiteSpace(group) && group.TrimStart().StartsWith(PoolNames.Scjv, StringComparison.OrdinalIgnoreCase);
 
     private Student EnsureStudent(string? firstName, string? lastName, string? email, string? phone, string? group)
     {
@@ -164,9 +201,11 @@ public class LegacyStudentRegisterImporter
             (!string.IsNullOrEmpty(normalizedEmail) && s.Email == normalizedEmail) ||
             (s.FirstName == firstName && s.LastName == lastName));
 
+        var workGroup = IsScjvReference(group) ? PoolNames.Scjv : group;
+
         if (existing != null)
         {
-            existing.WorkGroup = !string.IsNullOrWhiteSpace(group) ? group : existing.WorkGroup;
+            existing.WorkGroup = !string.IsNullOrWhiteSpace(workGroup) ? workGroup : existing.WorkGroup;
             return existing;
         }
 
@@ -177,25 +216,31 @@ public class LegacyStudentRegisterImporter
             LastName = lastName ?? "Unknown",
             Email = email,
             Phone = phone,
-            WorkGroup = group,
+            WorkGroup = workGroup,
             IsArchived = false
         };
         _context.Students.Add(student);
         return student;
     }
 
-    private CourseDefinition EnsureCourseDefinition(string courseCode, string courseTitle, decimal? defaultCost)
+    private CourseDefinition EnsureCourseDefinition(string courseCode, string courseTitle, string matchKey, decimal? defaultCost)
     {
-        var existing = _context.CourseDefinitions.Local.FirstOrDefault(c => c.CourseCode == courseCode)
+        var existing = _context.CourseDefinitions.Local.FirstOrDefault(c => c.MatchKey == matchKey)
+            ?? _context.CourseDefinitions.FirstOrDefault(c => c.MatchKey == matchKey)
+            ?? _context.CourseDefinitions.Local.FirstOrDefault(c => c.CourseCode == courseCode)
             ?? _context.CourseDefinitions.FirstOrDefault(c => c.CourseCode == courseCode);
 
         if (existing != null)
+        {
+            existing.MatchKey ??= matchKey;
             return existing;
+        }
 
         var course = new CourseDefinition
         {
             CourseCode = courseCode,
             CourseTitle = courseTitle,
+            MatchKey = matchKey,
             Provider = "Imported",
             DefaultCertificateCost = defaultCost,
             DefaultCreditQuantity = 1m
@@ -224,25 +269,29 @@ public class LegacyStudentRegisterImporter
         return delivery;
     }
 
-    private BudgetPool EnsureBudgetPool()
+    private BudgetPool EnsureBudgetPool(string name)
     {
-        var existing = _context.BudgetPools.Local.FirstOrDefault(b => b.Name == "Legacy Budget")
-            ?? _context.BudgetPools.FirstOrDefault(b => b.Name == "Legacy Budget");
+        var existing = _context.BudgetPools.Local.FirstOrDefault(b => b.Name == name)
+            ?? _context.BudgetPools.FirstOrDefault(b => b.Name == name);
 
         if (existing != null)
             return existing;
 
         var pool = new BudgetPool
         {
-            Name = "Legacy Budget",
+            DisplayId = _idGenerator.NextDisplayId<BudgetPool>("BUD"),
+            Name = name,
             FinancialPeriod = "Imported",
-            Notes = "Imported from legacy student register"
+            Notes = name == PoolNames.Scjv
+                ? "Spending funded on behalf of SCJV; a negative balance is the amount to invoice back."
+                : "General spending imported from the legacy student register."
         };
         _context.BudgetPools.Add(pool);
+        _context.SaveChanges();
         return pool;
     }
 
-    private void ProcessTopUp(IXLRow row, ColumnMap map, BudgetPool pool)
+    private void ProcessTopUp(IXLRow row, ColumnMap map, Pools pools)
     {
         var topUpDate = GetDate(row, map, "topupdate");
         var topUpAmount = GetDecimal(row, map, "topupamount");
@@ -251,24 +300,21 @@ public class LegacyStudentRegisterImporter
         if (!topUpDate.HasValue || !topUpAmount.HasValue || topUpAmount.Value <= 0)
             return;
 
+        // Only top-ups explicitly noted as SCJV money fund the SCJV pool; the register does not
+        // otherwise say which pool a payment belongs to.
+        var pool = IsScjvReference(topUpNotes) ? pools.Scjv : pools.General;
+
         var transaction = new BudgetTransaction
         {
             DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
             PoolId = pool.Id,
+            Pool = pool,
             TransactionType = BudgetTransactionType.FundsAdded,
             Amount = topUpAmount.Value,
             TransactionDate = topUpDate.Value,
             Reason = topUpNotes ?? "Legacy top-up"
         };
         _context.BudgetTransactions.Add(transaction);
-    }
-
-    private static (string Code, string Title) SplitCourse(string courseRaw)
-    {
-        var parts = courseRaw.Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
-        var code = parts[0].Trim();
-        var title = parts.Length > 1 ? parts[1].Trim() : code;
-        return (code, title);
     }
 
     private static OutcomeStatus InferOutcome(string? notes)
@@ -316,6 +362,8 @@ public class LegacyStudentRegisterImporter
         if (decimal.TryParse(cell.GetValue<string>(), NumberStyles.Any, CultureInfo.InvariantCulture, out d)) return d;
         return null;
     }
+
+    private record Pools(BudgetPool General, BudgetPool Scjv);
 
     private class ColumnMap
     {

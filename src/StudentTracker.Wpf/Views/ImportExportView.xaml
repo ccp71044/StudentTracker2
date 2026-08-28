@@ -14,6 +14,8 @@
             <Button Content="Restore Backup" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreBackupCommand}" HorizontalAlignment="Left" Width="180" />
             <Button Content="Export Invoicer Batch" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportInvoicerCommand}" HorizontalAlignment="Left" Width="180" />
             <Button Content="Import Migration Package" Style="{StaticResource ActionButtonStyle}" Command="{Binding ImportMigrationPackageCommand}" HorizontalAlignment="Left" Width="180" />
+            <Button Content="Import Price List CSV" AutomationProperties.AutomationId="ImportCompletionPricingButton" Style="{StaticResource ActionButtonStyle}" Command="{Binding ImportCompletionPricingCommand}" HorizontalAlignment="Left" Width="180" />
+            <Button Content="Import Credit History CSV" AutomationProperties.AutomationId="ImportCreditHistoryButton" Style="{StaticResource ActionButtonStyle}" Command="{Binding ImportCreditHistoryCommand}" HorizontalAlignment="Left" Width="180" />
         </StackPanel>
         <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="10" Grid.Row="2" />
     </Grid>

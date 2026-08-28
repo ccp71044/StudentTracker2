@@ -4,7 +4,10 @@ obj/
 
 # Publish / release artifacts
 release/StudentTracker-win-x64/
-release/StudentTracker-win-x64.zip
+release/StudentTracker-win-x64*.zip
+
+# WPF temporary project files
+*_wpftmp.csproj
 
 # User-specific files
 *.user
@@ -24,3 +27,8 @@ Thumbs.db
 
 # Temporary scripts
 generate_icon.py
+
+# Real registers and provider exports contain personal data and must stay local
+testdata/
+*.xlsx
+!sample-data/*.xlsx

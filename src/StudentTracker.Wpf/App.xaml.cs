@@ -5,14 +5,37 @@ using StudentTracker.Services;
 using StudentTracker.Wpf.ViewModels;
 using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace StudentTracker.Wpf;
 
 public partial class App : Application
 {
+    private const string SampleDataSwitch = "--sample-data";
+
     private ServiceProvider? _serviceProvider;
+    private string _logsPath = string.Empty;
 
     protected override void OnStartup(StartupEventArgs e)
+    {
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            Log.Fatal(args.ExceptionObject as Exception, "Unhandled application exception");
+
+        try
+        {
+            Start(e.Args);
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Student Tracker failed to start");
+            Log.CloseAndFlush();
+            ShowFatalError("Student Tracker could not start.", ex);
+            Shutdown(1);
+        }
+    }
+
+    private void Start(string[] args)
     {
         var services = new ServiceCollection();
         ConfigureServices(services);
@@ -20,24 +43,52 @@ public partial class App : Application
 
         var location = _serviceProvider.GetRequiredService<DataLocationService>();
         location.EnsureDirectories();
+        _logsPath = location.LogsPath;
 
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .WriteTo.File(Path.Combine(location.LogsPath, "student-tracker-.log"), rollingInterval: RollingInterval.Day)
+            .MinimumLevel.Information()
+            .WriteTo.File(
+                Path.Combine(location.LogsPath, "student-tracker-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 30)
             .CreateLogger();
+
+        Log.Information("Starting Student Tracker {Version}", AppVersion.Current);
 
         var bootstrap = _serviceProvider.GetRequiredService<DatabaseBootstrap>();
         using var context = bootstrap.CreateContext();
         bootstrap.EnsureMigrated(context);
-        var settings = bootstrap.GetOrCreateSettings(context);
+        bootstrap.GetOrCreateSettings(context);
 
         var seed = new SeedService(context);
         seed.SeedOutcomeReasonsAsync().GetAwaiter().GetResult();
-        seed.SeedSampleDataAsync(new DisplayIdGenerator(context)).GetAwaiter().GetResult();
+
+        if (args.Contains(SampleDataSwitch, StringComparer.OrdinalIgnoreCase))
+        {
+            Log.Information("Seeding demonstration data ({Switch} supplied)", SampleDataSwitch);
+            seed.SeedSampleDataAsync(new DisplayIdGenerator(context)).GetAwaiter().GetResult();
+        }
 
         var mainVm = _serviceProvider.GetRequiredService<MainViewModel>();
         MainWindow = new MainWindow { DataContext = mainVm };
         MainWindow.Show();
+    }
+
+    private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        Log.Error(e.Exception, "Unhandled UI exception");
+        ShowFatalError("Something went wrong and the last action was cancelled.", e.Exception);
+        e.Handled = true;
+    }
+
+    private void ShowFatalError(string summary, Exception exception)
+    {
+        var logHint = string.IsNullOrEmpty(_logsPath) ? string.Empty : $"\n\nDetails were written to:\n{_logsPath}";
+        MessageBox.Show(
+            $"{summary}\n\n{exception.Message}{logHint}",
+            "Student Tracker",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
     }
 
     private static void ConfigureServices(IServiceCollection services)
@@ -61,6 +112,10 @@ public partial class App : Application
         services.AddScoped<AllocationService>();
         services.AddScoped<CreditService>();
         services.AddScoped<BudgetService>();
+        services.AddScoped<PricingService>();
+        services.AddScoped<BudgetSummaryService>();
+        services.AddScoped<CompletionPricingImporter>();
+        services.AddScoped<ProviderCreditHistoryImporter>();
         services.AddScoped<CertificateService>();
         services.AddScoped<SignOffService>();
         services.AddScoped<DocumentService>();
