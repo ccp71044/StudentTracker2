@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using StudentTracker.Services;
+using System.IO;
 using System.Windows;
 
 namespace StudentTracker.Wpf.ViewModels;
