@@ -18,6 +18,9 @@ public partial class CoursesViewModel : ViewModelBase
     [ObservableProperty]
     private CourseDefinition? _selectedCourse;
 
+    [ObservableProperty]
+    private bool _showInactive;
+
     public CoursesViewModel(CourseService courseService, IDialogService dialogService)
     {
         _courseService = courseService;
@@ -27,7 +30,7 @@ public partial class CoursesViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        var list = await _courseService.GetDefinitionsAsync();
+        var list = await _courseService.GetDefinitionsAsync(includeInactive: ShowInactive);
         Courses = new ObservableCollection<CourseDefinition>(list);
     }
 
@@ -55,18 +58,44 @@ public partial class CoursesViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanEditOrDeleteCourse))]
     private async Task DeleteCourse()
     {
-        if (SelectedCourse == null) return;
-        SelectedCourse.IsActive = false;
-        await _courseService.UpdateDefinitionAsync(SelectedCourse);
-        await LoadAsync();
-        SelectedCourse = null;
+        if (SelectedCourse == null || !_dialogService.Confirm($"Archive course {SelectedCourse.CourseCode}? Historical deliveries will be retained.")) return;
+        try
+        {
+            await _courseService.SetDefinitionActiveAsync(SelectedCourse.Id, false);
+            await LoadAsync();
+            SelectedCourse = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The course could not be archived.", ex);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRestoreCourse))]
+    private async Task RestoreCourse()
+    {
+        if (SelectedCourse == null || !_dialogService.Confirm($"Restore course {SelectedCourse.CourseCode}?")) return;
+        try
+        {
+            await _courseService.SetDefinitionActiveAsync(SelectedCourse.Id, true);
+            await LoadAsync();
+            SelectedCourse = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The course could not be restored.", ex);
+        }
     }
 
     private bool CanEditOrDeleteCourse => SelectedCourse != null;
+    private bool CanRestoreCourse => SelectedCourse?.IsActive == false;
+
+    partial void OnShowInactiveChanged(bool value) => LoadAsync().ConfigureAwait(false);
 
     partial void OnSelectedCourseChanged(CourseDefinition? value)
     {
         EditCourseCommand.NotifyCanExecuteChanged();
         DeleteCourseCommand.NotifyCanExecuteChanged();
+        RestoreCourseCommand.NotifyCanExecuteChanged();
     }
 }

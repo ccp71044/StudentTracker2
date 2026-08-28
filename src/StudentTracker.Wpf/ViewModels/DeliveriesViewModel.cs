@@ -60,10 +60,28 @@ public partial class DeliveriesViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand(CanExecute = nameof(CanCancelDelivery))]
+    private async Task CancelDelivery()
+    {
+        if (SelectedDelivery == null || !_dialogService.Confirm($"Cancel delivery {SelectedDelivery.DisplayId}?")) return;
+        try
+        {
+            await _courseService.CancelDeliveryAsync(SelectedDelivery.Id);
+            await LoadAsync();
+            SelectedDelivery = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The delivery could not be cancelled.", ex);
+        }
+    }
+
     private bool CanEditDelivery => SelectedDelivery != null;
+    private bool CanCancelDelivery => SelectedDelivery != null && SelectedDelivery.DeliveryStatus != "Cancelled" && SelectedDelivery.DeliveryStatus != "Completed";
 
     partial void OnSelectedDeliveryChanged(CourseDelivery? value)
     {
         EditDeliveryCommand.NotifyCanExecuteChanged();
+        CancelDeliveryCommand.NotifyCanExecuteChanged();
     }
 }

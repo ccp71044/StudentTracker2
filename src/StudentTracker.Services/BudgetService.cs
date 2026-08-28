@@ -18,7 +18,7 @@ public class BudgetService
         _audit = audit;
     }
 
-    public async Task<List<BudgetPool>> GetPoolsAsync() => await _context.BudgetPools.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
+    public async Task<List<BudgetPool>> GetPoolsAsync(bool includeInactive = false) => await _context.BudgetPools.Where(p => includeInactive || p.IsActive).OrderBy(p => p.Name).ToListAsync();
 
     public async Task<BudgetPool?> GetPoolAsync(Guid id) => await _context.BudgetPools.FindAsync(id);
 
@@ -42,13 +42,27 @@ public class BudgetService
         return pool;
     }
 
-    public async Task ArchivePoolAsync(Guid id)
+    public async Task ArchivePoolAsync(Guid id) => await SetPoolActiveAsync(id, false);
+
+    public async Task RestorePoolAsync(Guid id) => await SetPoolActiveAsync(id, true);
+
+    private async Task SetPoolActiveAsync(Guid id, bool active)
     {
         var pool = await _context.BudgetPools.FindAsync(id) ?? throw new ArgumentException("Budget pool not found");
-        pool.IsActive = false;
+        if (!active)
+        {
+            var activeAllocations = await _context.Allocations.CountAsync(a => a.BudgetPoolId == id && a.CashCommitmentStatus == CashCommitmentStatus.Pending);
+            if (activeAllocations > 0)
+            {
+                _audit.Record("ArchiveBlocked", "BudgetPool", pool.Id, pool.DisplayId, null, new { PendingCommitments = activeAllocations });
+                await _context.SaveChangesAsync();
+                throw new InvalidOperationException($"Budget pool has {activeAllocations} pending commitment(s). Release or recognise them before archiving.");
+            }
+        }
+        pool.IsActive = active;
         pool.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        _audit.Record("Archived", "BudgetPool", pool.Id, pool.DisplayId);
+        _audit.Record(active ? "Restored" : "Archived", "BudgetPool", pool.Id, pool.DisplayId);
         await _context.SaveChangesAsync();
     }
 

@@ -15,7 +15,12 @@
             <Button Content="Export Non-Completions CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportNonCompletionsCsvCommand}" Width="180" />
             <Button Content="Export Awaiting Delivery CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportAwaitingDeliveryCsvCommand}" Width="180" />
             <Button Content="Export Delivered CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportDeliveredCsvCommand}" Width="180" />
-            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
+            <TextBlock Text="From" VerticalAlignment="Center" Margin="10,0,4,0" />
+            <DatePicker SelectedDate="{Binding FromDate}" Width="120" />
+            <TextBlock Text="To" VerticalAlignment="Center" Margin="10,0,4,0" />
+            <DatePicker SelectedDate="{Binding ToDate}" Width="120" />
+            <CheckBox Content="Include archived students" IsChecked="{Binding IncludeArchived}" VerticalAlignment="Center" Margin="10,0" />
+            <Button Content="Apply / Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
         </StackPanel>
         <TabControl Grid.Row="2" Margin="10">
             <TabItem Header="Completed Students">

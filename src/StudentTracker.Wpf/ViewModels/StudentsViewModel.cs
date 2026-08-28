@@ -22,6 +22,9 @@ public partial class StudentsViewModel : ViewModelBase
     [ObservableProperty]
     private Student? _selectedStudent;
 
+    [ObservableProperty]
+    private bool _showArchived;
+
     public StudentsViewModel(StudentService studentService, AllocationService allocationService, IDialogService dialogService)
     {
         _studentService = studentService;
@@ -32,7 +35,7 @@ public partial class StudentsViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        var list = await _studentService.SearchAsync(SearchText);
+        var list = await _studentService.SearchAsync(SearchText, ShowArchived);
         Students = new ObservableCollection<Student>(list);
     }
 
@@ -66,10 +69,33 @@ public partial class StudentsViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanEditOrDeleteStudent))]
     private async Task DeleteStudent()
     {
-        if (SelectedStudent == null) return;
-        await _studentService.ArchiveAsync(SelectedStudent.Id);
-        await LoadAsync();
-        SelectedStudent = null;
+        if (SelectedStudent == null || !_dialogService.Confirm($"Archive {SelectedStudent.FirstName} {SelectedStudent.LastName}? Historical records will be retained.")) return;
+        try
+        {
+            await _studentService.ArchiveAsync(SelectedStudent.Id);
+            await LoadAsync();
+            SelectedStudent = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The student could not be archived.", ex);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRestoreStudent))]
+    private async Task RestoreStudent()
+    {
+        if (SelectedStudent == null || !_dialogService.Confirm($"Restore {SelectedStudent.FirstName} {SelectedStudent.LastName}?")) return;
+        try
+        {
+            await _studentService.ArchiveAsync(SelectedStudent.Id, false);
+            await LoadAsync();
+            SelectedStudent = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The student could not be restored.", ex);
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanEditOrDeleteStudent))]
@@ -82,11 +108,15 @@ public partial class StudentsViewModel : ViewModelBase
     }
 
     private bool CanEditOrDeleteStudent => SelectedStudent != null;
+    private bool CanRestoreStudent => SelectedStudent?.IsArchived == true;
+
+    partial void OnShowArchivedChanged(bool value) => LoadAsync().ConfigureAwait(false);
 
     partial void OnSelectedStudentChanged(Student? value)
     {
         EditStudentCommand.NotifyCanExecuteChanged();
         DeleteStudentCommand.NotifyCanExecuteChanged();
+        RestoreStudentCommand.NotifyCanExecuteChanged();
         ViewStudentCommand.NotifyCanExecuteChanged();
     }
 }

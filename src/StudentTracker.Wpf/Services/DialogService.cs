@@ -1,4 +1,5 @@
 using System.Reflection;
+using Serilog;
 using System.Windows;
 using System.Windows.Controls;
 using StudentTracker.Wpf.ViewModels;
@@ -49,6 +50,18 @@ public class DialogService : IDialogService
 
         window.Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
         return window.ShowDialog();
+    }
+
+    public bool Confirm(string message, string title = "Confirm action") =>
+        MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
+
+    public void ShowError(string message, Exception? exception = null, string title = "Student Tracker")
+    {
+        if (exception == null)
+            Log.Error("{UserMessage}", message);
+        else
+            Log.Error(exception, "{UserMessage}", message);
+        MessageBox.Show($"{message}\n\nSee the application log for details.", title, MessageBoxButton.OK, MessageBoxImage.Error);
     }
 }
 

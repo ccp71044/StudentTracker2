@@ -18,7 +18,7 @@ public class CreditService
         _audit = audit;
     }
 
-    public async Task<List<CertificateCreditPool>> GetPoolsAsync() => await _context.CertificateCreditPools.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
+    public async Task<List<CertificateCreditPool>> GetPoolsAsync(bool includeInactive = false) => await _context.CertificateCreditPools.Where(p => includeInactive || p.IsActive).OrderBy(p => p.Name).ToListAsync();
 
     public async Task<CertificateCreditPool?> GetPoolAsync(Guid id) => await _context.CertificateCreditPools.FindAsync(id);
 
@@ -32,13 +32,27 @@ public class CreditService
         return pool;
     }
 
-    public async Task ArchivePoolAsync(Guid poolId)
+    public async Task ArchivePoolAsync(Guid poolId) => await SetPoolActiveAsync(poolId, false);
+
+    public async Task RestorePoolAsync(Guid poolId) => await SetPoolActiveAsync(poolId, true);
+
+    private async Task SetPoolActiveAsync(Guid poolId, bool active)
     {
         var pool = await _context.CertificateCreditPools.FindAsync(poolId) ?? throw new ArgumentException("Pool not found");
-        pool.IsActive = false;
+        if (!active)
+        {
+            var allocated = await _context.Allocations.CountAsync(a => a.CreditPoolId == poolId && a.CreditStatus == CreditStatus.Allocated);
+            if (allocated > 0)
+            {
+                _audit.Record("ArchiveBlocked", "CertificateCreditPool", pool.Id, pool.DisplayId, null, new { AllocatedCredits = allocated });
+                await _context.SaveChangesAsync();
+                throw new InvalidOperationException($"Credit pool has {allocated} active credit allocation(s). Release or consume them before archiving.");
+            }
+        }
+        pool.IsActive = active;
         pool.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        _audit.Record("Archived", "CertificateCreditPool", pool.Id, pool.DisplayId);
+        _audit.Record(active ? "Restored" : "Archived", "CertificateCreditPool", pool.Id, pool.DisplayId);
         await _context.SaveChangesAsync();
     }
 
@@ -202,7 +216,7 @@ public class CreditService
 
     public async Task<decimal> GetAllocatedAsync(Guid poolId) =>
         await _context.CertificateCreditTransactions
-            .Where(t => t.PoolId == poolId && (t.TransactionType == CreditTransactionType.Allocate || t.TransactionType == CreditTransactionType.Reserve))
+            .Where(t => t.PoolId == poolId && (t.TransactionType == CreditTransactionType.Allocate || t.TransactionType == CreditTransactionType.Reserve || t.TransactionType == CreditTransactionType.Release || t.TransactionType == CreditTransactionType.ReallocateOut))
             .SumAsync(t => t.Amount);
 
     public async Task<decimal> GetConsumedAsync(Guid poolId) =>

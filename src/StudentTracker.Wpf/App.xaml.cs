@@ -50,7 +50,10 @@ public partial class App : Application
             .WriteTo.File(
                 Path.Combine(location.LogsPath, "student-tracker-.log"),
                 rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 30)
+                retainedFileCountLimit: 30,
+                shared: true,
+                flushToDiskInterval: TimeSpan.FromSeconds(2),
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
 
         Log.Information("Starting Student Tracker {Version}", AppVersion.Current);

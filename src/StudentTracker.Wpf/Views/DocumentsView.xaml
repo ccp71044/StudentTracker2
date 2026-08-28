@@ -12,7 +12,9 @@
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="1">
             <Button Content="Add Document" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddDocumentCommand}" />
             <Button Content="View" Style="{StaticResource ActionButtonStyle}" Command="{Binding ViewDocumentCommand}" />
-            <Button Content="Delete" Style="{StaticResource ActionButtonStyle}" Command="{Binding DeleteDocumentCommand}" />
+            <Button Content="Archive" Style="{StaticResource ActionButtonStyle}" Command="{Binding DeleteDocumentCommand}" />
+            <Button Content="Restore" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreDocumentCommand}" />
+            <CheckBox Content="Show archived" IsChecked="{Binding ShowArchived}" VerticalAlignment="Center" Margin="10,0" />
             <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
         </StackPanel>
         <DataGrid ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True" 

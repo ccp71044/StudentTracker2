@@ -170,6 +170,63 @@ public class AllocationService
         return allocation;
     }
 
+    public async Task CancelAsync(Guid allocationId, string? reason = null)
+    {
+        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+        var certificateOrdered = await _context.CertificateOrders.AnyAsync(o => o.AllocationId == allocationId);
+        if (certificateOrdered || allocation.CreditStatus == CreditStatus.Consumed)
+        {
+            _audit.Record("CancellationBlocked", "Allocation", allocation.Id, allocation.DisplayId, null, new { Reason = "Certificate already ordered or credit consumed" });
+            await _context.SaveChangesAsync();
+            throw new InvalidOperationException("Allocation cannot be cancelled after a certificate has been ordered or credit consumed.");
+        }
+
+        if (allocation.CashCommitmentStatus == CashCommitmentStatus.Pending && allocation.BudgetPoolId.HasValue)
+        {
+            var commitment = -await _context.BudgetTransactions
+                .Where(t => t.AllocationId == allocation.Id && (t.TransactionType == BudgetTransactionType.CommitmentCreated || t.TransactionType == BudgetTransactionType.CommitmentReleased))
+                .SumAsync(t => t.Amount);
+            _context.BudgetTransactions.Add(new BudgetTransaction
+            {
+                DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+                PoolId = allocation.BudgetPoolId.Value,
+                AllocationId = allocation.Id,
+                TransactionType = BudgetTransactionType.CommitmentReleased,
+                Amount = Math.Max(0m, commitment),
+                Reason = reason ?? "Allocation cancelled",
+                TransactionDate = DateTime.UtcNow
+            });
+            allocation.CashCommitmentStatus = CashCommitmentStatus.Released;
+        }
+
+        if (allocation.CreditStatus == CreditStatus.Allocated && allocation.CreditPoolId.HasValue)
+        {
+            var allocatedCredit = await _context.CertificateCreditTransactions
+                .Where(t => t.AllocationId == allocation.Id && (t.TransactionType == CreditTransactionType.Allocate || t.TransactionType == CreditTransactionType.Reserve || t.TransactionType == CreditTransactionType.Release))
+                .SumAsync(t => t.Amount);
+            _context.CertificateCreditTransactions.Add(new CertificateCreditTransaction
+            {
+                DisplayId = _idGenerator.NextDisplayId<CertificateCreditTransaction>("CTX"),
+                PoolId = allocation.CreditPoolId.Value,
+                AllocationId = allocation.Id,
+                TransactionType = CreditTransactionType.Release,
+                Amount = -Math.Max(0m, allocatedCredit),
+                Reason = reason ?? "Allocation cancelled",
+                TransactionDateTime = DateTime.UtcNow
+            });
+            allocation.CreditStatus = CreditStatus.Released;
+        }
+
+        allocation.AllocationStatus = AllocationStatus.Cancelled;
+        allocation.OutcomeStatus = OutcomeStatus.Cancelled;
+        allocation.OutcomeDate = DateTime.UtcNow;
+        allocation.OutcomeNotes = string.Join(Environment.NewLine, new[] { allocation.OutcomeNotes, reason }.Where(n => !string.IsNullOrWhiteSpace(n)));
+        allocation.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("Cancelled", "Allocation", allocation.Id, allocation.DisplayId, null, new { Reason = reason });
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<Allocation> TransferAsync(Guid sourceAllocationId, Guid targetStudentId, Guid targetDeliveryId)
     {
         var source = await _context.Allocations.FindAsync(sourceAllocationId) ?? throw new ArgumentException("Source allocation not found");

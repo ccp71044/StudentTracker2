@@ -72,13 +72,16 @@ public class DocumentService
         return link;
     }
 
-    public async Task<List<Document>> GetDocumentsForEntityAsync(string entityType, Guid entityId)
+    public async Task<List<Document>> GetDocumentsForEntityAsync(string entityType, Guid entityId, bool includeArchived = false)
     {
+        if (entityType == "All")
+            return await _context.Documents.Where(d => includeArchived || d.Status != DocumentStatus.Archived).OrderBy(d => d.DisplayName).ToListAsync();
+
         return await _context.DocumentLinks
             .Where(l => l.EntityType == entityType && l.EntityId == entityId)
             .Include(l => l.Document)
             .Select(l => l.Document!)
-            .Where(d => d.Status != DocumentStatus.Archived)
+            .Where(d => includeArchived || d.Status != DocumentStatus.Archived)
             .ToListAsync();
     }
 
@@ -114,27 +117,34 @@ public class DocumentService
         return doc != null ? GetFullPath(doc) : string.Empty;
     }
 
-    public async Task DeleteDocumentAsync(Guid documentId)
+    public async Task ArchiveDocumentAsync(Guid documentId)
     {
-        var doc = await _context.Documents.FindAsync(documentId);
-        if (doc == null) return;
-
-        var filePath = GetFullPath(doc);
-        if (File.Exists(filePath))
+        var doc = await _context.Documents.FindAsync(documentId) ?? throw new ArgumentException("Document not found");
+        var evidenceLinks = await _context.CertificateDeliveries.CountAsync(d => d.EvidenceDocumentId == documentId);
+        if (evidenceLinks > 0)
         {
-            File.Delete(filePath);
+            _audit.Record("ArchiveBlocked", "Document", doc.Id, doc.DisplayId, null, new { CertificateEvidenceLinks = evidenceLinks });
+            await _context.SaveChangesAsync();
+            throw new InvalidOperationException($"Document is evidence for {evidenceLinks} certificate delivery record(s) and cannot be archived.");
         }
-
-        // Remove any links
-        var links = await _context.DocumentLinks.Where(l => l.DocumentId == documentId).ToListAsync();
-        _context.DocumentLinks.RemoveRange(links);
-
-        // Remove document
-        _context.Documents.Remove(doc);
+        doc.Status = DocumentStatus.Archived;
+        doc.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        _audit.Record("Deleted", "Document", documentId, doc.DisplayId);
+        _audit.Record("Archived", "Document", documentId, doc.DisplayId);
         await _context.SaveChangesAsync();
     }
+
+    public async Task RestoreDocumentAsync(Guid documentId)
+    {
+        var doc = await _context.Documents.FindAsync(documentId) ?? throw new ArgumentException("Document not found");
+        doc.Status = File.Exists(GetFullPath(doc)) ? DocumentStatus.Active : DocumentStatus.Missing;
+        doc.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("Restored", "Document", documentId, doc.DisplayId, null, new { doc.Status });
+        await _context.SaveChangesAsync();
+    }
+
+    public Task DeleteDocumentAsync(Guid documentId) => ArchiveDocumentAsync(documentId);
 
     public async Task CheckMissingFilesAsync()
     {

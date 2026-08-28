@@ -86,12 +86,30 @@ public partial class AllocationsViewModel : ViewModelBase
         await EditAllocation();
     }
 
+    [RelayCommand(CanExecute = nameof(CanCancelAllocation))]
+    private async Task CancelAllocation()
+    {
+        if (SelectedAllocation == null || !_dialogService.Confirm($"Cancel allocation {SelectedAllocation.DisplayId}? Pending budget commitments and allocated credit will be released.")) return;
+        try
+        {
+            await _allocationService.CancelAsync(SelectedAllocation.Id, "Cancelled by user");
+            await LoadAsync();
+            SelectedAllocation = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The allocation could not be cancelled.", ex);
+        }
+    }
+
     private bool CanEditAllocation => SelectedAllocation != null;
+    private bool CanCancelAllocation => SelectedAllocation != null && SelectedAllocation.AllocationStatus != Core.Enums.AllocationStatus.Cancelled && SelectedAllocation.AllocationStatus != Core.Enums.AllocationStatus.Finalised;
 
     partial void OnSelectedAllocationChanged(Allocation? value)
     {
         EditAllocationCommand.NotifyCanExecuteChanged();
         MarkAttendanceCommand.NotifyCanExecuteChanged();
         MarkOutcomeCommand.NotifyCanExecuteChanged();
+        CancelAllocationCommand.NotifyCanExecuteChanged();
     }
 }

@@ -25,6 +25,9 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     [ObservableProperty]
     private CertificateCreditPool? _selectedCreditPool;
 
+    [ObservableProperty]
+    private bool _showInactive;
+
     public CreditsBudgetsViewModel(CreditService creditService, BudgetService budgetService, IDialogService dialogService)
     {
         _creditService = creditService;
@@ -35,8 +38,8 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        CreditPools = new ObservableCollection<CertificateCreditPool>(await _creditService.GetPoolsAsync());
-        var pools = await _budgetService.GetPoolsAsync();
+        CreditPools = new ObservableCollection<CertificateCreditPool>(await _creditService.GetPoolsAsync(ShowInactive));
+        var pools = await _budgetService.GetPoolsAsync(ShowInactive);
         var rows = new List<BudgetPoolRow>();
         foreach (var pool in pools)
         {
@@ -91,10 +94,33 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanEditBudgetPool))]
     private async Task ArchiveBudgetPool()
     {
-        if (SelectedBudgetPool == null) return;
-        await _budgetService.ArchivePoolAsync(SelectedBudgetPool.Pool.Id);
-        await LoadAsync();
-        SelectedBudgetPool = null;
+        if (SelectedBudgetPool == null || !_dialogService.Confirm($"Archive budget pool {SelectedBudgetPool.Name}? Transactions will be retained.")) return;
+        try
+        {
+            await _budgetService.ArchivePoolAsync(SelectedBudgetPool.Pool.Id);
+            await LoadAsync();
+            SelectedBudgetPool = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The budget pool could not be archived.", ex);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRestoreBudgetPool))]
+    private async Task RestoreBudgetPool()
+    {
+        if (SelectedBudgetPool == null || !_dialogService.Confirm($"Restore budget pool {SelectedBudgetPool.Name}?")) return;
+        try
+        {
+            await _budgetService.RestorePoolAsync(SelectedBudgetPool.Pool.Id);
+            await LoadAsync();
+            SelectedBudgetPool = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The budget pool could not be restored.", ex);
+        }
     }
 
     [RelayCommand]
@@ -121,27 +147,56 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanEditCreditPool))]
     private async Task ArchiveCreditPool()
     {
-        if (SelectedCreditPool == null) return;
-        await _creditService.ArchivePoolAsync(SelectedCreditPool.Id);
-        await LoadAsync();
-        SelectedCreditPool = null;
+        if (SelectedCreditPool == null || !_dialogService.Confirm($"Archive credit pool {SelectedCreditPool.Name}? Transactions will be retained.")) return;
+        try
+        {
+            await _creditService.ArchivePoolAsync(SelectedCreditPool.Id);
+            await LoadAsync();
+            SelectedCreditPool = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The credit pool could not be archived.", ex);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRestoreCreditPool))]
+    private async Task RestoreCreditPool()
+    {
+        if (SelectedCreditPool == null || !_dialogService.Confirm($"Restore credit pool {SelectedCreditPool.Name}?")) return;
+        try
+        {
+            await _creditService.RestorePoolAsync(SelectedCreditPool.Id);
+            await LoadAsync();
+            SelectedCreditPool = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The credit pool could not be restored.", ex);
+        }
     }
 
     private bool CanEditBudgetPool => SelectedBudgetPool != null;
     private bool CanEditCreditPool => SelectedCreditPool != null;
+    private bool CanRestoreBudgetPool => SelectedBudgetPool?.Pool.IsActive == false;
+    private bool CanRestoreCreditPool => SelectedCreditPool?.IsActive == false;
 
     partial void OnSelectedBudgetPoolChanged(BudgetPoolRow? value)
     {
         EditBudgetPoolCommand.NotifyCanExecuteChanged();
         AddFundsCommand.NotifyCanExecuteChanged();
         ArchiveBudgetPoolCommand.NotifyCanExecuteChanged();
+        RestoreBudgetPoolCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedCreditPoolChanged(CertificateCreditPool? value)
     {
         EditCreditPoolCommand.NotifyCanExecuteChanged();
         ArchiveCreditPoolCommand.NotifyCanExecuteChanged();
+        RestoreCreditPoolCommand.NotifyCanExecuteChanged();
     }
+
+    partial void OnShowInactiveChanged(bool value) => LoadAsync().ConfigureAwait(false);
 }
 
 public class BudgetPoolRow

@@ -33,6 +33,15 @@ public partial class ReportsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _includeCostsInWithdrawn = true;
 
+    [ObservableProperty]
+    private DateTime? _fromDate;
+
+    [ObservableProperty]
+    private DateTime? _toDate;
+
+    [ObservableProperty]
+    private bool _includeArchived;
+
     public ReportsViewModel(ReportService reportService)
     {
         _reportService = reportService;
@@ -41,12 +50,12 @@ public partial class ReportsViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        CompletedStudents = new ObservableCollection<Allocation>(await _reportService.GetCompletedStudentsAsync());
-        AwaitingOrder = new ObservableCollection<Allocation>(await _reportService.GetCertificatesAwaitingOrderAsync());
-        WithdrawnStudents = new ObservableCollection<Allocation>(await _reportService.GetWithdrawnStudentsAsync(IncludeCostsInWithdrawn));
-        NonCompletions = new ObservableCollection<Allocation>(await _reportService.GetNonCompletionsAsync());
-        AwaitingDelivery = new ObservableCollection<Allocation>(await _reportService.GetCertificatesAwaitingDeliveryAsync());
-        CertificatesDelivered = new ObservableCollection<Allocation>(await _reportService.GetCertificatesDeliveredAsync());
+        CompletedStudents = new ObservableCollection<Allocation>(await _reportService.GetCompletedStudentsAsync(FromDate, ToDate, IncludeArchived));
+        AwaitingOrder = new ObservableCollection<Allocation>(await _reportService.GetCertificatesAwaitingOrderAsync(IncludeArchived));
+        WithdrawnStudents = new ObservableCollection<Allocation>(await _reportService.GetWithdrawnStudentsAsync(IncludeCostsInWithdrawn, FromDate, ToDate, IncludeArchived));
+        NonCompletions = new ObservableCollection<Allocation>(await _reportService.GetNonCompletionsAsync(FromDate, ToDate, IncludeArchived));
+        AwaitingDelivery = new ObservableCollection<Allocation>(await _reportService.GetCertificatesAwaitingDeliveryAsync(IncludeArchived));
+        CertificatesDelivered = new ObservableCollection<Allocation>(await _reportService.GetCertificatesDeliveredAsync(FromDate, ToDate, IncludeArchived));
     }
 
     [RelayCommand]
@@ -110,8 +119,6 @@ public partial class ReportsViewModel : ViewModelBase
         await LoadAsync();
     }
 
-    partial void OnIncludeCostsInWithdrawnChanged(bool value)
-    {
-        LoadAsync().ConfigureAwait(false);
-    }
+    partial void OnIncludeCostsInWithdrawnChanged(bool value) => LoadAsync().ConfigureAwait(false);
+    partial void OnIncludeArchivedChanged(bool value) => LoadAsync().ConfigureAwait(false);
 }
