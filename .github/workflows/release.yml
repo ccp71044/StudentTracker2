@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore StudentTracker.sln
+
+      - name: Build
+        run: dotnet build StudentTracker.sln -c Release --no-restore
+
+      - name: Unit tests
+        run: dotnet test tests/StudentTracker.Tests/StudentTracker.Tests.csproj -c Release --no-build
+
+      - name: Publish self-contained win-x64
+        run: ./installer/publish.ps1 -Version "${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}"
+        shell: pwsh
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/StudentTracker-win-x64*.zip
+          body_path: release/RELEASE_NOTES.md
+          draft: false
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: StudentTracker-win-x64
+          path: release/StudentTracker-win-x64*.zip

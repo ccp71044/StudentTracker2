@@ -1,0 +1,11 @@
+<Project>
+
+  <PropertyGroup>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <Company>Gillams Software</Company>
+    <Product>Student Tracker</Product>
+    <Copyright>Copyright © Gillams Software</Copyright>
+    <NeutralLanguage>en-AU</NeutralLanguage>
+  </PropertyGroup>
+
+</Project>

@@ -13,7 +13,7 @@ public partial class SettingsViewModel : ViewModelBase
     private string _databasePath = string.Empty;
 
     [ObservableProperty]
-    private string _version = "1.0.0";
+    private string _version = AppVersion.Current;
 
     public SettingsViewModel(DatabaseBootstrap bootstrap, DataLocationService dataLocation)
     {
