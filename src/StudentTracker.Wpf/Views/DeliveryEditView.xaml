@@ -1,0 +1,82 @@
+<UserControl x:Class="StudentTracker.Wpf.Views.DeliveryEditView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             MinWidth="500" MinHeight="450">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="{Binding Title}" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Course Selection -->
+                <TextBlock Text="Course:" VerticalAlignment="Center" Margin="0,4" Grid.Row="0" Grid.Column="0" />
+                <ComboBox ItemsSource="{Binding AvailableCourses}" SelectedItem="{Binding SelectedCourse}" 
+                         DisplayMemberPath="CourseTitle" Grid.Row="0" Grid.Column="1" Margin="8,4" />
+
+                <!-- Start Date -->
+                <TextBlock Text="Start date:" VerticalAlignment="Center" Margin="0,4" Grid.Row="1" Grid.Column="0" />
+                <DatePicker SelectedDate="{Binding StartDate}" Grid.Row="1" Grid.Column="1" Margin="8,4" />
+
+                <!-- End Date -->
+                <TextBlock Text="End date:" VerticalAlignment="Center" Margin="0,4" Grid.Row="2" Grid.Column="0" />
+                <DatePicker SelectedDate="{Binding EndDate}" Grid.Row="2" Grid.Column="1" Margin="8,4" />
+
+                <!-- Date Status -->
+                <TextBlock Text="Date status:" VerticalAlignment="Center" Margin="0,4" Grid.Row="3" Grid.Column="0" />
+                <ComboBox ItemsSource="{Binding DateStatusOptions}" SelectedItem="{Binding DateStatus}" 
+                         Grid.Row="3" Grid.Column="1" Margin="8,4" VerticalContentAlignment="Center" />
+
+                <!-- Location -->
+                <TextBlock Text="Location:" VerticalAlignment="Center" Margin="0,4" Grid.Row="4" Grid.Column="0" />
+                <TextBox Text="{Binding Location}" Grid.Row="4" Grid.Column="1" Margin="8,4" />
+
+                <!-- Trainer Name -->
+                <TextBlock Text="Trainer name:" VerticalAlignment="Center" Margin="0,4" Grid.Row="5" Grid.Column="0" />
+                <TextBox Text="{Binding TrainerName}" Grid.Row="5" Grid.Column="1" Margin="8,4" />
+
+                <!-- Trainer Business Details -->
+                <TextBlock Text="Trainer business details:" VerticalAlignment="Center" Margin="0,4" Grid.Row="6" Grid.Column="0" />
+                <TextBox Text="{Binding TrainerBusinessDetails}" Grid.Row="6" Grid.Column="1" Margin="8,4" />
+
+                <!-- Capacity -->
+                <TextBlock Text="Capacity:" VerticalAlignment="Center" Margin="0,4" Grid.Row="7" Grid.Column="0" />
+                <TextBox Text="{Binding Capacity}" Grid.Row="7" Grid.Column="1" Margin="8,4" />
+
+                <!-- Delivery Status -->
+                <TextBlock Text="Delivery status:" VerticalAlignment="Center" Margin="0,4" Grid.Row="8" Grid.Column="0" />
+                <TextBox Text="{Binding DeliveryStatus}" Grid.Row="8" Grid.Column="1" Margin="8,4" />
+
+                <!-- Notes -->
+                <TextBlock Text="Notes:" VerticalAlignment="Top" Margin="0,4" Grid.Row="9" Grid.Column="0" />
+                <TextBox Text="{Binding Notes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" 
+                        Grid.Row="9" Grid.Column="1" Margin="8,4" />
+            </Grid>
+        </ScrollViewer>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2" Margin="0,10,0,0">
+            <Button Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveCommand}" />
+            <Button Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,105 @@
+<UserControl x:Class="StudentTracker.Wpf.Views.AllocationEditView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             MinWidth="600" MinHeight="500">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="{Binding Title}" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Student Selection -->
+                <TextBlock Text="Student:" VerticalAlignment="Center" Margin="0,4" Grid.Row="0" Grid.Column="0" />
+                <ComboBox ItemsSource="{Binding AvailableStudents}" SelectedItem="{Binding SelectedStudent}" 
+                         DisplayMemberPath="FullName" Grid.Row="0" Grid.Column="1" Margin="8,4" />
+
+                <!-- Delivery Selection -->
+                <TextBlock Text="Course delivery:" VerticalAlignment="Center" Margin="0,4" Grid.Row="1" Grid.Column="0" />
+                <ComboBox ItemsSource="{Binding AvailableDeliveries}" SelectedItem="{Binding SelectedDelivery}" 
+                         DisplayMemberPath="DisplayId" Grid.Row="1" Grid.Column="1" Margin="8,4" />
+
+                <!-- Certificate Cost -->
+                <TextBlock Text="Certificate cost:" VerticalAlignment="Center" Margin="0,4" Grid.Row="2" Grid.Column="0" />
+                <TextBox Text="{Binding CertificateCost}" Grid.Row="2" Grid.Column="1" Margin="8,4" />
+
+                <!-- Budget Pool -->
+                <TextBlock Text="Budget pool:" VerticalAlignment="Center" Margin="0,4" Grid.Row="3" Grid.Column="0" />
+                <ComboBox ItemsSource="{Binding AvailableBudgetPools}" SelectedItem="{Binding SelectedBudgetPool}" 
+                         DisplayMemberPath="Name" Grid.Row="3" Grid.Column="1" Margin="8,4" />
+
+                <!-- Credit Pool -->
+                <TextBlock Text="Credit pool:" VerticalAlignment="Center" Margin="0,4" Grid.Row="4" Grid.Column="0" />
+                <ComboBox ItemsSource="{Binding AvailableCreditPools}" SelectedItem="{Binding SelectedCreditPool}" 
+                         DisplayMemberPath="Name" Grid.Row="4" Grid.Column="1" Margin="8,4" />
+
+                <Separator Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,16" />
+
+                <!-- Allocation Status -->
+                <TextBlock Text="Allocation status:" VerticalAlignment="Center" Margin="0,4" Grid.Row="6" Grid.Column="0" />
+                <ComboBox ItemsSource="{Binding AllocationStatusOptions}" SelectedItem="{Binding AllocationStatus}" 
+                         Grid.Row="6" Grid.Column="1" Margin="8,4" VerticalContentAlignment="Center" />
+
+                <!-- Attendance Status -->
+                <TextBlock Text="Attendance status:" VerticalAlignment="Center" Margin="0,4" Grid.Row="7" Grid.Column="0" />
+                <ComboBox ItemsSource="{Binding AttendanceStatusOptions}" SelectedItem="{Binding AttendanceStatus}" 
+                         Grid.Row="7" Grid.Column="1" Margin="8,4" VerticalContentAlignment="Center" />
+
+                <!-- Outcome Status -->
+                <TextBlock Text="Outcome status:" VerticalAlignment="Center" Margin="0,4" Grid.Row="8" Grid.Column="0" />
+                <ComboBox ItemsSource="{Binding OutcomeStatusOptions}" SelectedItem="{Binding OutcomeStatus}" 
+                         Grid.Row="8" Grid.Column="1" Margin="8,4" VerticalContentAlignment="Center" />
+
+                <!-- Outcome Date -->
+                <TextBlock Text="Outcome date:" VerticalAlignment="Center" Margin="0,4" Grid.Row="9" Grid.Column="0" />
+                <DatePicker SelectedDate="{Binding OutcomeDate}" Grid.Row="9" Grid.Column="1" Margin="8,4" />
+
+                <!-- Outcome Notes -->
+                <TextBlock Text="Outcome notes:" VerticalAlignment="Top" Margin="0,4" Grid.Row="10" Grid.Column="0" />
+                <TextBox Text="{Binding OutcomeNotes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" 
+                        Grid.Row="10" Grid.Column="1" Margin="8,4" />
+
+                <Separator Grid.Row="11" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,16" />
+
+                <!-- Credit Status -->
+                <TextBlock Text="Credit status:" VerticalAlignment="Center" Margin="0,4" Grid.Row="12" Grid.Column="0" />
+                <ComboBox ItemsSource="{Binding CreditStatusOptions}" SelectedItem="{Binding CreditStatus}" 
+                         Grid.Row="12" Grid.Column="1" Margin="8,4" VerticalContentAlignment="Center" />
+
+                <!-- Cash Commitment Status -->
+                <TextBlock Text="Cash commitment status:" VerticalAlignment="Center" Margin="0,4" Grid.Row="13" Grid.Column="0" />
+                <ComboBox ItemsSource="{Binding CashCommitmentStatusOptions}" SelectedItem="{Binding CashCommitmentStatus}" 
+                         Grid.Row="13" Grid.Column="1" Margin="8,4" VerticalContentAlignment="Center" />
+            </Grid>
+        </ScrollViewer>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2" Margin="0,10,0,0">
+            <Button Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveCommand}" />
+            <Button Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

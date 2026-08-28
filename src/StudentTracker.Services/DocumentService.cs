@@ -136,6 +136,32 @@ public class DocumentService
 
     public string GetFullPath(Document document) => Path.Combine(_dataLocation.DocumentsPath, document.RelativePath);
 
+    public string GetDocumentPath(Guid documentId)
+    {
+        var doc = _context.Documents.Find(documentId);
+        return doc != null ? GetFullPath(doc) : string.Empty;
+    }
+
+    public async Task DeleteDocumentAsync(Guid documentId)
+    {
+        var doc = await _context.Documents.FindAsync(documentId);
+        if (doc == null) return;
+
+        var filePath = GetFullPath(doc);
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+
+        var documentLinks = await _context.DocumentLinks.Where(l => l.DocumentId == documentId).ToListAsync();
+        _context.DocumentLinks.RemoveRange(documentLinks);
+
+        _context.Documents.Remove(doc);
+        await _context.SaveChangesAsync();
+        _audit.Record("Deleted", "Document", documentId, doc.DisplayId);
+        await _context.SaveChangesAsync();
+    }
+
     /// <summary>
     /// Reconciles the managed store against the database: files that have gone are flagged
     /// <see cref="DocumentStatus.Missing"/>, and a file that reappears with its original checksum

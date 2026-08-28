@@ -9,8 +9,13 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <TextBlock Text="Course Deliveries" AutomationProperties.AutomationId="DeliveriesHeader" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
-        <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" HorizontalAlignment="Left" Grid.Row="1" />
-        <DataGrid ItemsSource="{Binding Deliveries}" SelectedItem="{Binding SelectedDelivery}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True">
+        <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="1">
+            <Button Content="Add Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddDeliveryCommand}" />
+            <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditDeliveryCommand}" />
+            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
+        </StackPanel>
+        <DataGrid ItemsSource="{Binding Deliveries}" SelectedItem="{Binding SelectedDelivery}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True" 
+                 MouseDoubleClick="DataGrid_MouseDoubleClick">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Delivery ID" Binding="{Binding DisplayId}" Width="100" />
                 <DataGridTextColumn Header="Start" Binding="{Binding StartDate, StringFormat=dd/MM/yyyy}" Width="120" />

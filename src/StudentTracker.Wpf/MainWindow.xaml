@@ -21,8 +21,14 @@
         <DataTemplate DataType="{x:Type vm:DeliveriesViewModel}">
             <v:DeliveriesView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DeliveryEditViewModel}">
+            <v:DeliveryEditView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:AllocationsViewModel}">
             <v:AllocationsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AllocationEditViewModel}">
+            <v:AllocationEditView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:CertificatesViewModel}">
             <v:CertificatesView />
