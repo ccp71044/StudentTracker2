@@ -219,4 +219,23 @@ public class CreditLedgerTests
 
         Assert.Contains(anomalies, t => t.AllocationId == allocationId);
     }
+
+    [Fact]
+    public async Task ConsumptionWithoutAPriorReservation_StillReducesTheAvailableBalance()
+    {
+        // Provider history is imported as bare consumptions: nothing was ever reserved against them.
+        using var harness = new TestHarness();
+        var pool = await harness.CreditPoolAsync("Provider");
+        await harness.Credits.TopUpAsync(pool.Id, 1671m, 1671m);
+
+        var delivery = harness.AddDelivery();
+        var allocation = await harness.Allocations.AllocateStudentAsync(delivery.Id, harness.AddStudent("C", "Three").Id, 100m, null, pool.Id);
+        await harness.Credits.ConsumeAsync(pool.Id, allocation.Id, 1589m, 1, "Imported history", CreditTransactionType.ManualConsume);
+
+        var balance = await harness.Credits.GetBalanceAsync(pool.Id);
+
+        Assert.Equal(0m, balance.Allocated);
+        Assert.Equal(1589m, balance.Consumed);
+        Assert.Equal(82m, balance.Available);
+    }
 }

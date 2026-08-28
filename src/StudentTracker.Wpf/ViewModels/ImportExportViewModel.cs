@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using StudentTracker.Services;
 using System.IO;
-using System.Windows;
 
 namespace StudentTracker.Wpf.ViewModels;
 
@@ -24,14 +23,14 @@ public partial class ImportExportViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void CreateBackup()
+    private void CreateBackup() => Guard("CreateBackup", () =>
     {
         var path = _backupService.CreateBackup("manual");
         Status = $"Backup created: {path}";
-    }
+    });
 
     [RelayCommand]
-    private void RestoreBackup()
+    private void RestoreBackup() => Guard("RestoreBackup", () =>
     {
         var dialog = new OpenFileDialog { Filter = "Zip files (*.zip)|*.zip" };
         if (dialog.ShowDialog() == true)
@@ -39,10 +38,10 @@ public partial class ImportExportViewModel : ViewModelBase
             _backupService.RestoreBackup(dialog.FileName);
             Status = "Backup restored.";
         }
-    }
+    });
 
     [RelayCommand]
-    private async Task ExportInvoicer()
+    private Task ExportInvoicer() => GuardAsync("ExportInvoicer", async () =>
     {
         var billable = await _invoicerService.GetUnexportedBillableAsync();
         if (billable.Count == 0)
@@ -53,10 +52,10 @@ public partial class ImportExportViewModel : ViewModelBase
 
         var batch = await _invoicerService.ExportAsync(billable.Select(a => a.Id).ToList());
         Status = $"Invoicer export created: {batch.DisplayId}, items: {batch.ItemCount}";
-    }
+    });
 
     [RelayCommand]
-    private async Task ImportMigrationPackage()
+    private Task ImportMigrationPackage() => GuardAsync("ImportMigrationPackage", async () =>
     {
         var dialog = new OpenFileDialog { Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*" };
         if (dialog.ShowDialog() == true)
@@ -64,7 +63,7 @@ public partial class ImportExportViewModel : ViewModelBase
             var result = await _importService.ImportMigrationPackageAsync(dialog.FileName);
             Status = result.Message ?? "Import complete.";
         }
-    }
+    });
 
     [RelayCommand]
     private Task ImportCompletionPricing() => ImportCsv("CompletionPricing", "provider price list");
@@ -72,7 +71,7 @@ public partial class ImportExportViewModel : ViewModelBase
     [RelayCommand]
     private Task ImportCreditHistory() => ImportCsv("CreditHistory", "provider credit history");
 
-    private async Task ImportCsv(string entityType, string description)
+    private Task ImportCsv(string entityType, string description) => GuardAsync($"Import{entityType}", async () =>
     {
         var dialog = new OpenFileDialog
         {
@@ -86,5 +85,35 @@ public partial class ImportExportViewModel : ViewModelBase
         await using var stream = File.OpenRead(dialog.FileName);
         var result = await _importService.ImportCsvAsync(entityType, stream);
         Status = result.Message ?? "Import complete.";
+    });
+
+    /// <summary>
+    /// File-backed actions fail for ordinary reasons - a locked file, a wrong workbook. The failure
+    /// belongs in the log and on screen, not in a crash dialog.
+    /// </summary>
+    private void Guard(string operation, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception ex)
+        {
+            OperationLog.Failure(operation, ex);
+            Status = $"{operation} failed: {ex.Message}";
+        }
+    }
+
+    private async Task GuardAsync(string operation, Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            OperationLog.Failure(operation, ex);
+            Status = $"{operation} failed: {ex.Message}";
+        }
     }
 }

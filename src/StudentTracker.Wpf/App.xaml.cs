@@ -18,9 +18,19 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Logging is configured before anything else runs: in release 1 it was set up after the
+        // service provider had been built, so any failure during start-up was written to Serilog's
+        // silent default logger and lost.
+        ConfigureLogging();
+
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
             Log.Fatal(args.ExceptionObject as Exception, "Unhandled application exception");
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            Log.Error(args.Exception, "Unobserved background task exception");
+            args.SetObserved();
+        };
 
         try
         {
@@ -35,13 +45,9 @@ public partial class App : Application
         }
     }
 
-    private void Start(string[] args)
+    private void ConfigureLogging()
     {
-        var services = new ServiceCollection();
-        ConfigureServices(services);
-        _serviceProvider = services.BuildServiceProvider();
-
-        var location = _serviceProvider.GetRequiredService<DataLocationService>();
+        var location = new DataLocationService(new Core.Models.AppSettings());
         location.EnsureDirectories();
         _logsPath = location.LogsPath;
 
@@ -54,6 +60,15 @@ public partial class App : Application
             .CreateLogger();
 
         Log.Information("Starting Student Tracker {Version}", AppVersion.Current);
+    }
+
+    private void Start(string[] args)
+    {
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        _serviceProvider = services.BuildServiceProvider();
+
+        _serviceProvider.GetRequiredService<DataLocationService>().EnsureDirectories();
 
         var bootstrap = _serviceProvider.GetRequiredService<DatabaseBootstrap>();
         using var context = bootstrap.CreateContext();

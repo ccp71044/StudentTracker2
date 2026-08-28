@@ -309,7 +309,9 @@ public class CreditService
         }
 
         // Consuming or releasing a reservation retires it, so it no longer counts as allocated.
-        var allocated = reserved - released - consumed - unavailable;
+        // Credit consumed without ever being reserved - imported provider history, for example -
+        // must not drive this negative, or it would cancel out the consumption in Available.
+        var allocated = Math.Max(0m, reserved - released - consumed - unavailable);
 
         return new CreditPoolBalance(loaded, adjustments, allocated, consumed, released, expired, unavailable);
     }

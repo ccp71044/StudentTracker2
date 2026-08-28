@@ -29,56 +29,73 @@ public class ImportService
         IReadOnlyList<ImportReviewQueue> reviewQueue;
         ImportResult result;
 
-        switch (entityType)
+        try
         {
-            case "CompletionPricing":
+            switch (entityType)
             {
-                var importer = new CompletionPricingImporter(_context, _idGenerator, _audit);
-                result = importer.Import(reader, entityType);
-                reviewQueue = importer.ReviewQueue;
-                break;
-            }
-            case "CreditHistory":
-            {
-                var importer = new ProviderCreditHistoryImporter(_context, _idGenerator, _audit);
-                result = importer.Import(reader, entityType);
-                reviewQueue = importer.ReviewQueue;
-                break;
-            }
-            default:
-                return Task.FromResult(new ImportResult
+                case "CompletionPricing":
                 {
-                    Success = false,
-                    Message = $"Unsupported CSV type '{entityType}'. Expected 'CompletionPricing' or 'CreditHistory'."
-                });
-        }
+                    var importer = new CompletionPricingImporter(_context, _idGenerator, _audit);
+                    result = importer.Import(reader, entityType);
+                    reviewQueue = importer.ReviewQueue;
+                    break;
+                }
+                case "CreditHistory":
+                {
+                    var importer = new ProviderCreditHistoryImporter(_context, _idGenerator, _audit);
+                    result = importer.Import(reader, entityType);
+                    reviewQueue = importer.ReviewQueue;
+                    break;
+                }
+                default:
+                    return Task.FromResult(new ImportResult
+                    {
+                        Success = false,
+                        Message = $"Unsupported CSV type '{entityType}'. Expected 'CompletionPricing' or 'CreditHistory'."
+                    });
+            }
 
-        if (reviewQueue.Any())
+            if (reviewQueue.Any())
+            {
+                _context.ImportReviewQueues.AddRange(reviewQueue);
+                _context.SaveChanges();
+            }
+
+            return Task.FromResult(result);
+        }
+        catch (Exception ex)
         {
-            _context.ImportReviewQueues.AddRange(reviewQueue);
-            _context.SaveChanges();
+            // A malformed export must not take the application down: log it and report the reason.
+            OperationLog.Failure("ImportCsv", ex, new { EntityType = entityType });
+            return Task.FromResult(Failed($"The {entityType} CSV could not be imported: {ex.Message}"));
         }
-
-        return Task.FromResult(result);
     }
 
     public Task<ImportResult> ImportMigrationPackageAsync(string xlsxPath)
     {
-        var isLegacy = IsLegacyStudentRegisterFormat(xlsxPath);
         IReadOnlyList<ImportReviewQueue> reviewQueue;
         ImportResult result;
 
-        if (isLegacy)
+        try
         {
-            var importer = new LegacyStudentRegisterImporter(_context, _idGenerator, _audit);
-            result = importer.Import(xlsxPath);
-            reviewQueue = importer.ReviewQueue;
+            var isLegacy = IsLegacyStudentRegisterFormat(xlsxPath);
+            if (isLegacy)
+            {
+                var importer = new LegacyStudentRegisterImporter(_context, _idGenerator, _audit);
+                result = importer.Import(xlsxPath);
+                reviewQueue = importer.ReviewQueue;
+            }
+            else
+            {
+                var importer = new MigrationPackageImporter(_context, _idGenerator, _audit);
+                result = importer.ImportWorkbook(xlsxPath);
+                reviewQueue = importer.ReviewQueue;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            var importer = new MigrationPackageImporter(_context, _idGenerator, _audit);
-            result = importer.ImportWorkbook(xlsxPath);
-            reviewQueue = importer.ReviewQueue;
+            OperationLog.Failure("ImportMigrationPackage", ex, new { Path = xlsxPath });
+            return Task.FromResult(Failed($"The workbook could not be imported: {ex.Message}"));
         }
 
         if (reviewQueue.Any())
@@ -91,6 +108,8 @@ public class ImportService
         _context.SaveChanges();
         return Task.FromResult(result);
     }
+
+    private static ImportResult Failed(string message) => new() { Success = false, Message = message, Errors = { message } };
 
     private static bool IsLegacyStudentRegisterFormat(string xlsxPath)
     {

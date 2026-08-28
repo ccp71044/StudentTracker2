@@ -5,6 +5,7 @@ namespace StudentTracker.Tests;
 /// <summary>
 /// Backup and restore of the database plus the managed document store (design section 16).
 /// </summary>
+[Collection("SerilogGlobal")]
 public class BackupTests : IDisposable
 {
     private readonly TestHarness _harness = new();
