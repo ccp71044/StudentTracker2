@@ -22,45 +22,44 @@ public partial class CoursesViewModel : ViewModelBase
     {
         _courseService = courseService;
         _dialogService = dialogService;
-        LoadAsync().ConfigureAwait(false);
     }
 
-    private async Task LoadAsync()
+    protected override async Task InitialiseAsync()
     {
         var list = await _courseService.GetDefinitionsAsync();
         Courses = new ObservableCollection<CourseDefinition>(list);
     }
 
     [RelayCommand]
-    private async Task AddCourse()
+    private Task AddCourse() => GuardAsync("AddCourse", async () =>
     {
         var vm = new CourseEditViewModel(new CourseDefinition(), _courseService, isNew: true);
         if (_dialogService.ShowDialog(vm) == true)
         {
-            await LoadAsync();
+            await InitialiseAsync();
         }
-    }
+    });
 
     [RelayCommand(CanExecute = nameof(CanEditOrDeleteCourse))]
-    private async Task EditCourse()
+    private Task EditCourse() => GuardAsync("EditCourse", async () =>
     {
         if (SelectedCourse == null) return;
         var vm = new CourseEditViewModel(SelectedCourse, _courseService, isNew: false);
         if (_dialogService.ShowDialog(vm) == true)
         {
-            await LoadAsync();
+            await InitialiseAsync();
         }
-    }
+    });
 
     [RelayCommand(CanExecute = nameof(CanEditOrDeleteCourse))]
-    private async Task DeleteCourse()
+    private Task DeleteCourse() => GuardAsync("DeleteCourse", async () =>
     {
         if (SelectedCourse == null) return;
         SelectedCourse.IsActive = false;
         await _courseService.UpdateDefinitionAsync(SelectedCourse);
-        await LoadAsync();
+        await InitialiseAsync();
         SelectedCourse = null;
-    }
+    });
 
     private bool CanEditOrDeleteCourse => SelectedCourse != null;
 

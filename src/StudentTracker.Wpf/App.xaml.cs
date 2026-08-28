@@ -87,6 +87,8 @@ public partial class App : Application
         var mainVm = _serviceProvider.GetRequiredService<MainViewModel>();
         MainWindow = new MainWindow { DataContext = mainVm };
         MainWindow.Show();
+
+        Dispatcher.InvokeAsync(async () => await mainVm.EnsureInitialisedAsync());
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

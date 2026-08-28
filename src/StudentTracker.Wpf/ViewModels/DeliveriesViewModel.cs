@@ -19,18 +19,14 @@ public partial class DeliveriesViewModel : ViewModelBase
     public DeliveriesViewModel(CourseService courseService)
     {
         _courseService = courseService;
-        LoadAsync().ConfigureAwait(false);
     }
 
-    private async Task LoadAsync()
+    protected override async Task InitialiseAsync()
     {
         var list = await _courseService.GetDeliveriesAsync();
         Deliveries = new ObservableCollection<CourseDelivery>(list);
     }
 
     [RelayCommand]
-    private async Task Refresh()
-    {
-        await LoadAsync();
-    }
+    private Task Refresh() => GuardAsync("Refresh", InitialiseAsync);
 }

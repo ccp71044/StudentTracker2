@@ -43,26 +43,26 @@ public partial class ImportExportViewModel : ViewModelBase
     [RelayCommand]
     private Task ExportInvoicer() => GuardAsync("ExportInvoicer", async () =>
     {
-        var billable = await _invoicerService.GetUnexportedBillableAsync();
-        if (billable.Count == 0)
-        {
-            Status = "No billable items to export.";
-            return;
-        }
+    var billable = await _invoicerService.GetUnexportedBillableAsync();
+    if (billable.Count == 0)
+    {
+        Status = "No billable items to export.";
+        return;
+    }
 
-        var batch = await _invoicerService.ExportAsync(billable.Select(a => a.Id).ToList());
-        Status = $"Invoicer export created: {batch.DisplayId}, items: {batch.ItemCount}";
+    var batch = await _invoicerService.ExportAsync(billable.Select(a => a.Id).ToList());
+    Status = $"Invoicer export created: {batch.DisplayId}, items: {batch.ItemCount}";
     });
 
     [RelayCommand]
     private Task ImportMigrationPackage() => GuardAsync("ImportMigrationPackage", async () =>
     {
-        var dialog = new OpenFileDialog { Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*" };
-        if (dialog.ShowDialog() == true)
-        {
-            var result = await _importService.ImportMigrationPackageAsync(dialog.FileName);
-            Status = result.Message ?? "Import complete.";
-        }
+    var dialog = new OpenFileDialog { Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*" };
+    if (dialog.ShowDialog() == true)
+    {
+        var result = await _importService.ImportMigrationPackageAsync(dialog.FileName);
+        Status = result.Message ?? "Import complete.";
+    }
     });
 
     [RelayCommand]
@@ -88,32 +88,9 @@ public partial class ImportExportViewModel : ViewModelBase
     });
 
     /// <summary>
-    /// File-backed actions fail for ordinary reasons - a locked file, a wrong workbook. The failure
-    /// belongs in the log and on screen, not in a crash dialog.
+    /// File-backed actions fail for ordinary reasons - a locked file, a wrong workbook. The reason
+    /// belongs on screen, not in a crash dialog.
     /// </summary>
-    private void Guard(string operation, Action action)
-    {
-        try
-        {
-            action();
-        }
-        catch (Exception ex)
-        {
-            OperationLog.Failure(operation, ex);
-            Status = $"{operation} failed: {ex.Message}";
-        }
-    }
-
-    private async Task GuardAsync(string operation, Func<Task> action)
-    {
-        try
-        {
-            await action();
-        }
-        catch (Exception ex)
-        {
-            OperationLog.Failure(operation, ex);
-            Status = $"{operation} failed: {ex.Message}";
-        }
-    }
+    protected override void OnOperationFailed(string operation, Exception exception) =>
+        Status = $"{operation} failed: {exception.Message}";
 }

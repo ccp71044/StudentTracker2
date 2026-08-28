@@ -27,10 +27,9 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
         _creditService = creditService;
         _budgetService = budgetService;
         _dialogService = dialogService;
-        LoadAsync().ConfigureAwait(false);
     }
 
-    private async Task LoadAsync()
+    protected override async Task InitialiseAsync()
     {
         CreditPools = new ObservableCollection<CertificateCreditPool>(await _creditService.GetPoolsAsync());
         var pools = await _budgetService.GetPoolsAsync();
@@ -48,51 +47,48 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task Refresh()
-    {
-        await LoadAsync();
-    }
+    private Task Refresh() => GuardAsync("Refresh", InitialiseAsync);
 
     [RelayCommand]
-    private async Task AddBudgetPool()
+    private Task AddBudgetPool() => GuardAsync("AddBudgetPool", async () =>
     {
         var vm = new BudgetPoolEditViewModel(new BudgetPool { Name = "" }, _budgetService, isNew: true);
         if (_dialogService.ShowDialog(vm) == true)
         {
-            await LoadAsync();
+            await InitialiseAsync();
         }
-    }
+    });
 
     [RelayCommand(CanExecute = nameof(CanEditBudgetPool))]
-    private async Task EditBudgetPool()
+    private Task EditBudgetPool() => GuardAsync("EditBudgetPool", async () =>
     {
         if (SelectedBudgetPool == null) return;
         var vm = new BudgetPoolEditViewModel(SelectedBudgetPool.Pool, _budgetService, isNew: false);
         if (_dialogService.ShowDialog(vm) == true)
         {
-            await LoadAsync();
+            await InitialiseAsync();
         }
-    }
+    });
 
     [RelayCommand(CanExecute = nameof(CanEditBudgetPool))]
-    private async Task AddFunds()
+    private Task AddFunds() => GuardAsync("AddFunds", async () =>
     {
         if (SelectedBudgetPool == null) return;
         var vm = new BudgetAddFundsViewModel(SelectedBudgetPool.Pool, _budgetService);
         if (_dialogService.ShowDialog(vm) == true)
         {
-            await LoadAsync();
+            await InitialiseAsync();
         }
-    }
+    });
 
     [RelayCommand(CanExecute = nameof(CanEditBudgetPool))]
-    private async Task ArchiveBudgetPool()
+    private Task ArchiveBudgetPool() => GuardAsync("ArchiveBudgetPool", async () =>
     {
         if (SelectedBudgetPool == null) return;
         await _budgetService.ArchivePoolAsync(SelectedBudgetPool.Pool.Id);
-        await LoadAsync();
+        await InitialiseAsync();
         SelectedBudgetPool = null;
-    }
+    });
 
     private bool CanEditBudgetPool => SelectedBudgetPool != null;
 

@@ -13,6 +13,7 @@
             <Button Content="Add Course" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddCourseCommand}" />
             <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditCourseCommand}" />
             <Button Content="Delete" Style="{StaticResource ActionButtonStyle}" Command="{Binding DeleteCourseCommand}" ToolTip="Deactivate the selected course." />
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B00020" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
         </StackPanel>
         <DataGrid ItemsSource="{Binding Courses}" SelectedItem="{Binding SelectedCourse}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True">
             <DataGrid.Columns>

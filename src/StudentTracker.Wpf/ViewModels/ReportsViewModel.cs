@@ -21,17 +21,16 @@ public partial class ReportsViewModel : ViewModelBase
     public ReportsViewModel(ReportService reportService)
     {
         _reportService = reportService;
-        LoadAsync().ConfigureAwait(false);
     }
 
-    private async Task LoadAsync()
+    protected override async Task InitialiseAsync()
     {
         CompletedStudents = new ObservableCollection<Allocation>(await _reportService.GetCompletedStudentsAsync());
         AwaitingOrder = new ObservableCollection<Allocation>(await _reportService.GetCertificatesAwaitingOrderAsync());
     }
 
     [RelayCommand]
-    private async Task ExportCompletedCsv()
+    private Task ExportCompletedCsv() => GuardAsync("ExportCompletedCsv", async () =>
     {
         var dialog = new SaveFileDialog { Filter = "CSV files (*.csv)|*.csv", FileName = "completed-students.csv" };
         if (dialog.ShowDialog() == true)
@@ -39,11 +38,8 @@ public partial class ReportsViewModel : ViewModelBase
             var bytes = await _reportService.ExportCsvAsync(CompletedStudents.ToList());
             await File.WriteAllBytesAsync(dialog.FileName, bytes);
         }
-    }
+    });
 
     [RelayCommand]
-    private async Task Refresh()
-    {
-        await LoadAsync();
-    }
+    private Task Refresh() => GuardAsync("Refresh", InitialiseAsync);
 }

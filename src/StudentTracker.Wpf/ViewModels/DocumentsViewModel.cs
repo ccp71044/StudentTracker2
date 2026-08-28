@@ -20,28 +20,24 @@ public partial class DocumentsViewModel : ViewModelBase
     public DocumentsViewModel(DocumentService documentService)
     {
         _documentService = documentService;
-        LoadAsync().ConfigureAwait(false);
     }
 
-    private async Task LoadAsync()
+    protected override async Task InitialiseAsync()
     {
         Documents = new ObservableCollection<Document>(await _documentService.GetDocumentsForEntityAsync("All", Guid.Empty));
     }
 
     [RelayCommand]
-    private async Task AddDocument()
+    private Task AddDocument() => GuardAsync("AddDocument", async () =>
     {
         var dialog = new OpenFileDialog { Multiselect = false };
         if (dialog.ShowDialog() == true)
         {
             await _documentService.AddDocumentAsync(dialog.FileName, "General");
-            await LoadAsync();
+            await InitialiseAsync();
         }
-    }
+    });
 
     [RelayCommand]
-    private async Task Refresh()
-    {
-        await LoadAsync();
-    }
+    private Task Refresh() => GuardAsync("Refresh", InitialiseAsync);
 }

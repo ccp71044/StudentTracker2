@@ -27,59 +27,55 @@ public partial class StudentsViewModel : ViewModelBase
         _studentService = studentService;
         _allocationService = allocationService;
         _dialogService = dialogService;
-        LoadAsync().ConfigureAwait(false);
     }
 
-    private async Task LoadAsync()
+    protected override async Task InitialiseAsync()
     {
         var list = await _studentService.SearchAsync(SearchText);
         Students = new ObservableCollection<Student>(list);
     }
 
     [RelayCommand]
-    private async Task Search()
-    {
-        await LoadAsync();
-    }
+    private Task Search() => GuardAsync("Search", InitialiseAsync);
 
     [RelayCommand]
-    private async Task AddStudent()
+    private Task AddStudent() => GuardAsync("AddStudent", async () =>
     {
         var vm = new StudentEditViewModel(new Student { FirstName = "", LastName = "" }, _studentService, isNew: true);
         if (_dialogService.ShowDialog(vm) == true)
         {
-            await LoadAsync();
+            await InitialiseAsync();
         }
-    }
+    });
 
     [RelayCommand(CanExecute = nameof(CanEditOrDeleteStudent))]
-    private async Task EditStudent()
+    private Task EditStudent() => GuardAsync("EditStudent", async () =>
     {
         if (SelectedStudent == null) return;
         var vm = new StudentEditViewModel(SelectedStudent, _studentService, isNew: false);
         if (_dialogService.ShowDialog(vm) == true)
         {
-            await LoadAsync();
+            await InitialiseAsync();
         }
-    }
+    });
 
     [RelayCommand(CanExecute = nameof(CanEditOrDeleteStudent))]
-    private async Task DeleteStudent()
+    private Task DeleteStudent() => GuardAsync("DeleteStudent", async () =>
     {
         if (SelectedStudent == null) return;
         await _studentService.ArchiveAsync(SelectedStudent.Id);
-        await LoadAsync();
+        await InitialiseAsync();
         SelectedStudent = null;
-    }
+    });
 
     [RelayCommand(CanExecute = nameof(CanEditOrDeleteStudent))]
-    private async Task ViewStudent()
+    private Task ViewStudent() => GuardAsync("ViewStudent", async () =>
     {
         if (SelectedStudent == null) return;
         var allocations = await _allocationService.GetByStudentAsync(SelectedStudent.Id);
         var vm = new StudentViewViewModel(SelectedStudent, allocations, _studentService, _dialogService);
         _dialogService.ShowDialog(vm);
-    }
+    });
 
     private bool CanEditOrDeleteStudent => SelectedStudent != null;
 

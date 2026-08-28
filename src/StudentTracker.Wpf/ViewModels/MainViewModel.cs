@@ -40,36 +40,48 @@ public partial class MainViewModel : ViewModelBase
         _currentViewModel = dashboard;
     }
 
-    [RelayCommand]
-    private void ShowDashboard() => CurrentViewModel = DashboardViewModel;
+    /// <summary>
+    /// Shows a section and loads its data on first use. Sections load one at a time because they
+    /// share a single database context, which cannot serve concurrent queries.
+    /// </summary>
+    private async Task NavigateAsync(ViewModelBase viewModel)
+    {
+        CurrentViewModel = viewModel;
+        await viewModel.EnsureInitialisedAsync();
+    }
+
+    protected override Task InitialiseAsync() => DashboardViewModel.EnsureInitialisedAsync();
 
     [RelayCommand]
-    private void ShowStudents() => CurrentViewModel = StudentsViewModel;
+    private Task ShowDashboard() => NavigateAsync(DashboardViewModel);
 
     [RelayCommand]
-    private void ShowCourses() => CurrentViewModel = CoursesViewModel;
+    private Task ShowStudents() => NavigateAsync(StudentsViewModel);
 
     [RelayCommand]
-    private void ShowDeliveries() => CurrentViewModel = DeliveriesViewModel;
+    private Task ShowCourses() => NavigateAsync(CoursesViewModel);
 
     [RelayCommand]
-    private void ShowAllocations() => CurrentViewModel = AllocationsViewModel;
+    private Task ShowDeliveries() => NavigateAsync(DeliveriesViewModel);
 
     [RelayCommand]
-    private void ShowCertificates() => CurrentViewModel = CertificatesViewModel;
+    private Task ShowAllocations() => NavigateAsync(AllocationsViewModel);
 
     [RelayCommand]
-    private void ShowCreditsBudgets() => CurrentViewModel = CreditsBudgetsViewModel;
+    private Task ShowCertificates() => NavigateAsync(CertificatesViewModel);
 
     [RelayCommand]
-    private void ShowDocuments() => CurrentViewModel = DocumentsViewModel;
+    private Task ShowCreditsBudgets() => NavigateAsync(CreditsBudgetsViewModel);
 
     [RelayCommand]
-    private void ShowReports() => CurrentViewModel = ReportsViewModel;
+    private Task ShowDocuments() => NavigateAsync(DocumentsViewModel);
 
     [RelayCommand]
-    private void ShowImportExport() => CurrentViewModel = ImportExportViewModel;
+    private Task ShowReports() => NavigateAsync(ReportsViewModel);
 
     [RelayCommand]
-    private void ShowSettings() => CurrentViewModel = SettingsViewModel;
+    private Task ShowImportExport() => NavigateAsync(ImportExportViewModel);
+
+    [RelayCommand]
+    private Task ShowSettings() => NavigateAsync(SettingsViewModel);
 }

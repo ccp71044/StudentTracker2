@@ -52,11 +52,12 @@ public partial class DashboardViewModel : ViewModelBase
         _courseService = courseService;
         _dialogService = dialogService;
         _budgetSummary = budgetSummary;
-        Refresh().ConfigureAwait(false);
     }
 
+    protected override Task InitialiseAsync() => Refresh();
+
     [RelayCommand]
-    private async Task Refresh()
+    private Task Refresh() => GuardAsync("Refresh", async () =>
     {
         StudentCount = await _context.Students.CountAsync(s => !s.IsArchived);
         CourseCount = await _context.CourseDefinitions.CountAsync(c => c.IsActive);
@@ -80,25 +81,25 @@ public partial class DashboardViewModel : ViewModelBase
         ReconciliationStatus = reconciliation.IsBalanced
             ? "Register and provider ledger agree."
             : $"{reconciliation.Discrepancies.Count} unreconciled top-up(s); provider ledger differs by {reconciliation.Difference:C}.";
-    }
+    });
 
     [RelayCommand]
-    private async Task AddStudent()
+    private Task AddStudent() => GuardAsync("AddStudent", async () =>
     {
         var vm = new StudentEditViewModel(new Student { FirstName = "", LastName = "" }, _studentService, isNew: true);
         if (_dialogService.ShowDialog(vm) == true)
         {
             await Refresh();
         }
-    }
+    });
 
     [RelayCommand]
-    private async Task AddCourse()
+    private Task AddCourse() => GuardAsync("AddCourse", async () =>
     {
         var vm = new CourseEditViewModel(new CourseDefinition(), _courseService, isNew: true);
         if (_dialogService.ShowDialog(vm) == true)
         {
             await Refresh();
         }
-    }
+    });
 }

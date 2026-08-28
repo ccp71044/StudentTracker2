@@ -15,6 +15,9 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string _version = AppVersion.Current;
 
+    [ObservableProperty]
+    private string _status = string.Empty;
+
     public SettingsViewModel(DatabaseBootstrap bootstrap, DataLocationService dataLocation)
     {
         _bootstrap = bootstrap;
@@ -22,9 +25,10 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void CompactDatabase()
+    private void CompactDatabase() => Guard("CompactDatabase", () =>
     {
         using var context = _bootstrap.CreateContext();
         _bootstrap.CompactDatabase(context);
-    }
+        Status = "Database compacted.";
+    });
 }

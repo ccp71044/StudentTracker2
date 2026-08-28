@@ -30,16 +30,17 @@ public partial class BudgetAddFundsViewModel : ViewModelBase, ICloseable
     }
 
     [RelayCommand]
-    private async Task Save()
+    private Task Save() => GuardAsync("Save", async () =>
     {
         if (Amount <= 0)
         {
+            ErrorMessage = "Enter an amount greater than zero.";
             return;
         }
 
         await _budgetService.AddFundsAsync(_pool.Id, Amount, reason: Reason);
         RequestClose?.Invoke(true);
-    }
+    });
 
     [RelayCommand]
     private void Cancel()
