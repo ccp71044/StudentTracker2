@@ -33,8 +33,17 @@
         <DataTemplate DataType="{x:Type vm:CertificatesViewModel}">
             <v:CertificatesView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CertificateOrderEditViewModel}">
+            <v:CertificateOrderEditView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CertificateDeliveryEditViewModel}">
+            <v:CertificateDeliveryEditView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:CreditsBudgetsViewModel}">
             <v:CreditsBudgetsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CreditPoolEditViewModel}">
+            <v:CreditPoolEditView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:DocumentsViewModel}">
             <v:DocumentsView />

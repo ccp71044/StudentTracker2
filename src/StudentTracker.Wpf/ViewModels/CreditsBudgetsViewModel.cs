@@ -22,6 +22,9 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     [ObservableProperty]
     private BudgetPoolRow? _selectedBudgetPool;
 
+    [ObservableProperty]
+    private CertificateCreditPool? _selectedCreditPool;
+
     public CreditsBudgetsViewModel(CreditService creditService, BudgetService budgetService, IDialogService dialogService)
     {
         _creditService = creditService;
@@ -94,13 +97,50 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
         SelectedBudgetPool = null;
     }
 
+    [RelayCommand]
+    private async Task AddCreditPool()
+    {
+        var vm = new CreditPoolEditViewModel(new CertificateCreditPool { Name = "" }, _creditService, isNew: true);
+        if (_dialogService.ShowDialog(vm) == true)
+        {
+            await LoadAsync();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditCreditPool))]
+    private async Task EditCreditPool()
+    {
+        if (SelectedCreditPool == null) return;
+        var vm = new CreditPoolEditViewModel(SelectedCreditPool, _creditService, isNew: false);
+        if (_dialogService.ShowDialog(vm) == true)
+        {
+            await LoadAsync();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditCreditPool))]
+    private async Task ArchiveCreditPool()
+    {
+        if (SelectedCreditPool == null) return;
+        await _creditService.ArchivePoolAsync(SelectedCreditPool.Id);
+        await LoadAsync();
+        SelectedCreditPool = null;
+    }
+
     private bool CanEditBudgetPool => SelectedBudgetPool != null;
+    private bool CanEditCreditPool => SelectedCreditPool != null;
 
     partial void OnSelectedBudgetPoolChanged(BudgetPoolRow? value)
     {
         EditBudgetPoolCommand.NotifyCanExecuteChanged();
         AddFundsCommand.NotifyCanExecuteChanged();
         ArchiveBudgetPoolCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedCreditPoolChanged(CertificateCreditPool? value)
+    {
+        EditCreditPoolCommand.NotifyCanExecuteChanged();
+        ArchiveCreditPoolCommand.NotifyCanExecuteChanged();
     }
 }
 

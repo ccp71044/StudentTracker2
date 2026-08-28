@@ -22,6 +22,26 @@ public class CreditService
 
     public async Task<CertificateCreditPool?> GetPoolAsync(Guid id) => await _context.CertificateCreditPools.FindAsync(id);
 
+    public async Task<CertificateCreditPool> UpdatePoolAsync(CertificateCreditPool pool)
+    {
+        pool.UpdatedAt = DateTime.UtcNow;
+        _context.CertificateCreditPools.Update(pool);
+        await _context.SaveChangesAsync();
+        _audit.Record("Updated", "CertificateCreditPool", pool.Id, pool.DisplayId);
+        await _context.SaveChangesAsync();
+        return pool;
+    }
+
+    public async Task ArchivePoolAsync(Guid poolId)
+    {
+        var pool = await _context.CertificateCreditPools.FindAsync(poolId) ?? throw new ArgumentException("Pool not found");
+        pool.IsActive = false;
+        pool.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("Archived", "CertificateCreditPool", pool.Id, pool.DisplayId);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<CertificateCreditPool> CreatePoolAsync(CertificateCreditPool pool)
     {
         pool.DisplayId = _idGenerator.NextDisplayId<CertificateCreditPool>("CRP");
