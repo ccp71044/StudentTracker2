@@ -37,6 +37,7 @@ Data is stored under `%LOCALAPPDATA%\StudentTracker\` by default.
 
 ## Documentation Index
 
+- [Current Status and Next Steps — 2026-08-29](CURRENT_STATUS_AND_NEXT_STEPS_2026-08-29.md) — current implementation status, migration readiness, verification, and prioritized next actions.
 - [Technical Reference](TECHNICAL_REFERENCE.md) — architecture, data model, services, workflows, audit/logging, testing, and extension guidance.
 - [Progress Report — 2026-08-29](PROGRESS_REPORT_2026-08-29.md) — implemented changes and recorded verification results.
 - [Functionality Analysis](FUNCTIONALITY_ANALYSIS.md) — original function inventory and gap assessment.
