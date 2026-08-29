@@ -109,7 +109,7 @@ A conventional File/Actions/Data/View/Tools/Help menu bar sits above the content
 - Re-validates the workbook and runs database integrity check immediately before the destructive operation.
 - Clears and re-imports all operational data inside a database transaction; reconciles imported counts and checks relational integrity.
 - Rolls back on any failure; no database changes are committed unless the entire pipeline succeeds.
-- **Important:** the live production cutover has not yet been run.
+- The live cutover completed successfully on 30 August 2026 with verified pre-cutover and post-cutover backups.
 
 ### Reports and exports
 
@@ -172,7 +172,7 @@ Validation previously confirmed:
 - Valid allocation, attendance, and outcome values.
 - No merged cells or formulas.
 
-**Important:** this workbook has been validated but has not yet been loaded into the live application database.
+The workbook was loaded into the live application database on 30 August 2026. Post-cutover verification confirmed the expected counts, no broken student/delivery/course relationships, no duplicate student or delivery identifiers, and a successful SQLite integrity check.
 
 ## Recorded verification
 
@@ -198,16 +198,18 @@ Application data is stored by default under:
 
 ## Work needed next
 
-### 1. Run the guided data cutover
+### 1. Configure the real budget pools and opening funds
 
-This is the immediate operational next step. The **Replace All Data from Migration Package** tool (Data menu) now exists and automates the validated, transactional replacement workflow. It has been tested against the canonical workbook but the live production cutover has not yet been run.
+The authoritative student/course/allocation cutover is complete. The workbook did not contain a `BudgetPools` sheet, so the live database currently has no budget pools. The immediate operational setup is:
 
-1. Use **Data → Replace All Data from Migration Package** and select the canonical migration workbook.
-2. Review the preview dialog showing current database counts and workbook counts.
-3. Type `REPLACE DATA` to confirm.
-4. The tool creates a verified pre-cutover backup, clears and re-imports all data within a transaction, reconciles counts and relationships, and creates a post-cutover backup.
-5. After success, verify counts and sample records across Students, Courses, Deliveries, Allocations, Credits/Budgets, and Reports.
-6. Verify budget pool positions on the Dashboard match expected values.
+1. Create the general/personal pool and classify it as **Personal**.
+2. Create the T&C pool and classify it as **Client Funded**, with the client name recorded.
+3. Add each opening amount through **Add Funds**, recording the source and reason—for example, `Added $100 from T&C`.
+4. Confirm each course's Allen/provider completion cost.
+5. Create anonymous prepaid places by selecting delivery, pool, Allen cost, and quantity. This moves those costs from available to committed.
+6. Replace placeholders with named students as details become known; the commitment remains attached.
+7. Use **Mark Cost Spent** as the manual cost trigger after completion, and use the release/reversal actions where corrections are required.
+8. Confirm the Dashboard and Credits & Budgets position tables match the expected funds, commitments, spend, anonymous places, assigned pending places, and completions remaining.
 
 ### 2. Perform structured user acceptance testing
 
@@ -267,6 +269,6 @@ Some older unit tests use blocking task operations and produce `xUnit1031` analy
 
 ## Release readiness assessment
 
-The application is ready for controlled data migration and user acceptance testing. It should not yet be treated as fully production-accepted until the authoritative workbook has been imported into a backed-up database, the imported totals have been reconciled, and the key workflows have been exercised with real records.
+The authoritative workbook has been imported into a backed-up database and its counts and relationships have been reconciled. The application is ready for budget-pool configuration and structured user acceptance testing with the real records.
 
-No broad service/UI functionality gap is currently known to block that controlled validation phase. The remaining work is primarily data cutover, deeper automated workflow coverage, integrity hardening, and user-driven refinement.
+It should not yet be treated as fully production-accepted until opening pool balances and Allen/provider costs have been confirmed and the key prepaid-place, completion, manual-spend, reversal, certificate, and export workflows have been exercised. The remaining work is primarily financial setup, deeper automated workflow coverage, integrity hardening, and user-driven refinement.

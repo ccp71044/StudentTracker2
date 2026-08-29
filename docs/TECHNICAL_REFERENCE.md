@@ -517,7 +517,7 @@ It returns a `CutoverPreview` containing current database counts, workbook count
 
 If any step after the backup fails, the transaction is rolled back and no database changes are committed.
 
-**Important:** the live production cutover has not yet been run.
+The live cutover completed successfully on 30 August 2026. Verified backups were created before and after replacement, and the imported counts and relationships reconciled.
 
 ## 21. Backup and restore
 

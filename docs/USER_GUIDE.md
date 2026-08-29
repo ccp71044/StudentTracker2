@@ -130,7 +130,7 @@ The guided workflow:
 
 If any step fails, the transaction is rolled back and no database changes are committed. Both the pre-cutover and post-cutover backup paths are displayed on success.
 
-**Important:** the live production cutover has not yet been run. The workbook has been validated but the authoritative dataset has not yet been loaded into the live application database.
+The initial live cutover completed successfully on 30 August 2026 with verified pre-cutover and post-cutover backups. Run this command again only when intentionally replacing all current operational data with another complete canonical package.
 
 ## Import / Export and Invoice Manager Reference Exchange
 
