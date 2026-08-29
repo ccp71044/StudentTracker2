@@ -19,8 +19,12 @@
             <Button Content="Restore" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreCourseCommand}" />
             <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
             <CheckBox Content="Show inactive" IsChecked="{Binding ShowInactive}" VerticalAlignment="Center" Margin="10,0" />
+            <CheckBox Content="Edit Table" IsChecked="{Binding IsInlineEditingEnabled}" VerticalAlignment="Center" Margin="10,0" />
         </StackPanel>
-        <DataGrid x:Name="CoursesDataGrid" ItemsSource="{Binding Courses}" SelectedItem="{Binding SelectedCourse}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True"
+        <DataGrid x:Name="CoursesDataGrid" ItemsSource="{Binding Courses}" SelectedItem="{Binding SelectedCourse}" AutoGenerateColumns="False" Grid.Row="2" Margin="10"
+                 IsReadOnly="{Binding IsInlineEditingEnabled, Converter={StaticResource InvertedBooleanConverter}}"
+                 CanUserAddRows="False" CanUserDeleteRows="False"
+                 RowEditEnding="DataGrid_RowEditEnding"
                  MouseDoubleClick="DataGrid_MouseDoubleClick"
                  PreviewMouseRightButtonDown="DataGrid_PreviewMouseRightButtonDown">
             <DataGrid.ContextMenu>
@@ -33,11 +37,16 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Code" Binding="{Binding CourseCode}" Width="120" />
+                <DataGridTextColumn Header="Code" Binding="{Binding CourseCode}" Width="120" IsReadOnly="True" />
                 <DataGridTextColumn Header="Title" Binding="{Binding CourseTitle}" Width="300" />
                 <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="120" />
                 <DataGridTextColumn Header="Duration (days)" Binding="{Binding CourseDurationDays}" Width="110" />
                 <DataGridTextColumn Header="Provider" Binding="{Binding Provider}" Width="150" />
+                <DataGridTextColumn Header="Default Cost" Binding="{Binding DefaultCertificateCost}" Width="110" />
+                <DataGridTextColumn Header="Default Credit" Binding="{Binding DefaultCreditQuantity}" Width="110" />
+                <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="250" />
+                <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="200" />
+                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="70" IsReadOnly="True" />
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

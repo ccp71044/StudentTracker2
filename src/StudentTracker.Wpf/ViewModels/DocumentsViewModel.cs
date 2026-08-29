@@ -14,6 +14,7 @@ public partial class DocumentsViewModel : ViewModelBase
 {
     private readonly DocumentService _documentService;
     private readonly IDialogService _dialogService;
+    private readonly Dictionary<Guid, (string? DisplayName, DateTime? ReceivedDate)> _inlineEditSnapshots = new();
 
     [ObservableProperty]
     private ObservableCollection<Document> _documents = new();
@@ -23,6 +24,9 @@ public partial class DocumentsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _showArchived;
+
+    [ObservableProperty]
+    private bool _isTableEditingEnabled;
 
     public DocumentsViewModel(DocumentService documentService, IDialogService dialogService)
     {
@@ -128,6 +132,31 @@ public partial class DocumentsViewModel : ViewModelBase
     private async Task Refresh()
     {
         await LoadAsync();
+    }
+
+    public void BeginInlineEdit(Document document) => _inlineEditSnapshots.TryAdd(document.Id, (document.DisplayName, document.ReceivedDate));
+
+    public async Task CommitInlineEditAsync(Document document)
+    {
+        if (!IsTableEditingEnabled) return;
+        try
+        {
+            await _documentService.UpdateMetadataAsync(document.Id, document.DisplayName ?? string.Empty, document.Description, document.ReceivedDate, document.Confidentiality, document.Notes);
+        }
+        catch (Exception ex)
+        {
+            if (_inlineEditSnapshots.TryGetValue(document.Id, out var snapshot))
+            {
+                document.DisplayName = snapshot.DisplayName;
+                document.ReceivedDate = snapshot.ReceivedDate;
+            }
+            _dialogService.ShowError("The document metadata could not be updated.", ex);
+        }
+        finally
+        {
+            _inlineEditSnapshots.Remove(document.Id);
+            await LoadAsync();
+        }
     }
 
     private bool CanViewDocument => SelectedDocument != null;

@@ -20,8 +20,12 @@
             <Button Content="Restore" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreStudentCommand}" />
             <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
             <CheckBox Content="Show archived" IsChecked="{Binding ShowArchived}" VerticalAlignment="Center" Margin="10,0" />
+            <CheckBox Content="Edit Table" IsChecked="{Binding IsInlineEditingEnabled}" VerticalAlignment="Center" Margin="10,0" />
         </StackPanel>
-        <DataGrid x:Name="StudentsDataGrid" ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True"
+        <DataGrid x:Name="StudentsDataGrid" ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent}" AutoGenerateColumns="False" Grid.Row="2" Margin="10"
+                 IsReadOnly="{Binding IsInlineEditingEnabled, Converter={StaticResource InvertedBooleanConverter}}"
+                 CanUserAddRows="False" CanUserDeleteRows="False"
+                 RowEditEnding="DataGrid_RowEditEnding"
                  MouseDoubleClick="DataGrid_MouseDoubleClick"
                  PreviewMouseRightButtonDown="DataGrid_PreviewMouseRightButtonDown">
             <DataGrid.ContextMenu>
@@ -35,14 +39,17 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Student ID" Binding="{Binding DisplayId}" Width="100" />
+                <DataGridTextColumn Header="Student ID" Binding="{Binding DisplayId}" Width="100" IsReadOnly="True" />
                 <DataGridTextColumn Header="First Name" Binding="{Binding FirstName}" Width="120" />
                 <DataGridTextColumn Header="Last Name" Binding="{Binding LastName}" Width="120" />
-                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" IsReadOnly="True" />
                 <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="180" />
                 <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="120" />
                 <DataGridTextColumn Header="Employer" Binding="{Binding Employer}" Width="120" />
-                <DataGridCheckBoxColumn Header="Duplicate" Binding="{Binding PotentialDuplicate}" Width="80" />
+                <DataGridTextColumn Header="Work Group" Binding="{Binding WorkGroup}" Width="120" />
+                <DataGridTextColumn Header="Manager" Binding="{Binding Manager}" Width="120" />
+                <DataGridTextColumn Header="Group Tag" Binding="{Binding GroupTag}" Width="120" />
+                <DataGridCheckBoxColumn Header="Duplicate" Binding="{Binding PotentialDuplicate}" Width="80" IsReadOnly="True" />
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

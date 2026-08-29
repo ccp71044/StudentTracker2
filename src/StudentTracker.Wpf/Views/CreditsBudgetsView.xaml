@@ -17,6 +17,7 @@
             <Button Content="Transactions" Style="{StaticResource ActionButtonStyle}" Command="{Binding BudgetTransactionHistoryCommand}" ToolTip="View the selected budget pool's transaction history." />
             <Button Content="Archive" Style="{StaticResource ActionButtonStyle}" Command="{Binding ArchiveBudgetPoolCommand}" ToolTip="Deactivate the selected budget pool." />
             <Button Content="Restore" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreBudgetPoolCommand}" />
+            <ToggleButton Content="Edit Budget Table" IsChecked="{Binding IsBudgetTableEditingEnabled}" VerticalAlignment="Center" Margin="10,0" />
             <CheckBox Content="Show inactive" IsChecked="{Binding ShowInactive}" VerticalAlignment="Center" Margin="10,0" />
         </StackPanel>
         <TabControl Grid.Row="2" Margin="10">
@@ -33,11 +34,17 @@
                         <Button Content="Transactions" Style="{StaticResource ActionButtonStyle}" Command="{Binding CreditTransactionHistoryCommand}" ToolTip="View the selected credit pool's transaction history." />
                         <Button Content="Archive" Style="{StaticResource ActionButtonStyle}" Command="{Binding ArchiveCreditPoolCommand}" ToolTip="Deactivate the selected credit pool." />
                         <Button Content="Restore" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreCreditPoolCommand}" />
+                        <ToggleButton Content="Edit Table" IsChecked="{Binding IsCreditTableEditingEnabled}" VerticalAlignment="Center" Margin="10,0" />
                     </StackPanel>
-                    <DataGrid ItemsSource="{Binding CreditPools}" SelectedItem="{Binding SelectedCreditPool}" AutoGenerateColumns="False" IsReadOnly="True" Grid.Row="1" Margin="10" x:Name="CreditPoolsDataGrid">
-                        <DataGrid.InputBindings>
-                            <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding CreditTransactionHistoryCommand}" />
-                        </DataGrid.InputBindings>
+                    <DataGrid ItemsSource="{Binding CreditPools}" SelectedItem="{Binding SelectedCreditPool}" AutoGenerateColumns="False" Grid.Row="1" Margin="10" x:Name="CreditPoolsDataGrid" BeginningEdit="CreditPoolsDataGrid_BeginningEdit" RowEditEnding="CreditPoolsDataGrid_RowEditEnding" MouseDoubleClick="CreditPoolsDataGrid_MouseDoubleClick">
+                        <DataGrid.Style>
+                            <Style TargetType="DataGrid">
+                                <Setter Property="IsReadOnly" Value="True" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCreditTableEditingEnabled}" Value="True"><Setter Property="IsReadOnly" Value="False" /></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Style>
                         <DataGrid.ContextMenu>
                             <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                                 <MenuItem Header="Edit" Command="{Binding EditCreditPoolCommand}" />
@@ -50,17 +57,23 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Pool" Binding="{Binding Name}" Width="200" />
                             <DataGridTextColumn Header="Provider" Binding="{Binding Provider}" Width="150" />
-                            <DataGridTextColumn Header="Unit Type" Binding="{Binding UnitType}" Width="100" />
+                            <DataGridTextColumn Header="Unit Type" Binding="{Binding UnitType}" Width="100" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Expiry" Binding="{Binding ExpiryDate, StringFormat=dd/MM/yyyy}" Width="120" />
                             <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="300" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
             </TabItem>
             <TabItem Header="Budget Pools">
-                <DataGrid ItemsSource="{Binding BudgetPools}" SelectedItem="{Binding SelectedBudgetPool}" AutoGenerateColumns="False" IsReadOnly="True" x:Name="BudgetPoolsDataGrid">
-                    <DataGrid.InputBindings>
-                        <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding BudgetTransactionHistoryCommand}" />
-                    </DataGrid.InputBindings>
+                <DataGrid ItemsSource="{Binding BudgetPools}" SelectedItem="{Binding SelectedBudgetPool}" AutoGenerateColumns="False" x:Name="BudgetPoolsDataGrid" BeginningEdit="BudgetPoolsDataGrid_BeginningEdit" RowEditEnding="BudgetPoolsDataGrid_RowEditEnding" MouseDoubleClick="BudgetPoolsDataGrid_MouseDoubleClick">
+                    <DataGrid.Style>
+                        <Style TargetType="DataGrid">
+                            <Setter Property="IsReadOnly" Value="True" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsBudgetTableEditingEnabled}" Value="True"><Setter Property="IsReadOnly" Value="False" /></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.Style>
                     <DataGrid.ContextMenu>
                         <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                             <MenuItem Header="Edit" Command="{Binding EditBudgetPoolCommand}" />
@@ -73,8 +86,8 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Pool" Binding="{Binding Name}" Width="200" />
                         <DataGridTextColumn Header="Period" Binding="{Binding FinancialPeriod}" Width="120" />
-                        <DataGridTextColumn Header="Actual Available" Binding="{Binding ActualAvailable, StringFormat=C}" Width="130" ToolTipService.ToolTip="Cash that has been received and is not yet committed or spent." />
-                        <DataGridTextColumn Header="Forecast Available" Binding="{Binding ForecastAvailable, StringFormat=C}" Width="130" ToolTipService.ToolTip="Cash remaining after pending commitments are taken into account." />
+                        <DataGridTextColumn Header="Actual Available" Binding="{Binding ActualAvailable, StringFormat=C}" Width="130" IsReadOnly="True" ToolTipService.ToolTip="Cash that has been received and is not yet committed or spent." />
+                        <DataGridTextColumn Header="Forecast Available" Binding="{Binding ForecastAvailable, StringFormat=C}" Width="130" IsReadOnly="True" ToolTipService.ToolTip="Cash remaining after pending commitments are taken into account." />
                         <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="250" />
                     </DataGrid.Columns>
                 </DataGrid>

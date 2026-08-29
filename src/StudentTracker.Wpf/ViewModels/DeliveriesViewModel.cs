@@ -22,6 +22,9 @@ public partial class DeliveriesViewModel : ViewModelBase
     [ObservableProperty]
     private CourseDelivery? _selectedDelivery;
 
+    [ObservableProperty]
+    private bool _isInlineEditingEnabled;
+
     public DeliveriesViewModel(CourseService courseService, AllocationService allocationService, StudentService studentService, CreditService creditService, BudgetService budgetService, IDialogService dialogService)
     {
         _courseService = courseService;
@@ -87,6 +90,38 @@ public partial class DeliveriesViewModel : ViewModelBase
         vm.SelectedDelivery = SelectedDelivery;
         if (_dialogService.ShowDialog(vm) == true)
         {
+            await LoadAsync();
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeliveryRowEditEnding(CourseDelivery? delivery)
+    {
+        if (delivery == null) return;
+        try
+        {
+            var update = new CourseDelivery
+            {
+                Id = delivery.Id,
+                CourseDefinitionId = delivery.CourseDefinitionId,
+                DisplayId = delivery.DisplayId,
+                CreatedAt = delivery.CreatedAt,
+                UpdatedAt = delivery.UpdatedAt,
+                StartDate = delivery.StartDate,
+                EndDate = delivery.EndDate,
+                DateStatus = delivery.DateStatus,
+                Location = delivery.Location,
+                TrainerName = delivery.TrainerName,
+                TrainerBusinessDetails = delivery.TrainerBusinessDetails,
+                Capacity = delivery.Capacity,
+                DeliveryStatus = delivery.DeliveryStatus,
+                Notes = delivery.Notes
+            };
+            await _courseService.UpdateDeliveryAsync(update);
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The delivery changes could not be saved. The table has been reverted to the saved values.", ex);
             await LoadAsync();
         }
     }

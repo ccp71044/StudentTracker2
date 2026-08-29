@@ -24,6 +24,9 @@ public partial class CoursesViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showInactive;
 
+    [ObservableProperty]
+    private bool _isInlineEditingEnabled;
+
     public CoursesViewModel(CourseService courseService, IDialogService dialogService)
     {
         _courseService = courseService;
@@ -81,6 +84,21 @@ public partial class CoursesViewModel : ViewModelBase
         vm.SelectedCourse = SelectedCourse;
         if (_dialogService.ShowDialog(vm) == true)
         {
+            await LoadAsync();
+        }
+    }
+
+    [RelayCommand]
+    private async Task CourseRowEditEnding(CourseDefinition? course)
+    {
+        if (course == null) return;
+        try
+        {
+            await _courseService.UpdateDefinitionAsync(course);
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The course changes could not be saved. The table has been reverted to the saved values.", ex);
             await LoadAsync();
         }
     }

@@ -12,6 +12,8 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     private readonly CreditService _creditService;
     private readonly BudgetService _budgetService;
     private readonly IDialogService _dialogService;
+    private readonly Dictionary<Guid, (string Name, string? Provider, DateTime? ExpiryDate, string? Notes)> _creditEditSnapshots = new();
+    private readonly Dictionary<Guid, (string Name, string? FinancialPeriod, string? Notes)> _budgetEditSnapshots = new();
 
     [ObservableProperty]
     private ObservableCollection<CertificateCreditPool> _creditPools = new();
@@ -27,6 +29,12 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _showInactive;
+
+    [ObservableProperty]
+    private bool _isCreditTableEditingEnabled;
+
+    [ObservableProperty]
+    private bool _isBudgetTableEditingEnabled;
 
     public CreditsBudgetsViewModel(CreditService creditService, BudgetService budgetService, IDialogService dialogService)
     {
@@ -203,6 +211,61 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
         }
     }
 
+    public void BeginCreditPoolInlineEdit(CertificateCreditPool pool) =>
+        _creditEditSnapshots.TryAdd(pool.Id, (pool.Name, pool.Provider, pool.ExpiryDate, pool.Notes));
+
+    public void BeginBudgetPoolInlineEdit(BudgetPoolRow row) =>
+        _budgetEditSnapshots.TryAdd(row.Pool.Id, (row.Name, row.FinancialPeriod, row.Notes));
+
+    public async Task CommitCreditPoolInlineEditAsync(CertificateCreditPool pool)
+    {
+        if (!IsCreditTableEditingEnabled) return;
+        try
+        {
+            await _creditService.UpdatePoolAsync(pool);
+        }
+        catch (Exception ex)
+        {
+            if (_creditEditSnapshots.TryGetValue(pool.Id, out var snapshot))
+            {
+                pool.Name = snapshot.Name;
+                pool.Provider = snapshot.Provider;
+                pool.ExpiryDate = snapshot.ExpiryDate;
+                pool.Notes = snapshot.Notes;
+            }
+            _dialogService.ShowError("The credit pool metadata could not be updated.", ex);
+        }
+        finally
+        {
+            _creditEditSnapshots.Remove(pool.Id);
+            await LoadAsync();
+        }
+    }
+
+    public async Task CommitBudgetPoolInlineEditAsync(BudgetPoolRow row)
+    {
+        if (!IsBudgetTableEditingEnabled) return;
+        try
+        {
+            await _budgetService.UpdatePoolAsync(row.Pool);
+        }
+        catch (Exception ex)
+        {
+            if (_budgetEditSnapshots.TryGetValue(row.Pool.Id, out var snapshot))
+            {
+                row.Name = snapshot.Name;
+                row.FinancialPeriod = snapshot.FinancialPeriod;
+                row.Notes = snapshot.Notes;
+            }
+            _dialogService.ShowError("The budget pool metadata could not be updated.", ex);
+        }
+        finally
+        {
+            _budgetEditSnapshots.Remove(row.Pool.Id);
+            await LoadAsync();
+        }
+    }
+
     private bool CanEditBudgetPool => SelectedBudgetPool != null;
     private bool CanEditCreditPool => SelectedCreditPool != null;
     private bool CanRestoreBudgetPool => SelectedBudgetPool?.Pool.IsActive == false;
@@ -234,8 +297,20 @@ public class BudgetPoolRow
     public BudgetPool Pool { get; set; } = null!;
     public decimal ActualAvailable { get; set; }
     public decimal ForecastAvailable { get; set; }
-    public string Name => Pool.Name;
-    public string? FinancialPeriod => Pool.FinancialPeriod;
-    public string? Notes => Pool.Notes;
+    public string Name
+    {
+        get => Pool.Name;
+        set => Pool.Name = value;
+    }
+    public string? FinancialPeriod
+    {
+        get => Pool.FinancialPeriod;
+        set => Pool.FinancialPeriod = value;
+    }
+    public string? Notes
+    {
+        get => Pool.Notes;
+        set => Pool.Notes = value;
+    }
 }
 

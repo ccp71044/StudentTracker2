@@ -16,8 +16,12 @@
             <Button Content="Add Allocation" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddAllocationCommand}" ToolTip="Create a new allocation for the selected delivery." />
             <Button Content="Cancel Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelDeliveryCommand}" />
             <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
+            <CheckBox Content="Edit Table" IsChecked="{Binding IsInlineEditingEnabled}" VerticalAlignment="Center" Margin="10,0" />
         </StackPanel>
-        <DataGrid x:Name="DeliveriesDataGrid" ItemsSource="{Binding Deliveries}" SelectedItem="{Binding SelectedDelivery}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True"
+        <DataGrid x:Name="DeliveriesDataGrid" ItemsSource="{Binding Deliveries}" SelectedItem="{Binding SelectedDelivery}" AutoGenerateColumns="False" Grid.Row="2" Margin="10"
+                 IsReadOnly="{Binding IsInlineEditingEnabled, Converter={StaticResource InvertedBooleanConverter}}"
+                 CanUserAddRows="False" CanUserDeleteRows="False"
+                 RowEditEnding="DataGrid_RowEditEnding"
                  MouseDoubleClick="DataGrid_MouseDoubleClick"
                  PreviewMouseRightButtonDown="DataGrid_PreviewMouseRightButtonDown">
             <DataGrid.ContextMenu>
@@ -30,14 +34,17 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Delivery ID" Binding="{Binding DisplayId}" Width="100" />
-                <DataGridTextColumn Header="Course Code" Binding="{Binding CourseDefinition.CourseCode}" Width="120" />
-                <DataGridTextColumn Header="Status" Binding="{Binding DeliveryStatus}" Width="100" />
+                <DataGridTextColumn Header="Delivery ID" Binding="{Binding DisplayId}" Width="100" IsReadOnly="True" />
+                <DataGridTextColumn Header="Course Code" Binding="{Binding CourseDefinition.CourseCode}" Width="120" IsReadOnly="True" />
+                <DataGridTextColumn Header="Status" Binding="{Binding DeliveryStatus}" Width="100" IsReadOnly="True" />
+                <DataGridTextColumn Header="Date Status" Binding="{Binding DateStatus}" Width="100" IsReadOnly="True" />
                 <DataGridTextColumn Header="Capacity" Binding="{Binding Capacity}" Width="80" />
                 <DataGridTextColumn Header="Start" Binding="{Binding StartDate, StringFormat=dd/MM/yyyy}" Width="120" />
                 <DataGridTextColumn Header="End" Binding="{Binding EndDate, StringFormat=dd/MM/yyyy}" Width="120" />
                 <DataGridTextColumn Header="Location" Binding="{Binding Location}" Width="150" />
                 <DataGridTextColumn Header="Trainer" Binding="{Binding TrainerName}" Width="150" />
+                <DataGridTextColumn Header="Business Details" Binding="{Binding TrainerBusinessDetails}" Width="200" />
+                <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="200" />
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

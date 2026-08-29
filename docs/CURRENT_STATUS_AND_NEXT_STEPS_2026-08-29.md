@@ -8,7 +8,7 @@
 
 Student Tracker 2 is now a buildable, self-contained .NET 8 WPF application with the principal student, course, delivery, allocation, certificate, finance, document, migration, reporting, audit, backup, and export workflows exposed through the user interface.
 
-The major functionality and lifecycle gaps identified in the earlier reviews have been addressed. The current priority is no longer broad feature construction; it is controlled production-data loading, user acceptance testing, deeper workflow automation, and correction of any issues found with real operating data.
+The major functionality and lifecycle gaps identified in the earlier reviews have been addressed. Safe inline table editing is available for ordinary metadata while lifecycle and financial state changes remain command-driven. The current priority is no longer broad feature construction; it is controlled production-data loading, user acceptance testing, deeper workflow automation, and correction of any issues found with real operating data.
 
 ## Completed application areas
 
@@ -87,6 +87,12 @@ The Reports screen now includes the original completion/certificate reports plus
 
 CSV export commands are available for the expanded report set. Course, student, allocation, and invoicer exports are also available from Import / Export.
 
+### Inline table editing
+
+An explicit **Edit Table** toggle is available for students, courses, deliveries, documents, budget pools, and credit pools. Tables remain read-only until it is enabled.
+
+Editable fields are limited to ordinary metadata such as names, contact details, providers, dates, capacities, descriptions, and notes. Display identifiers, archive/active state, delivery status, allocation status, attendance, outcomes, certificate lifecycle state, balances, and transactions remain read-only in tables and must be changed through their validated workflow commands. Committed inline edits use the existing update services and therefore create audit records; failed updates show an error and reload the stored values.
+
 ### Lifecycle, audit, and diagnostics
 
 - Archive/deactivate operations preserve historical records.
@@ -130,7 +136,7 @@ Validation previously confirmed:
 | Check | Result |
 |---|---:|
 | Release solution build | Passed |
-| Unit tests | 40 passed, 0 failed |
+| Unit tests | 45 passed, 0 failed |
 | FlaUI tests | 11 passed, 0 failed |
 | Self-contained Windows publish | Passed |
 | Git synchronization before this report | Clean and synchronized |

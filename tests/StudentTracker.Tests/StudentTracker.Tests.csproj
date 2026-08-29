@@ -1,9 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UseWPF>false</UseWPF>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
@@ -25,6 +26,7 @@
     <ProjectReference Include="..\..\src\StudentTracker.Core\StudentTracker.Core.csproj" />
     <ProjectReference Include="..\..\src\StudentTracker.Data\StudentTracker.Data.csproj" />
     <ProjectReference Include="..\..\src\StudentTracker.Services\StudentTracker.Services.csproj" />
+    <ProjectReference Include="..\..\src\StudentTracker.Wpf\StudentTracker.Wpf.csproj" />
   </ItemGroup>
 
 </Project>

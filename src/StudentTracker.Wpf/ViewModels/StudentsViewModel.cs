@@ -28,6 +28,9 @@ public partial class StudentsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showArchived;
 
+    [ObservableProperty]
+    private bool _isInlineEditingEnabled;
+
     public StudentsViewModel(StudentService studentService, AllocationService allocationService, CourseService courseService, CreditService creditService, BudgetService budgetService, IDialogService dialogService)
     {
         _studentService = studentService;
@@ -129,6 +132,21 @@ public partial class StudentsViewModel : ViewModelBase
         vm.SelectedStudent = SelectedStudent;
         if (_dialogService.ShowDialog(vm) == true)
         {
+            await LoadAsync();
+        }
+    }
+
+    [RelayCommand]
+    private async Task StudentRowEditEnding(Student? student)
+    {
+        if (student == null) return;
+        try
+        {
+            await _studentService.UpdateAsync(student);
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The student changes could not be saved. The table has been reverted to the saved values.", ex);
             await LoadAsync();
         }
     }

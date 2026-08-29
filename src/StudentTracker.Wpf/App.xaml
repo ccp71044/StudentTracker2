@@ -10,6 +10,7 @@
                 <ResourceDictionary Source="Resources/Brushes.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
+            <converters:InvertedBooleanConverter x:Key="InvertedBooleanConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
