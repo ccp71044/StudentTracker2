@@ -6,6 +6,8 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="2*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <TextBlock Text="Certificate Orders" AutomationProperties.AutomationId="CertificatesHeader" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
@@ -14,13 +16,37 @@
             <Button Content="Record Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding RecordDeliveryCommand}" />
             <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
         </StackPanel>
-        <DataGrid ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True">
+        <DataGrid ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True"
+                  MouseDoubleClick="DataGrid_MouseDoubleClick">
+            <DataGrid.ContextMenu>
+                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                    <MenuItem Header="Show details" Command="{Binding ShowOrderDetailCommand}" />
+                    <MenuItem Header="Record delivery" Command="{Binding RecordDeliveryCommand}" />
+                    <Separator />
+                    <MenuItem Header="Refresh" Command="{Binding RefreshCommand}" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Order ID" Binding="{Binding DisplayId}" Width="100" />
                 <DataGridTextColumn Header="Ordered" Binding="{Binding OrderedDate, StringFormat=dd/MM/yyyy}" Width="120" />
-                <DataGridTextColumn Header="Status" Binding="{Binding OrderStatus}" Width="120" />
-                <DataGridTextColumn Header="Count" Binding="{Binding ItemCount}" Width="80" />
-                <DataGridTextColumn Header="Total" Binding="{Binding TotalAmount, StringFormat=C}" Width="100" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120" />
+                <DataGridTextColumn Header="Quantity" Binding="{Binding Quantity}" Width="80" />
+                <DataGridTextColumn Header="Provider" Binding="{Binding Provider}" Width="140" />
+                <DataGridTextColumn Header="Allocation" Binding="{Binding Allocation.DisplayId}" Width="110" />
+                <DataGridTextColumn Header="Student" Binding="{Binding Allocation.Student.FullName}" Width="160" />
+                <DataGridTextColumn Header="Course" Binding="{Binding Allocation.CourseDelivery.CourseDefinition.CourseTitle}" Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <TextBlock Grid.Row="3" Margin="10,4" FontWeight="Bold" Text="Delivery history" />
+        <DataGrid Grid.Row="4" Margin="10" ItemsSource="{Binding DeliveryHistory}" AutoGenerateColumns="False" IsReadOnly="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Delivery ID" Binding="{Binding DisplayId}" Width="100" />
+                <DataGridTextColumn Header="Delivered" Binding="{Binding DeliveredDate, StringFormat=dd/MM/yyyy}" Width="110" />
+                <DataGridTextColumn Header="Method" Binding="{Binding DeliveryMethod}" Width="120" />
+                <DataGridTextColumn Header="Delivered to" Binding="{Binding DeliveredTo}" Width="160" />
+                <DataGridTextColumn Header="Recipient details" Binding="{Binding RecipientDetails}" Width="160" />
+                <DataGridTextColumn Header="Evidence" Binding="{Binding EvidenceDocument.DisplayName}" Width="160" />
+                <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*" />
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

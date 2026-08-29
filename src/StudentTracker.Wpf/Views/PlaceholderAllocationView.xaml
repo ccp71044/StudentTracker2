@@ -1,0 +1,38 @@
+<UserControl x:Class="StudentTracker.Wpf.Views.PlaceholderAllocationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             MinWidth="500" MinHeight="280">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="{Binding Title}" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
+        <Grid Grid.Row="1" Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Course delivery:" VerticalAlignment="Center" Margin="0,4" Grid.Row="0" Grid.Column="0" />
+            <ComboBox ItemsSource="{Binding AvailableDeliveries}" SelectedItem="{Binding SelectedDelivery}"
+                      DisplayMemberPath="DisplayId" Grid.Row="0" Grid.Column="1" Margin="8,4" />
+
+            <TextBlock Text="Placeholder name:" VerticalAlignment="Center" Margin="0,4" Grid.Row="1" Grid.Column="0" />
+            <TextBox Text="{Binding PlaceholderName, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="1" Margin="8,4" />
+
+            <TextBlock Text="Legacy reference:" VerticalAlignment="Center" Margin="0,4" Grid.Row="2" Grid.Column="0" />
+            <TextBox Text="{Binding LegacyReference, UpdateSourceTrigger=PropertyChanged}" Grid.Row="2" Grid.Column="1" Margin="8,4" />
+        </Grid>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2" Margin="0,10,0,0">
+            <Button Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveCommand}" />
+            <Button Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -11,6 +11,9 @@ public partial class StudentsViewModel : ViewModelBase
 {
     private readonly StudentService _studentService;
     private readonly AllocationService _allocationService;
+    private readonly CourseService _courseService;
+    private readonly CreditService _creditService;
+    private readonly BudgetService _budgetService;
     private readonly IDialogService _dialogService;
 
     [ObservableProperty]
@@ -25,10 +28,13 @@ public partial class StudentsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showArchived;
 
-    public StudentsViewModel(StudentService studentService, AllocationService allocationService, IDialogService dialogService)
+    public StudentsViewModel(StudentService studentService, AllocationService allocationService, CourseService courseService, CreditService creditService, BudgetService budgetService, IDialogService dialogService)
     {
         _studentService = studentService;
         _allocationService = allocationService;
+        _courseService = courseService;
+        _creditService = creditService;
+        _budgetService = budgetService;
         _dialogService = dialogService;
         LoadAsync().ConfigureAwait(false);
     }
@@ -37,6 +43,12 @@ public partial class StudentsViewModel : ViewModelBase
     {
         var list = await _studentService.SearchAsync(SearchText, ShowArchived);
         Students = new ObservableCollection<Student>(list);
+    }
+
+    [RelayCommand]
+    private async Task Refresh()
+    {
+        await LoadAsync();
     }
 
     [RelayCommand]
@@ -107,6 +119,20 @@ public partial class StudentsViewModel : ViewModelBase
         _dialogService.ShowDialog(vm);
     }
 
+    [RelayCommand(CanExecute = nameof(CanEditOrDeleteStudent))]
+    private async Task AddAllocation()
+    {
+        if (SelectedStudent == null) return;
+        var allocation = new Allocation { StudentId = SelectedStudent.Id, Student = SelectedStudent };
+        var vm = new AllocationEditViewModel(allocation, _allocationService, _studentService, _courseService, _creditService, _budgetService, isNew: true);
+        await vm.LoadDataAsync();
+        vm.SelectedStudent = SelectedStudent;
+        if (_dialogService.ShowDialog(vm) == true)
+        {
+            await LoadAsync();
+        }
+    }
+
     private bool CanEditOrDeleteStudent => SelectedStudent != null;
     private bool CanRestoreStudent => SelectedStudent?.IsArchived == true;
 
@@ -118,5 +144,6 @@ public partial class StudentsViewModel : ViewModelBase
         DeleteStudentCommand.NotifyCanExecuteChanged();
         RestoreStudentCommand.NotifyCanExecuteChanged();
         ViewStudentCommand.NotifyCanExecuteChanged();
+        AddAllocationCommand.NotifyCanExecuteChanged();
     }
 }

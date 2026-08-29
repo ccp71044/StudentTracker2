@@ -4,7 +4,7 @@
 
 Student Tracker 2 has progressed from a partially exposed service-layer application to an integrated WPF desktop system in which the main student, course, delivery, allocation, certificate, finance, document, reporting, backup, import, and export workflows are accessible through the UI.
 
-The implementation work was driven by the gap assessment in `FUNCTIONALITY_ANALYSIS.md` and the lifecycle safety backlog in `LIFECYCLE_WORKFLOW_TASKS_2026-08-29.md`. The current `main` branch has passed the solution Release build, 25 unit tests, and 11 FlaUI tests.
+The implementation work was driven by the gap assessment in `FUNCTIONALITY_ANALYSIS.md` and the lifecycle safety backlog in `LIFECYCLE_WORKFLOW_TASKS_2026-08-29.md`. The current implementation has passed the solution Release build, 40 unit tests, and 11 FlaUI tests.
 
 ## Repository synchronization and baseline
 
@@ -234,6 +234,19 @@ The file logger uses:
 - Dispatcher unhandled-exception capture.
 - Dialog-service logging for handled workflow errors.
 
+## Workflow and reporting completion pass
+
+The follow-up component review added:
+
+- Right-click context menus and row-under-pointer selection for student, course, delivery, allocation, certificate, document, budget, and credit tables.
+- Direct student/course/delivery allocation actions and delivery participant views.
+- Placeholder creation, placeholder replacement, and allocation transfer dialogs.
+- Selected certificate-order delivery, order detail, and delivery-history workflows.
+- Document metadata editing, friendly record linking, duplicate-link prevention, and missing-file checks.
+- Credit top-up plus budget and credit transaction-history dialogs.
+- Reports and CSV exports for delivery scheduling/capacity, allocation status/attendance, course utilisation, budget and credit activity, certificate orders, audit history, and import-review items.
+- Unit coverage for report queries, CSV export, document metadata, and document linking.
+
 ## Verification results
 
 Final recorded verification:
@@ -241,7 +254,7 @@ Final recorded verification:
 | Check | Result |
 |---|---:|
 | Release solution build | Passed — 0 warnings, 0 errors |
-| Unit tests | Passed — 25/25 |
+| Unit tests | Passed — 40/40 |
 | FlaUI tests | Passed — 11/11 |
 | Git synchronization | `main` synchronized with `origin/main` |
 

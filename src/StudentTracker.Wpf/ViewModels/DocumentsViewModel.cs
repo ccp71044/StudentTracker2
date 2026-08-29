@@ -102,6 +102,28 @@ public partial class DocumentsViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand(CanExecute = nameof(CanEditDocument))]
+    private async Task EditDocument()
+    {
+        if (SelectedDocument == null) return;
+        if (_dialogService.ShowDialog(new DocumentMetadataEditViewModel(SelectedDocument, _documentService)) == true)
+            await LoadAsync();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditDocument))]
+    private void LinkDocument()
+    {
+        if (SelectedDocument == null) return;
+        _dialogService.ShowDialog(new DocumentLinkEditViewModel(SelectedDocument, _documentService));
+    }
+
+    [RelayCommand]
+    private async Task CheckMissingFiles()
+    {
+        await _documentService.CheckMissingFilesAsync();
+        await LoadAsync();
+    }
+
     [RelayCommand]
     private async Task Refresh()
     {
@@ -109,6 +131,7 @@ public partial class DocumentsViewModel : ViewModelBase
     }
 
     private bool CanViewDocument => SelectedDocument != null;
+    private bool CanEditDocument => SelectedDocument != null;
     private bool CanDeleteDocument => SelectedDocument != null;
     private bool CanRestoreDocument => SelectedDocument?.Status == Core.Enums.DocumentStatus.Archived;
 
@@ -117,6 +140,8 @@ public partial class DocumentsViewModel : ViewModelBase
     partial void OnSelectedDocumentChanged(Document? value)
     {
         ViewDocumentCommand.NotifyCanExecuteChanged();
+        EditDocumentCommand.NotifyCanExecuteChanged();
+        LinkDocumentCommand.NotifyCanExecuteChanged();
         DeleteDocumentCommand.NotifyCanExecuteChanged();
         RestoreDocumentCommand.NotifyCanExecuteChanged();
     }

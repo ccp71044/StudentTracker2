@@ -23,7 +23,18 @@ public class CertificateService
     public async Task<List<CertificateOrder>> GetOrdersAsync()
     {
         return await _context.CertificateOrders
+            .Include(o => o.Allocation).ThenInclude(a => a!.Student)
+            .Include(o => o.Allocation).ThenInclude(a => a!.CourseDelivery).ThenInclude(d => d!.CourseDefinition)
             .OrderByDescending(o => o.OrderedDate)
+            .ToListAsync();
+    }
+
+    public async Task<List<CertificateDelivery>> GetDeliveriesAsync(Guid certificateOrderId)
+    {
+        return await _context.CertificateDeliveries
+            .Where(d => d.CertificateOrderId == certificateOrderId)
+            .Include(d => d.EvidenceDocument)
+            .OrderByDescending(d => d.DeliveredDate)
             .ToListAsync();
     }
 
@@ -79,7 +90,7 @@ public class CertificateService
         return order;
     }
 
-    public async Task<CertificateDelivery> RecordDeliveryAsync(Guid certificateOrderId, DateTime deliveredDate, string method, string deliveredTo, string? notes = null, Guid? evidenceDocumentId = null)
+    public async Task<CertificateDelivery> RecordDeliveryAsync(Guid certificateOrderId, DateTime deliveredDate, string method, string deliveredTo, string? notes = null, Guid? evidenceDocumentId = null, string? recipientDetails = null)
     {
         var order = await _context.CertificateOrders.FindAsync(certificateOrderId) ?? throw new ArgumentException("Certificate order not found");
         var delivery = new CertificateDelivery
@@ -89,6 +100,7 @@ public class CertificateService
             DeliveredDate = deliveredDate,
             DeliveryMethod = method,
             DeliveredTo = deliveredTo,
+            RecipientDetails = recipientDetails,
             EvidenceDocumentId = evidenceDocumentId,
             Notes = notes
         };

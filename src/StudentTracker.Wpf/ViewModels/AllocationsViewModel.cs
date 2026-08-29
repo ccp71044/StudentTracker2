@@ -56,6 +56,17 @@ public partial class AllocationsViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    private async Task AddPlaceholder()
+    {
+        var vm = new PlaceholderAllocationViewModel(_allocationService, _courseService);
+        await vm.LoadDataAsync();
+        if (_dialogService.ShowDialog(vm) == true)
+        {
+            await LoadAsync();
+        }
+    }
+
     [RelayCommand(CanExecute = nameof(CanEditAllocation))]
     private async Task EditAllocation()
     {
@@ -68,12 +79,22 @@ public partial class AllocationsViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand(CanExecute = nameof(CanReplacePlaceholder))]
+    private async Task ReplacePlaceholder()
+    {
+        if (SelectedAllocation == null) return;
+        var vm = new ReplacePlaceholderViewModel(SelectedAllocation, _allocationService, _studentService);
+        await vm.LoadDataAsync();
+        if (_dialogService.ShowDialog(vm) == true)
+        {
+            await LoadAsync();
+        }
+    }
+
     [RelayCommand(CanExecute = nameof(CanEditAllocation))]
     private async Task MarkAttendance()
     {
         if (SelectedAllocation == null) return;
-        // Simple attendance marking dialog could be added here
-        // For now, use the edit dialog
         await EditAllocation();
     }
 
@@ -81,9 +102,19 @@ public partial class AllocationsViewModel : ViewModelBase
     private async Task MarkOutcome()
     {
         if (SelectedAllocation == null) return;
-        // Simple outcome marking dialog could be added here
-        // For now, use the edit dialog
         await EditAllocation();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanTransferAllocation))]
+    private async Task TransferAllocation()
+    {
+        if (SelectedAllocation == null) return;
+        var vm = new TransferAllocationViewModel(SelectedAllocation, _allocationService, _studentService, _courseService);
+        await vm.LoadDataAsync();
+        if (_dialogService.ShowDialog(vm) == true)
+        {
+            await LoadAsync();
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanCancelAllocation))]
@@ -104,6 +135,9 @@ public partial class AllocationsViewModel : ViewModelBase
 
     private bool CanEditAllocation => SelectedAllocation != null;
     private bool CanCancelAllocation => SelectedAllocation != null && SelectedAllocation.AllocationStatus != Core.Enums.AllocationStatus.Cancelled && SelectedAllocation.AllocationStatus != Core.Enums.AllocationStatus.Finalised;
+    private bool CanReplacePlaceholder => SelectedAllocation != null && !string.IsNullOrEmpty(SelectedAllocation.PlaceholderName);
+    private bool CanTransferAllocation => SelectedAllocation != null && SelectedAllocation.StudentId.HasValue &&
+        (SelectedAllocation.AllocationStatus == Core.Enums.AllocationStatus.Enrolled || SelectedAllocation.AllocationStatus == Core.Enums.AllocationStatus.Active);
 
     partial void OnSelectedAllocationChanged(Allocation? value)
     {
@@ -111,5 +145,7 @@ public partial class AllocationsViewModel : ViewModelBase
         MarkAttendanceCommand.NotifyCanExecuteChanged();
         MarkOutcomeCommand.NotifyCanExecuteChanged();
         CancelAllocationCommand.NotifyCanExecuteChanged();
+        ReplacePlaceholderCommand.NotifyCanExecuteChanged();
+        TransferAllocationCommand.NotifyCanExecuteChanged();
     }
 }

@@ -6,6 +6,11 @@ using StudentTracker.Data;
 
 namespace StudentTracker.Services;
 
+public sealed record DocumentLinkTarget(Guid Id, string DisplayId, string Description)
+{
+    public string FriendlyName => string.IsNullOrWhiteSpace(Description) ? DisplayId : $"{DisplayId} — {Description}";
+}
+
 public class DocumentService
 {
     private readonly StudentTrackerDbContext _context;
@@ -56,8 +61,42 @@ public class DocumentService
         return doc;
     }
 
+    public async Task<Document> UpdateMetadataAsync(Guid documentId, string displayName, string? description, DateTime? receivedDate, string? confidentiality, string? notes)
+    {
+        var document = await _context.Documents.FindAsync(documentId) ?? throw new ArgumentException("Document not found");
+        if (string.IsNullOrWhiteSpace(displayName)) throw new ArgumentException("Display name is required", nameof(displayName));
+        document.DisplayName = displayName.Trim();
+        document.Description = description;
+        document.ReceivedDate = receivedDate;
+        document.Confidentiality = confidentiality;
+        document.Notes = notes;
+        document.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("Updated", "Document", document.Id, document.DisplayId);
+        await _context.SaveChangesAsync();
+        return document;
+    }
+
+    public async Task<List<DocumentLinkTarget>> GetLinkTargetsAsync(string entityType)
+    {
+        return entityType switch
+        {
+            "Student" => await _context.Students.OrderBy(s => s.LastName).ThenBy(s => s.FirstName)
+                .Select(s => new DocumentLinkTarget(s.Id, s.DisplayId ?? s.Id.ToString(), s.FirstName + " " + s.LastName)).ToListAsync(),
+            "Allocation" => await _context.Allocations.OrderByDescending(a => a.AllocatedAt)
+                .Select(a => new DocumentLinkTarget(a.Id, a.DisplayId ?? a.Id.ToString(), a.Student != null ? a.Student.FirstName + " " + a.Student.LastName : a.PlaceholderName ?? string.Empty)).ToListAsync(),
+            "CourseDelivery" => await _context.CourseDeliveries.OrderByDescending(d => d.StartDate)
+                .Select(d => new DocumentLinkTarget(d.Id, d.DisplayId ?? d.Id.ToString(), d.CourseDefinition != null ? d.CourseDefinition.CourseCode + " - " + d.CourseDefinition.CourseTitle : string.Empty)).ToListAsync(),
+            "CertificateOrder" => await _context.CertificateOrders.OrderByDescending(o => o.OrderedDate)
+                .Select(o => new DocumentLinkTarget(o.Id, o.DisplayId ?? o.Id.ToString(), o.Provider ?? string.Empty)).ToListAsync(),
+            _ => throw new ArgumentException("Unsupported link type", nameof(entityType))
+        };
+    }
+
     public async Task<DocumentLink> LinkDocumentAsync(Guid documentId, string entityType, Guid entityId, string? purpose = null)
     {
+        if (await _context.DocumentLinks.AnyAsync(l => l.DocumentId == documentId && l.EntityType == entityType && l.EntityId == entityId))
+            throw new InvalidOperationException("The document is already linked to this record.");
         var link = new DocumentLink
         {
             DocumentId = documentId,

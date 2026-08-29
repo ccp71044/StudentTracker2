@@ -15,12 +15,25 @@
             <Button Content="Add Student" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddStudentCommand}" />
             <Button Content="View" Style="{StaticResource ActionButtonStyle}" Command="{Binding ViewStudentCommand}" ToolTip="Open read-only student profile." />
             <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditStudentCommand}" />
+            <Button Content="Add Allocation" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddAllocationCommand}" ToolTip="Create a new allocation for the selected student." />
             <Button Content="Archive" Style="{StaticResource ActionButtonStyle}" Command="{Binding DeleteStudentCommand}" ToolTip="Mark the selected student as archived." />
             <Button Content="Restore" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreStudentCommand}" />
+            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
             <CheckBox Content="Show archived" IsChecked="{Binding ShowArchived}" VerticalAlignment="Center" Margin="10,0" />
         </StackPanel>
-        <DataGrid ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True" 
-                 MouseDoubleClick="DataGrid_MouseDoubleClick">
+        <DataGrid x:Name="StudentsDataGrid" ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True"
+                 MouseDoubleClick="DataGrid_MouseDoubleClick"
+                 PreviewMouseRightButtonDown="DataGrid_PreviewMouseRightButtonDown">
+            <DataGrid.ContextMenu>
+                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                    <MenuItem Header="View" Command="{Binding ViewStudentCommand}" />
+                    <MenuItem Header="Edit" Command="{Binding EditStudentCommand}" />
+                    <MenuItem Header="Add Allocation" Command="{Binding AddAllocationCommand}" />
+                    <Separator />
+                    <MenuItem Header="Archive" Command="{Binding DeleteStudentCommand}" />
+                    <MenuItem Header="Restore" Command="{Binding RestoreStudentCommand}" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Student ID" Binding="{Binding DisplayId}" Width="100" />
                 <DataGridTextColumn Header="First Name" Binding="{Binding FirstName}" Width="120" />

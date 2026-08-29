@@ -21,6 +21,9 @@ public partial class CertificatesViewModel : ViewModelBase
     [ObservableProperty]
     private CertificateOrder? _selectedOrder;
 
+    [ObservableProperty]
+    private ObservableCollection<CertificateDelivery> _deliveryHistory = new();
+
     public CertificatesViewModel(CertificateService certificateService, ReportService reportService, AllocationService allocationService, DocumentService documentService, IDialogService dialogService)
     {
         _certificateService = certificateService;
@@ -53,13 +56,38 @@ public partial class CertificatesViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRecordDelivery))]
     private async Task RecordDelivery()
     {
-        var vm = new CertificateDeliveryEditViewModel(_certificateService, _documentService);
+        if (SelectedOrder == null) return;
+        var vm = new CertificateDeliveryEditViewModel(_certificateService, _documentService, SelectedOrder);
         if (_dialogService.ShowDialog(vm) == true)
         {
             await LoadAsync();
+            await LoadDeliveryHistoryAsync();
         }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanShowOrderDetail))]
+    private async Task ShowOrderDetail()
+    {
+        await LoadDeliveryHistoryAsync();
+    }
+
+    private bool CanRecordDelivery => SelectedOrder != null;
+    private bool CanShowOrderDetail => SelectedOrder != null;
+
+    private async Task LoadDeliveryHistoryAsync()
+    {
+        DeliveryHistory = SelectedOrder == null
+            ? new ObservableCollection<CertificateDelivery>()
+            : new ObservableCollection<CertificateDelivery>(await _certificateService.GetDeliveriesAsync(SelectedOrder.Id));
+    }
+
+    partial void OnSelectedOrderChanged(CertificateOrder? value)
+    {
+        RecordDeliveryCommand.NotifyCanExecuteChanged();
+        ShowOrderDetailCommand.NotifyCanExecuteChanged();
+        LoadDeliveryHistoryAsync().ConfigureAwait(false);
     }
 }

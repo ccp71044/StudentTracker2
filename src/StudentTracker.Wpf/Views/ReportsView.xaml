@@ -9,19 +9,38 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <TextBlock Text="Reports" AutomationProperties.AutomationId="ReportsHeader" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
-        <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="1">
-            <Button Content="Export Completed CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCompletedCsvCommand}" Width="180" />
-            <Button Content="Export Withdrawn CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportWithdrawnCsvCommand}" Width="180" />
-            <Button Content="Export Non-Completions CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportNonCompletionsCsvCommand}" Width="180" />
-            <Button Content="Export Awaiting Delivery CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportAwaitingDeliveryCsvCommand}" Width="180" />
-            <Button Content="Export Delivered CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportDeliveredCsvCommand}" Width="180" />
+        <WrapPanel Margin="10" Grid.Row="1">
+            <Button Content="Export Completed CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCompletedCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Awaiting Order CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportAwaitingOrderCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Withdrawn CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportWithdrawnCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Non-Completions CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportNonCompletionsCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Awaiting Delivery CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportAwaitingDeliveryCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Delivered CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportDeliveredCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Upcoming CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportUpcomingDeliveriesCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Cancelled Delivery CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCancelledDeliveriesCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Completed Delivery CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCompletedDeliveriesCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Capacity CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCapacityCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Active CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportActiveAllocationsCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Transferred CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportTransferredAllocationsCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Cancelled Allocs CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCancelledAllocationsCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Placeholders CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportPlaceholderAllocationsCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Attendance CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportAttendanceCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Utilization CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCourseUtilizationCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Budget Summary CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportBudgetSummaryCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Budget History CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportBudgetHistoryCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Credit Summary CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCreditSummaryCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Credit History CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCreditHistoryCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Audit Activity CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportAuditActivityCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Import Queue CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportImportReviewQueueCsvCommand}" Width="180" Margin="4,2" />
+            <Button Content="Export Certificate Orders CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCertificateOrdersCsvCommand}" Width="180" Margin="4,2" />
+            <CheckBox Content="Replacements only" IsChecked="{Binding ReplacementsOnly}" VerticalAlignment="Center" Margin="10,0" />
             <TextBlock Text="From" VerticalAlignment="Center" Margin="10,0,4,0" />
             <DatePicker SelectedDate="{Binding FromDate}" Width="120" />
             <TextBlock Text="To" VerticalAlignment="Center" Margin="10,0,4,0" />
             <DatePicker SelectedDate="{Binding ToDate}" Width="120" />
             <CheckBox Content="Include archived students" IsChecked="{Binding IncludeArchived}" VerticalAlignment="Center" Margin="10,0" />
-            <Button Content="Apply / Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
-        </StackPanel>
+            <Button Content="Apply / Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" Margin="4,2" />
+        </WrapPanel>
         <TabControl Grid.Row="2" Margin="10">
             <TabItem Header="Completed Students">
                 <DataGrid ItemsSource="{Binding CompletedStudents}" AutoGenerateColumns="False" IsReadOnly="True">
@@ -34,13 +53,7 @@
                 </DataGrid>
             </TabItem>
             <TabItem Header="Awaiting Certificate Order">
-                <DataGrid ItemsSource="{Binding AwaitingOrder}" AutoGenerateColumns="False" IsReadOnly="True">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Student" Binding="{Binding Student.FullName}" Width="200" />
-                        <DataGridTextColumn Header="Course" Binding="{Binding CourseDelivery.CourseDefinition.CourseCode}" Width="120" />
-                        <DataGridTextColumn Header="Outcome Date" Binding="{Binding OutcomeDate, StringFormat=dd/MM/yyyy}" Width="120" />
-                    </DataGrid.Columns>
-                </DataGrid>
+                <DataGrid ItemsSource="{Binding AwaitingOrder}" AutoGenerateColumns="True" IsReadOnly="True" />
             </TabItem>
             <TabItem Header="Withdrawn Students">
                 <StackPanel Margin="10">
@@ -85,6 +98,57 @@
                         <DataGridTextColumn Header="Certificate Cost" Binding="{Binding CertificateCost, StringFormat=C}" Width="120" />
                     </DataGrid.Columns>
                 </DataGrid>
+            </TabItem>
+            <TabItem Header="Upcoming Deliveries">
+                <DataGrid ItemsSource="{Binding UpcomingDeliveries}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Cancelled Deliveries">
+                <DataGrid ItemsSource="{Binding CancelledDeliveries}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Completed Deliveries">
+                <DataGrid ItemsSource="{Binding CompletedDeliveries}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Capacity">
+                <DataGrid ItemsSource="{Binding CapacityReport}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Active Allocations">
+                <DataGrid ItemsSource="{Binding ActiveAllocations}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Transferred Allocations">
+                <DataGrid ItemsSource="{Binding TransferredAllocations}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Cancelled Allocations">
+                <DataGrid ItemsSource="{Binding CancelledAllocations}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Placeholder Allocations">
+                <DataGrid ItemsSource="{Binding PlaceholderAllocations}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Attendance">
+                <DataGrid ItemsSource="{Binding Attendance}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Course Utilization">
+                <DataGrid ItemsSource="{Binding CourseUtilization}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Budget Summary">
+                <DataGrid ItemsSource="{Binding BudgetSummary}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Budget History">
+                <DataGrid ItemsSource="{Binding BudgetHistory}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Credit Summary">
+                <DataGrid ItemsSource="{Binding CreditSummary}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Credit History">
+                <DataGrid ItemsSource="{Binding CreditHistory}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Audit Activity">
+                <DataGrid ItemsSource="{Binding AuditActivity}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Import Review Queue">
+                <DataGrid ItemsSource="{Binding ImportReviewQueue}" AutoGenerateColumns="True" IsReadOnly="True" />
+            </TabItem>
+            <TabItem Header="Certificate Orders">
+                <DataGrid ItemsSource="{Binding CertificateOrders}" AutoGenerateColumns="True" IsReadOnly="True" />
             </TabItem>
         </TabControl>
     </Grid>

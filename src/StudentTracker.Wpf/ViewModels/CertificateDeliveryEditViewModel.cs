@@ -46,13 +46,17 @@ public partial class CertificateDeliveryEditViewModel : ViewModelBase, ICloseabl
     private Document? _selectedEvidenceDocument;
 
     public CertificateDeliveryEditViewModel(CertificateService certificateService, DocumentService documentService)
+        : this(certificateService, documentService, null)
+    {
+    }
+
+    public CertificateDeliveryEditViewModel(CertificateService certificateService, DocumentService documentService, CertificateOrder? selectedOrder)
     {
         _certificateService = certificateService;
         _documentService = documentService;
-
+        SelectedOrder = selectedOrder;
         AvailableOrders = new ObservableCollection<CertificateOrder>();
         AvailableDocuments = new ObservableCollection<Document>();
-
         LoadDataAsync().ConfigureAwait(false);
     }
 
@@ -61,6 +65,8 @@ public partial class CertificateDeliveryEditViewModel : ViewModelBase, ICloseabl
         var orders = await _certificateService.GetOrdersAsync();
         var awaiting = orders.Where(o => o.Status == CertificateOrderStatus.Ordered).ToList();
         AvailableOrders = new ObservableCollection<CertificateOrder>(awaiting);
+        if (SelectedOrder != null && AvailableOrders.All(o => o.Id != SelectedOrder.Id))
+            AvailableOrders.Insert(0, SelectedOrder);
 
         var documents = await _documentService.GetDocumentsForEntityAsync("All", Guid.Empty);
         AvailableDocuments = new ObservableCollection<Document>(documents);
@@ -95,7 +101,8 @@ public partial class CertificateDeliveryEditViewModel : ViewModelBase, ICloseabl
                 DeliveryMethod,
                 DeliveredTo,
                 Notes,
-                SelectedEvidenceDocument?.Id);
+                SelectedEvidenceDocument?.Id,
+                RecipientDetails);
 
             RequestClose?.Invoke(true);
         }

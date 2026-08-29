@@ -92,6 +92,14 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     }
 
     [RelayCommand(CanExecute = nameof(CanEditBudgetPool))]
+    private void BudgetTransactionHistory()
+    {
+        if (SelectedBudgetPool == null) return;
+        var vm = new BudgetTransactionHistoryViewModel(SelectedBudgetPool.Pool, _budgetService);
+        _dialogService.ShowDialog(vm);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditBudgetPool))]
     private async Task ArchiveBudgetPool()
     {
         if (SelectedBudgetPool == null || !_dialogService.Confirm($"Archive budget pool {SelectedBudgetPool.Name}? Transactions will be retained.")) return;
@@ -145,6 +153,25 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     }
 
     [RelayCommand(CanExecute = nameof(CanEditCreditPool))]
+    private async Task AddCredits()
+    {
+        if (SelectedCreditPool == null) return;
+        var vm = new CreditAddFundsViewModel(SelectedCreditPool, _creditService);
+        if (_dialogService.ShowDialog(vm) == true)
+        {
+            await LoadAsync();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditCreditPool))]
+    private void CreditTransactionHistory()
+    {
+        if (SelectedCreditPool == null) return;
+        var vm = new CreditTransactionHistoryViewModel(SelectedCreditPool, _creditService);
+        _dialogService.ShowDialog(vm);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditCreditPool))]
     private async Task ArchiveCreditPool()
     {
         if (SelectedCreditPool == null || !_dialogService.Confirm($"Archive credit pool {SelectedCreditPool.Name}? Transactions will be retained.")) return;
@@ -185,6 +212,7 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     {
         EditBudgetPoolCommand.NotifyCanExecuteChanged();
         AddFundsCommand.NotifyCanExecuteChanged();
+        BudgetTransactionHistoryCommand.NotifyCanExecuteChanged();
         ArchiveBudgetPoolCommand.NotifyCanExecuteChanged();
         RestoreBudgetPoolCommand.NotifyCanExecuteChanged();
     }
@@ -192,6 +220,8 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     partial void OnSelectedCreditPoolChanged(CertificateCreditPool? value)
     {
         EditCreditPoolCommand.NotifyCanExecuteChanged();
+        AddCreditsCommand.NotifyCanExecuteChanged();
+        CreditTransactionHistoryCommand.NotifyCanExecuteChanged();
         ArchiveCreditPoolCommand.NotifyCanExecuteChanged();
         RestoreCreditPoolCommand.NotifyCanExecuteChanged();
     }

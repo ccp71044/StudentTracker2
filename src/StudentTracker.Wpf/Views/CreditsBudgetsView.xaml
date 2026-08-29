@@ -14,6 +14,7 @@
             <Button Content="Add Budget Pool" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddBudgetPoolCommand}" />
             <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditBudgetPoolCommand}" />
             <Button Content="Add Funds" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddFundsCommand}" ToolTip="Top up the selected budget pool." />
+            <Button Content="Transactions" Style="{StaticResource ActionButtonStyle}" Command="{Binding BudgetTransactionHistoryCommand}" ToolTip="View the selected budget pool's transaction history." />
             <Button Content="Archive" Style="{StaticResource ActionButtonStyle}" Command="{Binding ArchiveBudgetPoolCommand}" ToolTip="Deactivate the selected budget pool." />
             <Button Content="Restore" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreBudgetPoolCommand}" />
             <CheckBox Content="Show inactive" IsChecked="{Binding ShowInactive}" VerticalAlignment="Center" Margin="10,0" />
@@ -28,10 +29,24 @@
                     <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0">
                         <Button Content="Add Credit Pool" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddCreditPoolCommand}" />
                         <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditCreditPoolCommand}" />
+                        <Button Content="Add Credits" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddCreditsCommand}" ToolTip="Top up the selected credit pool." />
+                        <Button Content="Transactions" Style="{StaticResource ActionButtonStyle}" Command="{Binding CreditTransactionHistoryCommand}" ToolTip="View the selected credit pool's transaction history." />
                         <Button Content="Archive" Style="{StaticResource ActionButtonStyle}" Command="{Binding ArchiveCreditPoolCommand}" ToolTip="Deactivate the selected credit pool." />
                         <Button Content="Restore" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreCreditPoolCommand}" />
                     </StackPanel>
-                    <DataGrid ItemsSource="{Binding CreditPools}" SelectedItem="{Binding SelectedCreditPool}" AutoGenerateColumns="False" IsReadOnly="True" Grid.Row="1" Margin="10">
+                    <DataGrid ItemsSource="{Binding CreditPools}" SelectedItem="{Binding SelectedCreditPool}" AutoGenerateColumns="False" IsReadOnly="True" Grid.Row="1" Margin="10" x:Name="CreditPoolsDataGrid">
+                        <DataGrid.InputBindings>
+                            <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding CreditTransactionHistoryCommand}" />
+                        </DataGrid.InputBindings>
+                        <DataGrid.ContextMenu>
+                            <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                <MenuItem Header="Edit" Command="{Binding EditCreditPoolCommand}" />
+                                <MenuItem Header="Add Credits" Command="{Binding AddCreditsCommand}" />
+                                <MenuItem Header="Transactions" Command="{Binding CreditTransactionHistoryCommand}" />
+                                <MenuItem Header="Archive" Command="{Binding ArchiveCreditPoolCommand}" />
+                                <MenuItem Header="Restore" Command="{Binding RestoreCreditPoolCommand}" />
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Pool" Binding="{Binding Name}" Width="200" />
                             <DataGridTextColumn Header="Provider" Binding="{Binding Provider}" Width="150" />
@@ -42,7 +57,19 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Budget Pools">
-                <DataGrid ItemsSource="{Binding BudgetPools}" SelectedItem="{Binding SelectedBudgetPool}" AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid ItemsSource="{Binding BudgetPools}" SelectedItem="{Binding SelectedBudgetPool}" AutoGenerateColumns="False" IsReadOnly="True" x:Name="BudgetPoolsDataGrid">
+                    <DataGrid.InputBindings>
+                        <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding BudgetTransactionHistoryCommand}" />
+                    </DataGrid.InputBindings>
+                    <DataGrid.ContextMenu>
+                        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                            <MenuItem Header="Edit" Command="{Binding EditBudgetPoolCommand}" />
+                            <MenuItem Header="Add Funds" Command="{Binding AddFundsCommand}" />
+                            <MenuItem Header="Transactions" Command="{Binding BudgetTransactionHistoryCommand}" />
+                            <MenuItem Header="Archive" Command="{Binding ArchiveBudgetPoolCommand}" />
+                            <MenuItem Header="Restore" Command="{Binding RestoreBudgetPoolCommand}" />
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Pool" Binding="{Binding Name}" Width="200" />
                         <DataGridTextColumn Header="Period" Binding="{Binding FinancialPeriod}" Width="120" />

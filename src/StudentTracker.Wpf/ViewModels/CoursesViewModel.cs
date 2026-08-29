@@ -19,6 +19,9 @@ public partial class CoursesViewModel : ViewModelBase
     private CourseDefinition? _selectedCourse;
 
     [ObservableProperty]
+    private string _searchText = string.Empty;
+
+    [ObservableProperty]
     private bool _showInactive;
 
     public CoursesViewModel(CourseService courseService, IDialogService dialogService)
@@ -30,8 +33,21 @@ public partial class CoursesViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        var list = await _courseService.GetDefinitionsAsync(includeInactive: ShowInactive);
+        var query = string.IsNullOrWhiteSpace(SearchText) ? null : SearchText;
+        var list = await _courseService.GetDefinitionsAsync(query: query, includeInactive: ShowInactive);
         Courses = new ObservableCollection<CourseDefinition>(list);
+    }
+
+    [RelayCommand]
+    private async Task Refresh()
+    {
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task Search()
+    {
+        await LoadAsync();
     }
 
     [RelayCommand]
@@ -49,6 +65,20 @@ public partial class CoursesViewModel : ViewModelBase
     {
         if (SelectedCourse == null) return;
         var vm = new CourseEditViewModel(SelectedCourse, _courseService, isNew: false);
+        if (_dialogService.ShowDialog(vm) == true)
+        {
+            await LoadAsync();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditOrDeleteCourse))]
+    private async Task AddDelivery()
+    {
+        if (SelectedCourse == null) return;
+        var delivery = new CourseDelivery { CourseDefinitionId = SelectedCourse.Id, CourseDefinition = SelectedCourse };
+        var vm = new DeliveryEditViewModel(delivery, _courseService, isNew: true);
+        await vm.LoadDataAsync();
+        vm.SelectedCourse = SelectedCourse;
         if (_dialogService.ShowDialog(vm) == true)
         {
             await LoadAsync();
@@ -97,5 +127,6 @@ public partial class CoursesViewModel : ViewModelBase
         EditCourseCommand.NotifyCanExecuteChanged();
         DeleteCourseCommand.NotifyCanExecuteChanged();
         RestoreCourseCommand.NotifyCanExecuteChanged();
+        AddDeliveryCommand.NotifyCanExecuteChanged();
     }
 }

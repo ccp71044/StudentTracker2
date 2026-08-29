@@ -12,13 +12,28 @@
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="1">
             <Button Content="Add Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddDeliveryCommand}" />
             <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditDeliveryCommand}" />
+            <Button Content="View Allocations" Style="{StaticResource ActionButtonStyle}" Command="{Binding ViewAllocationsCommand}" ToolTip="View allocations for the selected delivery." />
+            <Button Content="Add Allocation" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddAllocationCommand}" ToolTip="Create a new allocation for the selected delivery." />
             <Button Content="Cancel Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelDeliveryCommand}" />
             <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
         </StackPanel>
-        <DataGrid ItemsSource="{Binding Deliveries}" SelectedItem="{Binding SelectedDelivery}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True" 
-                 MouseDoubleClick="DataGrid_MouseDoubleClick">
+        <DataGrid x:Name="DeliveriesDataGrid" ItemsSource="{Binding Deliveries}" SelectedItem="{Binding SelectedDelivery}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True"
+                 MouseDoubleClick="DataGrid_MouseDoubleClick"
+                 PreviewMouseRightButtonDown="DataGrid_PreviewMouseRightButtonDown">
+            <DataGrid.ContextMenu>
+                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                    <MenuItem Header="Edit" Command="{Binding EditDeliveryCommand}" />
+                    <MenuItem Header="View Allocations" Command="{Binding ViewAllocationsCommand}" />
+                    <MenuItem Header="Add Allocation" Command="{Binding AddAllocationCommand}" />
+                    <Separator />
+                    <MenuItem Header="Cancel Delivery" Command="{Binding CancelDeliveryCommand}" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Delivery ID" Binding="{Binding DisplayId}" Width="100" />
+                <DataGridTextColumn Header="Course Code" Binding="{Binding CourseDefinition.CourseCode}" Width="120" />
+                <DataGridTextColumn Header="Status" Binding="{Binding DeliveryStatus}" Width="100" />
+                <DataGridTextColumn Header="Capacity" Binding="{Binding Capacity}" Width="80" />
                 <DataGridTextColumn Header="Start" Binding="{Binding StartDate, StringFormat=dd/MM/yyyy}" Width="120" />
                 <DataGridTextColumn Header="End" Binding="{Binding EndDate, StringFormat=dd/MM/yyyy}" Width="120" />
                 <DataGridTextColumn Header="Location" Binding="{Binding Location}" Width="150" />

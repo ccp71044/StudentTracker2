@@ -10,6 +10,10 @@ namespace StudentTracker.Wpf.ViewModels;
 public partial class DeliveriesViewModel : ViewModelBase
 {
     private readonly CourseService _courseService;
+    private readonly AllocationService _allocationService;
+    private readonly StudentService _studentService;
+    private readonly CreditService _creditService;
+    private readonly BudgetService _budgetService;
     private readonly IDialogService _dialogService;
 
     [ObservableProperty]
@@ -18,9 +22,13 @@ public partial class DeliveriesViewModel : ViewModelBase
     [ObservableProperty]
     private CourseDelivery? _selectedDelivery;
 
-    public DeliveriesViewModel(CourseService courseService, IDialogService dialogService)
+    public DeliveriesViewModel(CourseService courseService, AllocationService allocationService, StudentService studentService, CreditService creditService, BudgetService budgetService, IDialogService dialogService)
     {
         _courseService = courseService;
+        _allocationService = allocationService;
+        _studentService = studentService;
+        _creditService = creditService;
+        _budgetService = budgetService;
         _dialogService = dialogService;
         LoadAsync().ConfigureAwait(false);
     }
@@ -60,6 +68,29 @@ public partial class DeliveriesViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand(CanExecute = nameof(CanEditDelivery))]
+    private async Task ViewAllocations()
+    {
+        if (SelectedDelivery == null) return;
+        var allocations = await _allocationService.GetByDeliveryAsync(SelectedDelivery.Id);
+        var vm = new ViewAllocationsViewModel(SelectedDelivery, allocations);
+        _dialogService.ShowDialog(vm);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditDelivery))]
+    private async Task AddAllocation()
+    {
+        if (SelectedDelivery == null) return;
+        var allocation = new Allocation { CourseDeliveryId = SelectedDelivery.Id, CourseDelivery = SelectedDelivery };
+        var vm = new AllocationEditViewModel(allocation, _allocationService, _studentService, _courseService, _creditService, _budgetService, isNew: true);
+        await vm.LoadDataAsync();
+        vm.SelectedDelivery = SelectedDelivery;
+        if (_dialogService.ShowDialog(vm) == true)
+        {
+            await LoadAsync();
+        }
+    }
+
     [RelayCommand(CanExecute = nameof(CanCancelDelivery))]
     private async Task CancelDelivery()
     {
@@ -83,5 +114,7 @@ public partial class DeliveriesViewModel : ViewModelBase
     {
         EditDeliveryCommand.NotifyCanExecuteChanged();
         CancelDeliveryCommand.NotifyCanExecuteChanged();
+        ViewAllocationsCommand.NotifyCanExecuteChanged();
+        AddAllocationCommand.NotifyCanExecuteChanged();
     }
 }
