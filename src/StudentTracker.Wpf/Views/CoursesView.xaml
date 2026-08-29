@@ -22,6 +22,7 @@
                 <DataGridTextColumn Header="Code" Binding="{Binding CourseCode}" Width="120" />
                 <DataGridTextColumn Header="Title" Binding="{Binding CourseTitle}" Width="300" />
                 <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="120" />
+                <DataGridTextColumn Header="Duration (days)" Binding="{Binding CourseDurationDays}" Width="110" />
                 <DataGridTextColumn Header="Provider" Binding="{Binding Provider}" Width="150" />
             </DataGrid.Columns>
         </DataGrid>

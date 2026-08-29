@@ -31,8 +31,19 @@ A local, offline, single-user Windows desktop application for managing the compl
 1. Open `StudentTracker.sln` in Visual Studio 2022 or run `dotnet build`.
 2. Run `dotnet test`.
 3. Publish with `installer\publish.ps1`.
-4. Run `StudentTracker.Wpf.exe` from the publish folder.
+4. Run `StudentTracker.exe` from the publish folder.
 
 Data is stored under `%LOCALAPPDATA%\StudentTracker\` by default.
 
-See [BUILD.md](BUILD.md), [INSTALL.md](INSTALL.md), [USER_GUIDE.md](USER_GUIDE.md), and [MIGRATION.md](MIGRATION.md) for more details.
+## Documentation Index
+
+- [Technical Reference](TECHNICAL_REFERENCE.md) — architecture, data model, services, workflows, audit/logging, testing, and extension guidance.
+- [Progress Report — 2026-08-29](PROGRESS_REPORT_2026-08-29.md) — implemented changes and recorded verification results.
+- [Functionality Analysis](FUNCTIONALITY_ANALYSIS.md) — original function inventory and gap assessment.
+- [Lifecycle Workflow Tasks — 2026-08-29](LIFECYCLE_WORKFLOW_TASKS_2026-08-29.md) — completed archive, restore, cancellation, and diagnostics backlog.
+- [Build Instructions](BUILD.md).
+- [Data Migration Format](DATA_MIGRATION_FORMAT.md) — exact Excel sheet/column specification for migration imports.
+- [Installation](INSTALL.md).
+- [User Guide](USER_GUIDE.md).
+- [Migration Guide](MIGRATION.md).
+- [Test Results](TEST_RESULTS.md).

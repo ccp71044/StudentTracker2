@@ -1,12 +1,11 @@
-using StudentTracker.Wpf.ViewModels;
+using System.Windows.Controls;
 
 namespace StudentTracker.Wpf.Views;
 
-public partial class CertificateOrderEditView
+public partial class CertificateOrderEditView : UserControl
 {
-    public CertificateOrderEditView(CertificateOrderEditViewModel viewModel)
+    public CertificateOrderEditView()
     {
         InitializeComponent();
-        DataContext = viewModel;
     }
 }

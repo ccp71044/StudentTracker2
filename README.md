@@ -69,7 +69,7 @@ To produce the same artifact locally on Windows, run `installer\publish.ps1`.
 
 ## Installing
 
-Extract the zip anywhere and run `StudentTracker.Wpf.exe` — no .NET runtime install required.
+Extract the zip anywhere and run `StudentTracker.exe` — no .NET runtime install required.
 Application data (database, documents, backups, logs) lives under `%LOCALAPPDATA%\StudentTracker\`.
 
 See [docs/INSTALL.md](docs/INSTALL.md), [docs/USER_GUIDE.md](docs/USER_GUIDE.md),

@@ -36,6 +36,9 @@ public partial class CourseEditViewModel : ViewModelBase, ICloseable
     private decimal? _defaultCertificateCost;
 
     [ObservableProperty]
+    private int? _courseDurationDays;
+
+    [ObservableProperty]
     private decimal? _defaultCreditQuantity;
 
     [ObservableProperty]
@@ -56,6 +59,7 @@ public partial class CourseEditViewModel : ViewModelBase, ICloseable
         Description = course.Description;
         Provider = course.Provider;
         DefaultCertificateCost = course.DefaultCertificateCost;
+        CourseDurationDays = course.CourseDurationDays;
         DefaultCreditQuantity = course.DefaultCreditQuantity;
         IsActive = course.IsActive;
         Notes = course.Notes;
@@ -70,6 +74,7 @@ public partial class CourseEditViewModel : ViewModelBase, ICloseable
         _course.Description = Description;
         _course.Provider = Provider;
         _course.DefaultCertificateCost = DefaultCertificateCost;
+        _course.CourseDurationDays = CourseDurationDays;
         _course.DefaultCreditQuantity = DefaultCreditQuantity;
         _course.IsActive = IsActive;
         _course.Notes = Notes;

@@ -25,6 +25,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <TextBlock Text="Course code:" VerticalAlignment="Center" Margin="0,4" Grid.Row="0" Grid.Column="0" />
                 <TextBox Text="{Binding CourseCode}" Grid.Row="0" Grid.Column="1" Margin="8,4" />
@@ -41,17 +42,20 @@
                 <TextBlock Text="Default certificate cost:" VerticalAlignment="Center" Margin="0,4" Grid.Row="4" Grid.Column="0" />
                 <TextBox Text="{Binding DefaultCertificateCost}" Grid.Row="4" Grid.Column="1" Margin="8,4" />
 
-                <TextBlock Text="Default credit quantity:" VerticalAlignment="Center" Margin="0,4" Grid.Row="5" Grid.Column="0" />
-                <TextBox Text="{Binding DefaultCreditQuantity}" Grid.Row="5" Grid.Column="1" Margin="8,4" />
+                <TextBlock Text="Duration (days):" VerticalAlignment="Center" Margin="0,4" Grid.Row="5" Grid.Column="0" />
+                <TextBox Text="{Binding CourseDurationDays}" Grid.Row="5" Grid.Column="1" Margin="8,4" />
 
-                <TextBlock Text="Description:" VerticalAlignment="Top" Margin="0,4" Grid.Row="6" Grid.Column="0" />
-                <TextBox Text="{Binding Description}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Grid.Row="6" Grid.Column="1" Margin="8,4" />
+                <TextBlock Text="Default credit quantity:" VerticalAlignment="Center" Margin="0,4" Grid.Row="6" Grid.Column="0" />
+                <TextBox Text="{Binding DefaultCreditQuantity}" Grid.Row="6" Grid.Column="1" Margin="8,4" />
 
-                <TextBlock Text="Notes:" VerticalAlignment="Top" Margin="0,4" Grid.Row="7" Grid.Column="0" />
-                <TextBox Text="{Binding Notes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Grid.Row="7" Grid.Column="1" Margin="8,4" />
+                <TextBlock Text="Description:" VerticalAlignment="Top" Margin="0,4" Grid.Row="7" Grid.Column="0" />
+                <TextBox Text="{Binding Description}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Grid.Row="7" Grid.Column="1" Margin="8,4" />
 
-                <TextBlock Text="Active:" VerticalAlignment="Center" Margin="0,4" Grid.Row="8" Grid.Column="0" />
-                <CheckBox IsChecked="{Binding IsActive}" Grid.Row="8" Grid.Column="1" Margin="8,4" VerticalAlignment="Center" />
+                <TextBlock Text="Notes:" VerticalAlignment="Top" Margin="0,4" Grid.Row="8" Grid.Column="0" />
+                <TextBox Text="{Binding Notes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Grid.Row="8" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Text="Active:" VerticalAlignment="Center" Margin="0,4" Grid.Row="9" Grid.Column="0" />
+                <CheckBox IsChecked="{Binding IsActive}" Grid.Row="9" Grid.Column="1" Margin="8,4" VerticalAlignment="Center" />
             </Grid>
         </ScrollViewer>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2" Margin="0,10,0,0">

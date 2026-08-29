@@ -5,7 +5,7 @@
 1. Download `StudentTracker-win-x64-<version>.zip` from the GitHub release for the version you want.
 2. Right-click the zip, choose Properties and tick **Unblock** (Windows marks downloaded files), then extract it
    to a folder such as `C:\Program Files\StudentTracker`.
-3. Run `StudentTracker.Wpf.exe`.
+3. Run `StudentTracker.exe`.
 4. The application creates its data directory under `%LOCALAPPDATA%\StudentTracker\` on first run and starts
    with an empty register.
 
@@ -18,7 +18,7 @@ To populate a fresh installation with example students, courses and deliveries f
 start the application once with:
 
 ```powershell
-StudentTracker.Wpf.exe --sample-data
+StudentTracker.exe --sample-data
 ```
 
 Sample data is only inserted when the register is empty. Never use this switch on a live installation.

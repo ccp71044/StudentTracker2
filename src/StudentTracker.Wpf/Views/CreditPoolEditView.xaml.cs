@@ -1,12 +1,11 @@
-using StudentTracker.Wpf.ViewModels;
+using System.Windows.Controls;
 
 namespace StudentTracker.Wpf.Views;
 
-public partial class CreditPoolEditView
+public partial class CreditPoolEditView : UserControl
 {
-    public CreditPoolEditView(CreditPoolEditViewModel viewModel)
+    public CreditPoolEditView()
     {
         InitializeComponent();
-        DataContext = viewModel;
     }
 }

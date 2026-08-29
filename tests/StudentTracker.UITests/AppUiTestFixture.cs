@@ -20,7 +20,7 @@ public class AppUiTestFixture : IDisposable
 
         var exePath = FindExePath();
         if (string.IsNullOrEmpty(exePath) || !File.Exists(exePath))
-            throw new FileNotFoundException("Could not locate StudentTracker.Wpf.exe. Run 'dotnet publish' first.", "StudentTracker.Wpf.exe");
+            throw new FileNotFoundException("Could not locate StudentTracker.exe. Run 'dotnet publish' first.", "StudentTracker.exe");
 
         var startInfo = new ProcessStartInfo(exePath, "--sample-data")
         {
@@ -71,9 +71,9 @@ public class AppUiTestFixture : IDisposable
     {
         var candidates = new[]
         {
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "StudentTracker.Wpf", "bin", "Release", "net8.0-windows", "StudentTracker.Wpf.exe"),
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "StudentTracker.Wpf", "bin", "Release", "net8.0-windows", "win-x64", "StudentTracker.Wpf.exe"),
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "release", "StudentTracker-win-x64", "StudentTracker.Wpf.exe"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "StudentTracker.Wpf", "bin", "Release", "net8.0-windows", "StudentTracker.exe"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "StudentTracker.Wpf", "bin", "Release", "net8.0-windows", "win-x64", "StudentTracker.exe"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "release", "StudentTracker-win-x64", "StudentTracker.exe"),
         };
 
         foreach (var candidate in candidates)
