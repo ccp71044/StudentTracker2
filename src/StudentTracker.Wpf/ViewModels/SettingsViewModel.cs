@@ -22,7 +22,7 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void CompactDatabase()
+    public void CompactDatabase()
     {
         using var context = _bootstrap.CreateContext();
         _bootstrap.CompactDatabase(context);

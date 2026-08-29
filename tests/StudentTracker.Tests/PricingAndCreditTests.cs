@@ -214,6 +214,52 @@ public class BudgetSummaryTests
     }
 
     [Fact]
+    public async Task PoolSummaries_ReportPrepaidPlacePositionsWithoutCombiningPools()
+    {
+        using var context = TestDbContextFactory.Create();
+        context.AppSettings.Add(new());
+        var first = new BudgetPool { Name = "First" };
+        var second = new BudgetPool { Name = "Second" };
+        var course = new CourseDefinition { CourseCode = "C1", CourseTitle = "Course" };
+        var delivery = new CourseDelivery { CourseDefinition = course };
+        context.AddRange(first, second, delivery);
+        context.Allocations.AddRange(
+            new Allocation { CourseDelivery = delivery, BudgetPool = first, PlaceholderName = "Place 1", AllocationStatus = AllocationStatus.Reserved },
+            new Allocation { CourseDelivery = delivery, BudgetPool = first, Student = new Student { FirstName = "A", LastName = "B" }, OutcomeStatus = OutcomeStatus.Pending },
+            new Allocation { CourseDelivery = delivery, BudgetPool = first, Student = new Student { FirstName = "C", LastName = "D" }, OutcomeStatus = OutcomeStatus.Completed, CashCommitmentStatus = CashCommitmentStatus.Pending },
+            new Allocation { CourseDelivery = delivery, BudgetPool = second, PlaceholderName = "Place 2", AllocationStatus = AllocationStatus.Reserved });
+        context.SaveChanges();
+
+        var summaries = await new BudgetSummaryService(context, new PricingService(context)).GetPoolSummariesAsync();
+
+        var firstSummary = summaries.Single(s => s.PoolId == first.Id);
+        Assert.Equal(1, firstSummary.UnassignedPlaceholderPlaces);
+        Assert.Equal(1, firstSummary.AssignedPendingPlaces);
+        Assert.Equal(1, firstSummary.CompletedAwaitingManualSpend);
+        Assert.Equal(1, summaries.Single(s => s.PoolId == second.Id).UnassignedPlaceholderPlaces);
+    }
+
+    [Fact]
+    public async Task CompletionsRemaining_ReportsEachPoolSeparately()
+    {
+        using var context = TestDbContextFactory.Create();
+        context.AppSettings.Add(new());
+        var first = new BudgetPool { Name = "First" };
+        var second = new BudgetPool { Name = "Second" };
+        var course = new CourseDefinition { CourseCode = "C1", CourseTitle = "Course", DefaultCertificateCost = 20m };
+        context.AddRange(first, second, course);
+        context.BudgetTransactions.AddRange(
+            new BudgetTransaction { PoolId = first.Id, TransactionType = BudgetTransactionType.FundsAdded, Amount = 100m },
+            new BudgetTransaction { PoolId = second.Id, TransactionType = BudgetTransactionType.FundsAdded, Amount = 60m });
+        context.SaveChanges();
+
+        var rows = await new BudgetSummaryService(context, new PricingService(context)).GetCompletionsRemainingAsync();
+
+        Assert.Equal(5, rows.Single(r => r.PoolId == first.Id).Remaining);
+        Assert.Equal(3, rows.Single(r => r.PoolId == second.Id).Remaining);
+    }
+
+    [Fact]
     public async Task Reconciliation_FlagsTheDollarDifferenceInsteadOfOverwritingTheRegister()
     {
         using var context = TestDbContextFactory.Create();

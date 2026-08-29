@@ -73,7 +73,7 @@ public partial class DashboardViewModel : ViewModelBase
         HasNegativePool = Pools.Any(p => p.Free < 0);
 
         CompletionsRemaining.Clear();
-        foreach (var course in (await _budgetSummary.GetCompletionsRemainingAsync()).Take(10))
+        foreach (var course in await _budgetSummary.GetCompletionsRemainingAsync())
             CompletionsRemaining.Add(course);
 
         var reconciliation = await _budgetSummary.ReconcileTopUpsAsync();

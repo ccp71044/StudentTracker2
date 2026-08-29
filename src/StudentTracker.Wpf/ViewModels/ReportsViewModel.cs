@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
@@ -11,6 +12,7 @@ namespace StudentTracker.Wpf.ViewModels;
 public partial class ReportsViewModel : ViewModelBase
 {
     private readonly ReportService _reportService;
+    private readonly InvoicerReferenceExportService _referenceExportService;
 
     [ObservableProperty]
     private ObservableCollection<Allocation> _completedStudents = new();
@@ -96,9 +98,10 @@ public partial class ReportsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _includeArchived;
 
-    public ReportsViewModel(ReportService reportService)
+    public ReportsViewModel(ReportService reportService, InvoicerReferenceExportService referenceExportService)
     {
         _reportService = reportService;
+        _referenceExportService = referenceExportService;
         LoadAsync().ConfigureAwait(false);
     }
 
@@ -271,6 +274,17 @@ public partial class ReportsViewModel : ViewModelBase
     private async Task ExportCertificateOrdersCsv()
     {
         await ExportAsync("certificate-orders.csv", CertificateOrders.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportInvoiceManagerCostPosition()
+    {
+        var result = await _referenceExportService.ExportCostPositionSnapshotAsync("Manual export from Reports");
+        MessageBox.Show(
+            $"Invoice Manager cost position snapshot exported.\nPools: {result.PoolCount}\nCourses: {result.CourseCount}\nJSON: {Path.GetFileName(result.JsonPath)}\nCSV: {Path.GetFileName(result.CsvPath)}",
+            "Export Complete",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
     }
 
     [RelayCommand]

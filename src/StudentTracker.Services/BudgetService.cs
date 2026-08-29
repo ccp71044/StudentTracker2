@@ -87,6 +87,18 @@ public class BudgetService
 
     public async Task<BudgetTransaction> CreateCommitmentAsync(Guid poolId, Guid allocationId, decimal amount, string? reason = null)
     {
+        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+        if (allocation.CashCommitmentStatus != CashCommitmentStatus.None && allocation.CashCommitmentStatus != CashCommitmentStatus.Released)
+            throw new InvalidOperationException("Commitment can only be created when the allocation has no active commitment.");
+
+        var forecast = await GetForecastAvailableAsync(poolId);
+        if (forecast < amount)
+        {
+            _audit.Record("CommitmentBlocked", "Allocation", allocation.Id, allocation.DisplayId, null, new { Requested = amount, Available = forecast });
+            await _context.SaveChangesAsync();
+            throw new InvalidOperationException($"Insufficient budget funds. Available: {forecast:C}, requested: {amount:C}.");
+        }
+
         var tx = new BudgetTransaction
         {
             DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
@@ -98,29 +110,35 @@ public class BudgetService
             TransactionDate = DateTime.UtcNow
         };
         _context.BudgetTransactions.Add(tx);
-        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
         allocation.CashCommitmentStatus = CashCommitmentStatus.Pending;
         allocation.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        _audit.Record("CommitmentCreated", "Allocation", allocation.Id, allocation.DisplayId);
+        _audit.Record("CommitmentCreated", "Allocation", allocation.Id, allocation.DisplayId, null, new { Amount = amount, PoolId = poolId });
         await _context.SaveChangesAsync();
         return tx;
     }
 
-    public async Task<BudgetTransaction> ReleaseCommitmentAsync(Guid poolId, Guid allocationId, decimal amount, string? reason = null)
+    public async Task<BudgetTransaction> ReleaseCommitmentAsync(Guid poolId, Guid allocationId, string? reason = null)
     {
+        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+        if (allocation.CashCommitmentStatus != CashCommitmentStatus.Pending)
+            throw new InvalidOperationException("Only a pending commitment can be released.");
+
+        var committed = await GetAllocationCommitmentAsync(allocationId);
+        if (committed <= 0)
+            throw new InvalidOperationException("No outstanding commitment amount to release.");
+
         var tx = new BudgetTransaction
         {
             DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
             PoolId = poolId,
             AllocationId = allocationId,
             TransactionType = BudgetTransactionType.CommitmentReleased,
-            Amount = amount,
+            Amount = committed,
             Reason = reason ?? "Commitment released",
             TransactionDate = DateTime.UtcNow
         };
         _context.BudgetTransactions.Add(tx);
-        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
         allocation.CashCommitmentStatus = CashCommitmentStatus.Released;
         allocation.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
@@ -129,24 +147,73 @@ public class BudgetService
         return tx;
     }
 
-    public async Task<BudgetTransaction> RecogniseExpenseAsync(Guid poolId, Guid allocationId, decimal amount, string? reason = null)
+    public async Task<BudgetTransaction> RecogniseExpenseAsync(Guid poolId, Guid allocationId, string? reason = null)
     {
-        var tx = new BudgetTransaction
+        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+        if (allocation.CashCommitmentStatus != CashCommitmentStatus.Pending)
+            throw new InvalidOperationException("Expense can only be recognised when a commitment is pending.");
+
+        var committed = await GetAllocationCommitmentAsync(allocationId);
+        if (committed <= 0)
+            throw new InvalidOperationException("No outstanding commitment amount to recognise.");
+
+        var releaseTx = new BudgetTransaction
+        {
+            DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+            PoolId = poolId,
+            AllocationId = allocationId,
+            TransactionType = BudgetTransactionType.CommitmentReleased,
+            Amount = committed,
+            Reason = reason ?? "Commitment released for expense recognition",
+            TransactionDate = DateTime.UtcNow
+        };
+        _context.BudgetTransactions.Add(releaseTx);
+
+        var expenseTx = new BudgetTransaction
         {
             DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
             PoolId = poolId,
             AllocationId = allocationId,
             TransactionType = BudgetTransactionType.ExpenseRecognised,
-            Amount = -Math.Abs(amount),
+            Amount = -committed,
             Reason = reason ?? "Expense recognised",
             TransactionDate = DateTime.UtcNow
         };
-        _context.BudgetTransactions.Add(tx);
-        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+        _context.BudgetTransactions.Add(expenseTx);
+
         allocation.CashCommitmentStatus = CashCommitmentStatus.Spent;
         allocation.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-        _audit.Record("ExpenseRecognised", "Allocation", allocation.Id, allocation.DisplayId);
+        _audit.Record("ExpenseRecognised", "Allocation", allocation.Id, allocation.DisplayId, null, new { Amount = committed, PoolId = poolId });
+        await _context.SaveChangesAsync();
+        return expenseTx;
+    }
+
+    public async Task<BudgetTransaction> ReverseExpenseAsync(Guid poolId, Guid allocationId, string? reason = null)
+    {
+        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+        if (allocation.CashCommitmentStatus != CashCommitmentStatus.Spent)
+            throw new InvalidOperationException("Only a spent cost can be reversed.");
+
+        var expense = await GetAllocationExpenseAsync(allocationId);
+        if (expense <= 0)
+            throw new InvalidOperationException("No recognised expense to reverse.");
+
+        var tx = new BudgetTransaction
+        {
+            DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+            PoolId = poolId,
+            AllocationId = allocationId,
+            TransactionType = BudgetTransactionType.ExpenseReversed,
+            Amount = expense,
+            Reason = reason ?? "Spent cost reversed",
+            TransactionDate = DateTime.UtcNow
+        };
+        _context.BudgetTransactions.Add(tx);
+        allocation.CashCommitmentStatus = CashCommitmentStatus.Released;
+        allocation.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("ExpenseReversed", "Allocation", allocation.Id, allocation.DisplayId, null, new { Amount = expense, PoolId = poolId });
         await _context.SaveChangesAsync();
         return tx;
     }
@@ -155,7 +222,9 @@ public class BudgetService
         await _context.BudgetTransactions.Where(t => t.PoolId == poolId && t.TransactionType == BudgetTransactionType.FundsAdded).SumAsync(t => t.Amount);
 
     public async Task<decimal> GetActualExpenditureAsync(Guid poolId) =>
-        -await _context.BudgetTransactions.Where(t => t.PoolId == poolId && t.TransactionType == BudgetTransactionType.ExpenseRecognised).SumAsync(t => t.Amount);
+        -await _context.BudgetTransactions
+            .Where(t => t.PoolId == poolId && (t.TransactionType == BudgetTransactionType.ExpenseRecognised || t.TransactionType == BudgetTransactionType.ExpenseReversed))
+            .SumAsync(t => t.Amount);
 
     public async Task<decimal> GetPendingCommitmentsAsync(Guid poolId) =>
         -await _context.BudgetTransactions
@@ -164,6 +233,16 @@ public class BudgetService
 
     public async Task<decimal> GetActualAvailableAsync(Guid poolId) => await GetFundsAddedAsync(poolId) - await GetActualExpenditureAsync(poolId);
     public async Task<decimal> GetForecastAvailableAsync(Guid poolId) => await GetActualAvailableAsync(poolId) - await GetPendingCommitmentsAsync(poolId);
+
+    public async Task<decimal> GetAllocationCommitmentAsync(Guid allocationId) =>
+        -await _context.BudgetTransactions
+            .Where(t => t.AllocationId == allocationId && (t.TransactionType == BudgetTransactionType.CommitmentCreated || t.TransactionType == BudgetTransactionType.CommitmentReleased))
+            .SumAsync(t => t.Amount);
+
+    public async Task<decimal> GetAllocationExpenseAsync(Guid allocationId) =>
+        -await _context.BudgetTransactions
+            .Where(t => t.AllocationId == allocationId && (t.TransactionType == BudgetTransactionType.ExpenseRecognised || t.TransactionType == BudgetTransactionType.ExpenseReversed))
+            .SumAsync(t => t.Amount);
 
     public async Task<List<BudgetTransaction>> GetTransactionsAsync(Guid poolId) =>
         await _context.BudgetTransactions.Where(t => t.PoolId == poolId).OrderByDescending(t => t.TransactionDate).ToListAsync();

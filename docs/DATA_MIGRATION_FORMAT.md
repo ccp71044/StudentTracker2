@@ -119,3 +119,13 @@ The import expects a single Excel workbook (`*.xlsx`) with separate sheets, one 
 6. Check the Students, Courses, Deliveries, and Allocations screens to confirm the data loaded correctly.
 
 If a row cannot be imported, the importer will report the problem in the status message.
+
+## Guided full-data cutover
+
+Use **Data > Replace All Data from Migration Package** (also available on **Import / Export**) only for an approved full replacement. This is deliberately separate from the additive **Import Migration Package** command.
+
+Before enabling confirmation, the workflow reads the workbook without changing the database and reports current database and workbook counts. It requires the four canonical sheets and their headers/required values; checks duplicate student, course and delivery identifiers and pool names; validates course/delivery/student/pool references and supported enum values; and rejects unreadable or invalid packages.
+
+To proceed, type `REPLACE DATA` exactly in the warning dialog. The application then revalidates the package, checks database integrity, and creates and verifies a `verified-pre-cutover` backup. Inside one database transaction it clears operational and test records, imports via `MigrationPackageImporter`, rejects any import error or review-queue item, and reconciles exact counts and course/student/delivery relationships. Failure rolls back the transaction and clears EF's change tracker so deleted/imported tracked objects cannot leak into later saves. Success writes a `DataCutoverCompleted` audit record, commits, then creates and verifies a `verified-post-cutover` backup.
+
+The replacement removes database rows for students, courses/prices/deliveries, allocations, pools and transactions, funding/invoices/certificates/sign-offs, document metadata/links, imports/exports, outcome reasons and prior audit records. It preserves `AppSettings` and `__EFMigrationsHistory`. **It never deletes files from the Documents directory.** The pre-cutover backup includes the database, document files, and templates.

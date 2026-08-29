@@ -4,7 +4,7 @@
 
 Student Tracker 2 has progressed from a partially exposed service-layer application to an integrated WPF desktop system in which the main student, course, delivery, allocation, certificate, finance, document, reporting, backup, import, and export workflows are accessible through the UI.
 
-The implementation work was driven by the gap assessment in `FUNCTIONALITY_ANALYSIS.md` and the lifecycle safety backlog in `LIFECYCLE_WORKFLOW_TASKS_2026-08-29.md`. The current implementation has passed the solution Release build, 40 unit tests, and 11 FlaUI tests.
+The implementation work was driven by the gap assessment in `FUNCTIONALITY_ANALYSIS.md` and the lifecycle safety backlog in `LIFECYCLE_WORKFLOW_TASKS_2026-08-29.md`. The current implementation has passed the solution Release build, 62 unit tests, and 33 FlaUI tests.
 
 ## Repository synchronization and baseline
 
@@ -254,8 +254,8 @@ Final recorded verification:
 | Check | Result |
 |---|---:|
 | Release solution build | Passed — 0 warnings, 0 errors |
-| Unit tests | Passed — 40/40 |
-| FlaUI tests | Passed — 11/11 |
+| Unit tests | Passed — 62/62 |
+| FlaUI tests | Passed — 33/33 |
 | Git synchronization | `main` synchronized with `origin/main` |
 
 The first parallel Release build attempt encountered locked WPF output DLLs because a previous Student Tracker process remained running. The stale process was stopped and the build was rerun successfully with no warnings or errors.

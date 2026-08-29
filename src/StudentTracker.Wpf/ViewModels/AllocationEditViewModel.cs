@@ -65,23 +65,9 @@ public partial class AllocationEditViewModel : ViewModelBase, ICloseable
     [ObservableProperty]
     private string? _outcomeNotes;
 
-    [ObservableProperty]
-    private CreditStatus _creditStatus = CreditStatus.None;
-
-    [ObservableProperty]
-    private CashCommitmentStatus _cashCommitmentStatus = CashCommitmentStatus.None;
-
-    [ObservableProperty]
-    private bool _reserveCredit;
-
-    [ObservableProperty]
-    private bool _createCashCommitment;
-
     public IReadOnlyList<AllocationStatus> AllocationStatusOptions { get; } = Enum.GetValues<AllocationStatus>();
     public IReadOnlyList<AttendanceStatus> AttendanceStatusOptions { get; } = Enum.GetValues<AttendanceStatus>();
     public IReadOnlyList<OutcomeStatus> OutcomeStatusOptions { get; } = Enum.GetValues<OutcomeStatus>();
-    public IReadOnlyList<CreditStatus> CreditStatusOptions { get; } = Enum.GetValues<CreditStatus>();
-    public IReadOnlyList<CashCommitmentStatus> CashCommitmentStatusOptions { get; } = Enum.GetValues<CashCommitmentStatus>();
 
     public AllocationEditViewModel(Allocation allocation, AllocationService allocationService, StudentService studentService, CourseService courseService, CreditService creditService, BudgetService budgetService, bool isNew = false)
     {
@@ -112,8 +98,6 @@ public partial class AllocationEditViewModel : ViewModelBase, ICloseable
             OutcomeStatus = _allocation.OutcomeStatus;
             OutcomeDate = _allocation.OutcomeDate;
             OutcomeNotes = _allocation.OutcomeNotes;
-            CreditStatus = _allocation.CreditStatus;
-            CashCommitmentStatus = _allocation.CashCommitmentStatus;
         }
     }
 
@@ -152,9 +136,7 @@ public partial class AllocationEditViewModel : ViewModelBase, ICloseable
                 SelectedStudent!.Id,
                 CertificateCost,
                 SelectedBudgetPool?.Id,
-                SelectedCreditPool?.Id,
-                ReserveCredit,
-                CreateCashCommitment);
+                SelectedCreditPool?.Id);
         }
         else
         {
@@ -177,9 +159,6 @@ public partial class AllocationEditViewModel : ViewModelBase, ICloseable
             _allocation.OutcomeStatus = OutcomeStatus;
             _allocation.OutcomeDate = OutcomeDate;
             _allocation.OutcomeNotes = OutcomeNotes;
-            _allocation.CreditStatus = CreditStatus;
-            _allocation.CashCommitmentStatus = CashCommitmentStatus;
-
             await _allocationService.MarkAttendanceAsync(_allocation.Id, AttendanceStatus, OutcomeNotes);
             await _allocationService.MarkOutcomeAsync(_allocation.Id, OutcomeStatus, null, OutcomeNotes, OutcomeDate);
         }

@@ -10,12 +10,14 @@ public class AllocationService
     private readonly StudentTrackerDbContext _context;
     private readonly DisplayIdGenerator _idGenerator;
     private readonly AuditService _audit;
+    private readonly BudgetService _budgetService;
 
-    public AllocationService(StudentTrackerDbContext context, DisplayIdGenerator idGenerator, AuditService audit)
+    public AllocationService(StudentTrackerDbContext context, DisplayIdGenerator idGenerator, AuditService audit, BudgetService budgetService)
     {
         _context = context;
         _idGenerator = idGenerator;
         _audit = audit;
+        _budgetService = budgetService;
     }
 
     public async Task<List<Allocation>> GetAllocationsAsync()
@@ -55,13 +57,22 @@ public class AllocationService
         if (existing) throw new InvalidOperationException("Student is already allocated to this delivery.");
 
         var delivery = await _context.CourseDeliveries.FindAsync(deliveryId) ?? throw new ArgumentException("Delivery not found");
-        var defaultCost = delivery.CourseDefinition?.DefaultCertificateCost ?? certificateCost;
+        var defaultCost = delivery.CourseDefinition?.DefaultCertificateCost;
+        var cost = certificateCost ?? defaultCost;
+
+        if (createCashCommitment && budgetPoolId.HasValue && cost.HasValue && cost.Value > 0)
+        {
+            var available = await _budgetService.GetForecastAvailableAsync(budgetPoolId.Value);
+            if (available < cost.Value)
+                throw new InvalidOperationException($"Insufficient budget funds. Available: {available:C}, requested: {cost.Value:C}.");
+        }
+
         var allocation = new Allocation
         {
             DisplayId = _idGenerator.NextDisplayId<Allocation>("ALL"),
             CourseDeliveryId = deliveryId,
             StudentId = studentId,
-            CertificateCost = certificateCost ?? delivery.CourseDefinition?.DefaultCertificateCost,
+            CertificateCost = cost,
             BudgetPoolId = budgetPoolId,
             CreditPoolId = creditPoolId,
             AllocationStatus = AllocationStatus.Enrolled,
@@ -75,8 +86,20 @@ public class AllocationService
 
         if (reserveCredit && creditPoolId.HasValue)
             allocation.CreditStatus = CreditStatus.Allocated;
-        if (createCashCommitment && budgetPoolId.HasValue)
+        if (createCashCommitment && budgetPoolId.HasValue && cost.HasValue && cost.Value > 0)
+        {
             allocation.CashCommitmentStatus = CashCommitmentStatus.Pending;
+            _context.BudgetTransactions.Add(new BudgetTransaction
+            {
+                DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+                PoolId = budgetPoolId.Value,
+                AllocationId = allocation.Id,
+                TransactionType = BudgetTransactionType.CommitmentCreated,
+                Amount = -cost.Value,
+                Reason = "Cash commitment created on allocation",
+                TransactionDate = DateTime.UtcNow
+            });
+        }
 
         _context.Allocations.Add(allocation);
         await _context.SaveChangesAsync();
@@ -106,6 +129,73 @@ public class AllocationService
         _audit.Record("Created", "Allocation", allocation.Id, allocation.DisplayId, null, new { Placeholder = placeholderName });
         await _context.SaveChangesAsync();
         return allocation;
+    }
+
+    public async Task<List<Allocation>> CreatePlaceholderAllocationsAsync(Guid deliveryId, string placeholderName, int quantity, decimal? certificateCost = null, Guid? budgetPoolId = null, string? legacyReference = null)
+    {
+        if (quantity <= 0)
+            throw new ArgumentException("Quantity must be greater than zero.", nameof(quantity));
+        if (string.IsNullOrWhiteSpace(placeholderName))
+            throw new ArgumentException("Placeholder name is required.", nameof(placeholderName));
+
+        var delivery = await _context.CourseDeliveries.FindAsync(deliveryId) ?? throw new ArgumentException("Delivery not found");
+        var cost = certificateCost ?? delivery.CourseDefinition?.DefaultCertificateCost;
+        var totalCost = cost.GetValueOrDefault() * quantity;
+
+        if (budgetPoolId.HasValue && totalCost > 0)
+        {
+            var available = await _budgetService.GetForecastAvailableAsync(budgetPoolId.Value);
+            if (available < totalCost)
+            {
+                _audit.Record("PlaceholderCommitmentBlocked", "Allocation", Guid.Empty, null, null, new { Requested = totalCost, Available = available, PoolId = budgetPoolId.Value });
+                await _context.SaveChangesAsync();
+                throw new InvalidOperationException($"Insufficient budget funds for {quantity} placeholders. Available: {available:C}, required: {totalCost:C}.");
+            }
+        }
+
+        var allocations = new List<Allocation>();
+        for (int i = 0; i < quantity; i++)
+        {
+            var indexedName = quantity == 1 ? placeholderName : $"{placeholderName} ({i + 1}/{quantity})";
+            var allocation = new Allocation
+            {
+                DisplayId = _idGenerator.NextDisplayId<Allocation>("ALL"),
+                CourseDeliveryId = deliveryId,
+                PlaceholderName = indexedName,
+                LegacyReference = legacyReference,
+                AllocationStatus = AllocationStatus.Reserved,
+                AttendanceStatus = AttendanceStatus.NotRecorded,
+                OutcomeStatus = OutcomeStatus.Pending,
+                CreditStatus = CreditStatus.None,
+                CertificateOrderStatus = CertificateOrderStatus.NotReady,
+                CertificateDeliveryStatus = CertificateDeliveryStatus.NotApplicable,
+                CashCommitmentStatus = CashCommitmentStatus.None,
+                BudgetPoolId = budgetPoolId,
+                CertificateCost = cost
+            };
+            _context.Allocations.Add(allocation);
+            allocations.Add(allocation);
+
+            if (budgetPoolId.HasValue && cost.HasValue && cost.Value > 0)
+            {
+                _context.BudgetTransactions.Add(new BudgetTransaction
+                {
+                    DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+                    PoolId = budgetPoolId.Value,
+                    AllocationId = allocation.Id,
+                    TransactionType = BudgetTransactionType.CommitmentCreated,
+                    Amount = -cost.Value,
+                    Reason = $"Placeholder commitment for {indexedName}",
+                    TransactionDate = DateTime.UtcNow
+                });
+                allocation.CashCommitmentStatus = CashCommitmentStatus.Pending;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        _audit.Record("CreatedPlaceholders", "Allocation", allocations.First().Id, null, null, new { Count = quantity, DeliveryId = deliveryId, BudgetPoolId = budgetPoolId, TotalCost = totalCost });
+        await _context.SaveChangesAsync();
+        return allocations;
     }
 
     public async Task<Allocation> ReplacePlaceholderAsync(Guid allocationId, Guid studentId)
@@ -183,9 +273,7 @@ public class AllocationService
 
         if (allocation.CashCommitmentStatus == CashCommitmentStatus.Pending && allocation.BudgetPoolId.HasValue)
         {
-            var commitment = -await _context.BudgetTransactions
-                .Where(t => t.AllocationId == allocation.Id && (t.TransactionType == BudgetTransactionType.CommitmentCreated || t.TransactionType == BudgetTransactionType.CommitmentReleased))
-                .SumAsync(t => t.Amount);
+            var commitment = await _budgetService.GetAllocationCommitmentAsync(allocation.Id);
             _context.BudgetTransactions.Add(new BudgetTransaction
             {
                 DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
@@ -256,5 +344,144 @@ public class AllocationService
         _audit.Record("Created", "Allocation", target.Id, target.DisplayId, null, new { TransferredFrom = source.DisplayId });
         await _context.SaveChangesAsync();
         return target;
+    }
+
+    public async Task CreateOrRestoreCommitmentAsync(Guid allocationId, decimal? amount = null, string? reason = null)
+    {
+        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+        if (!allocation.BudgetPoolId.HasValue)
+            throw new InvalidOperationException("Allocation is not linked to a budget pool.");
+        if (allocation.CashCommitmentStatus == CashCommitmentStatus.Pending)
+            throw new InvalidOperationException("A commitment is already pending for this allocation.");
+        if (allocation.CashCommitmentStatus != CashCommitmentStatus.None && allocation.CashCommitmentStatus != CashCommitmentStatus.Released)
+            throw new InvalidOperationException("Commitment can only be created or restored when the allocation has no active commitment.");
+
+        var commitmentAmount = amount ?? allocation.CertificateCost ?? 0m;
+        if (commitmentAmount <= 0)
+            throw new InvalidOperationException("A positive commitment amount is required.");
+
+        var available = await _budgetService.GetForecastAvailableAsync(allocation.BudgetPoolId.Value);
+        if (available < commitmentAmount)
+        {
+            _audit.Record("CommitmentBlocked", "Allocation", allocation.Id, allocation.DisplayId, null, new { Requested = commitmentAmount, Available = available });
+            await _context.SaveChangesAsync();
+            throw new InvalidOperationException($"Insufficient budget funds. Available: {available:C}, requested: {commitmentAmount:C}.");
+        }
+
+        _context.BudgetTransactions.Add(new BudgetTransaction
+        {
+            DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+            PoolId = allocation.BudgetPoolId.Value,
+            AllocationId = allocation.Id,
+            TransactionType = BudgetTransactionType.CommitmentCreated,
+            Amount = -commitmentAmount,
+            Reason = reason ?? "Commitment created/restored",
+            TransactionDate = DateTime.UtcNow
+        });
+        allocation.CashCommitmentStatus = CashCommitmentStatus.Pending;
+        allocation.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("CommitmentCreated", "Allocation", allocation.Id, allocation.DisplayId, null, new { Amount = commitmentAmount, PoolId = allocation.BudgetPoolId });
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task ReleaseCommitmentAsync(Guid allocationId, string? reason = null)
+    {
+        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+        if (!allocation.BudgetPoolId.HasValue)
+            throw new InvalidOperationException("Allocation is not linked to a budget pool.");
+        if (allocation.CashCommitmentStatus != CashCommitmentStatus.Pending)
+            throw new InvalidOperationException("Only a pending commitment can be released.");
+
+        var committed = await _budgetService.GetAllocationCommitmentAsync(allocation.Id);
+        if (committed <= 0)
+            throw new InvalidOperationException("No outstanding commitment amount to release.");
+
+        _context.BudgetTransactions.Add(new BudgetTransaction
+        {
+            DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+            PoolId = allocation.BudgetPoolId.Value,
+            AllocationId = allocation.Id,
+            TransactionType = BudgetTransactionType.CommitmentReleased,
+            Amount = committed,
+            Reason = reason ?? "Commitment released",
+            TransactionDate = DateTime.UtcNow
+        });
+        allocation.CashCommitmentStatus = CashCommitmentStatus.Released;
+        allocation.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("CommitmentReleased", "Allocation", allocation.Id, allocation.DisplayId);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task MarkCostSpentAsync(Guid allocationId, bool force = false, string? reason = null)
+    {
+        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+        if (!allocation.BudgetPoolId.HasValue)
+            throw new InvalidOperationException("Allocation is not linked to a budget pool.");
+        if (allocation.CashCommitmentStatus != CashCommitmentStatus.Pending)
+            throw new InvalidOperationException("Cost can only be marked as spent when a commitment is pending.");
+        if (!force && allocation.OutcomeStatus != OutcomeStatus.Completed)
+            throw new InvalidOperationException("Cost can only be marked as spent after the allocation is completed. Use the override to continue.");
+
+        var committed = await _budgetService.GetAllocationCommitmentAsync(allocation.Id);
+        if (committed <= 0)
+            throw new InvalidOperationException("No outstanding commitment amount to recognise.");
+
+        var poolId = allocation.BudgetPoolId.Value;
+        _context.BudgetTransactions.Add(new BudgetTransaction
+        {
+            DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+            PoolId = poolId,
+            AllocationId = allocation.Id,
+            TransactionType = BudgetTransactionType.CommitmentReleased,
+            Amount = committed,
+            Reason = reason ?? "Commitment released for expense recognition",
+            TransactionDate = DateTime.UtcNow
+        });
+        _context.BudgetTransactions.Add(new BudgetTransaction
+        {
+            DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+            PoolId = poolId,
+            AllocationId = allocation.Id,
+            TransactionType = BudgetTransactionType.ExpenseRecognised,
+            Amount = -committed,
+            Reason = reason ?? "Expense recognised",
+            TransactionDate = DateTime.UtcNow
+        });
+        allocation.CashCommitmentStatus = CashCommitmentStatus.Spent;
+        allocation.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("ExpenseRecognised", "Allocation", allocation.Id, allocation.DisplayId, null, new { Amount = committed, PoolId = poolId, Forced = force });
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task ReverseSpentCostAsync(Guid allocationId, string? reason = null)
+    {
+        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+        if (!allocation.BudgetPoolId.HasValue)
+            throw new InvalidOperationException("Allocation is not linked to a budget pool.");
+        if (allocation.CashCommitmentStatus != CashCommitmentStatus.Spent)
+            throw new InvalidOperationException("Only a spent cost can be reversed.");
+
+        var expense = await _budgetService.GetAllocationExpenseAsync(allocation.Id);
+        if (expense <= 0)
+            throw new InvalidOperationException("No recognised expense to reverse.");
+
+        _context.BudgetTransactions.Add(new BudgetTransaction
+        {
+            DisplayId = _idGenerator.NextDisplayId<BudgetTransaction>("BTX"),
+            PoolId = allocation.BudgetPoolId.Value,
+            AllocationId = allocation.Id,
+            TransactionType = BudgetTransactionType.ExpenseReversed,
+            Amount = expense,
+            Reason = reason ?? "Spent cost reversed",
+            TransactionDate = DateTime.UtcNow
+        });
+        allocation.CashCommitmentStatus = CashCommitmentStatus.Released;
+        allocation.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("ExpenseReversed", "Allocation", allocation.Id, allocation.DisplayId, null, new { Amount = expense, PoolId = allocation.BudgetPoolId });
+        await _context.SaveChangesAsync();
     }
 }

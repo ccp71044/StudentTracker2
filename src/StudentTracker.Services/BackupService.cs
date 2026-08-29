@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using Microsoft.EntityFrameworkCore;
 using StudentTracker.Core.Models;
 using StudentTracker.Data;
 
@@ -24,9 +25,15 @@ public class BackupService
         var fileName = $"StudentTracker-backup-{timestamp}{(label != null ? "-" + label : "")}.zip";
         var path = Path.Combine(_dataLocation.BackupsPath, fileName);
 
+        // Flush SQLite's WAL before taking the snapshot. Read with shared access because the
+        // application's DbContext may legitimately keep the database handle open.
+        _context.Database.ExecuteSqlRaw("PRAGMA wal_checkpoint(FULL);");
         using (var archive = ZipFile.Open(path, ZipArchiveMode.Create))
         {
-            archive.CreateEntryFromFile(_dataLocation.DatabasePath, "Database/student-tracker.db");
+            var databaseEntry = archive.CreateEntry("Database/student-tracker.db", CompressionLevel.Optimal);
+            using (var source = new FileStream(_dataLocation.DatabasePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            using (var target = databaseEntry.Open())
+                source.CopyTo(target);
             AddDirectory(archive, _dataLocation.DocumentsPath, "Documents");
             AddDirectory(archive, _dataLocation.TemplatesPath, "Templates");
         }

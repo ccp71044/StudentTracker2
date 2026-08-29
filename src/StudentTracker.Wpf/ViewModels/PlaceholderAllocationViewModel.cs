@@ -11,6 +11,7 @@ public partial class PlaceholderAllocationViewModel : ViewModelBase, ICloseable
 {
     private readonly AllocationService _allocationService;
     private readonly CourseService _courseService;
+    private readonly BudgetService _budgetService;
 
     public event Action<bool?>? RequestClose;
 
@@ -24,21 +25,36 @@ public partial class PlaceholderAllocationViewModel : ViewModelBase, ICloseable
     private string? _legacyReference;
 
     [ObservableProperty]
+    private int _quantity = 1;
+
+    [ObservableProperty]
+    private decimal? _certificateCost;
+
+    [ObservableProperty]
     private CourseDelivery? _selectedDelivery;
+
+    [ObservableProperty]
+    private BudgetPool? _selectedBudgetPool;
 
     [ObservableProperty]
     private ObservableCollection<CourseDelivery> _availableDeliveries = new();
 
-    public PlaceholderAllocationViewModel(AllocationService allocationService, CourseService courseService)
+    [ObservableProperty]
+    private ObservableCollection<BudgetPool> _availableBudgetPools = new();
+
+    public PlaceholderAllocationViewModel(AllocationService allocationService, CourseService courseService, BudgetService budgetService)
     {
         _allocationService = allocationService;
         _courseService = courseService;
+        _budgetService = budgetService;
     }
 
     public async Task LoadDataAsync()
     {
         var deliveries = await _courseService.GetDeliveriesAsync();
+        var budgetPools = await _budgetService.GetPoolsAsync();
         AvailableDeliveries = new ObservableCollection<CourseDelivery>(deliveries);
+        AvailableBudgetPools = new ObservableCollection<BudgetPool>(budgetPools);
     }
 
     [RelayCommand]
@@ -54,9 +70,17 @@ public partial class PlaceholderAllocationViewModel : ViewModelBase, ICloseable
             return;
         }
 
-        await _allocationService.CreatePlaceholderAsync(
+        if (Quantity <= 0)
+        {
+            return;
+        }
+
+        await _allocationService.CreatePlaceholderAllocationsAsync(
             SelectedDelivery.Id,
             PlaceholderName,
+            Quantity,
+            CertificateCost,
+            SelectedBudgetPool?.Id,
             LegacyReference);
 
         RequestClose?.Invoke(true);

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using StudentTracker.Core.Enums;
 using StudentTracker.Core.Models;
 using StudentTracker.Services;
 using StudentTracker.Wpf.Services;
@@ -32,6 +33,14 @@ public partial class BudgetPoolEditViewModel : ViewModelBase, ICloseable
     [ObservableProperty]
     private bool _isActive = true;
 
+    [ObservableProperty]
+    private BudgetPoolCategory _category = BudgetPoolCategory.Other;
+
+    [ObservableProperty]
+    private string? _clientName;
+
+    public IReadOnlyList<BudgetPoolCategory> CategoryOptions { get; } = Enum.GetValues<BudgetPoolCategory>();
+
     public BudgetPoolEditViewModel(BudgetPool pool, BudgetService budgetService, bool isNew = false)
     {
         _pool = pool;
@@ -43,6 +52,8 @@ public partial class BudgetPoolEditViewModel : ViewModelBase, ICloseable
         FinancialPeriod = pool.FinancialPeriod;
         Notes = pool.Notes;
         IsActive = pool.IsActive;
+        Category = pool.Category;
+        ClientName = pool.ClientName;
     }
 
     [RelayCommand]
@@ -53,6 +64,8 @@ public partial class BudgetPoolEditViewModel : ViewModelBase, ICloseable
         _pool.FinancialPeriod = FinancialPeriod;
         _pool.Notes = Notes;
         _pool.IsActive = IsActive;
+        _pool.Category = Category;
+        _pool.ClientName = ClientName;
 
         if (_isNew)
         {

@@ -18,6 +18,11 @@
             <Button Content="Mark Attendance" Style="{StaticResource ActionButtonStyle}" Command="{Binding MarkAttendanceCommand}" ToolTip="Mark attendance for selected allocation" />
             <Button Content="Mark Outcome" Style="{StaticResource ActionButtonStyle}" Command="{Binding MarkOutcomeCommand}" ToolTip="Mark outcome for selected allocation" />
             <Button Content="Cancel Allocation" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelAllocationCommand}" />
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="4,0" />
+            <Button Content="Create/Restore Commitment" Style="{StaticResource ActionButtonStyle}" Command="{Binding CreateOrRestoreCommitmentCommand}" ToolTip="Reserve budget for the selected allocation" />
+            <Button Content="Release Commitment" Style="{StaticResource ActionButtonStyle}" Command="{Binding ReleaseCommitmentCommand}" ToolTip="Release reserved budget for the selected allocation" />
+            <Button Content="Mark Cost Spent" Style="{StaticResource ActionButtonStyle}" Command="{Binding MarkCostSpentCommand}" ToolTip="Mark the reserved cost as spent" />
+            <Button Content="Reverse Spent Cost" Style="{StaticResource ActionButtonStyle}" Command="{Binding ReverseSpentCostCommand}" ToolTip="Reverse a spent cost and return it to released" />
             <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
         </StackPanel>
         <DataGrid x:Name="AllocationsDataGrid" ItemsSource="{Binding Allocations}" SelectedItem="{Binding SelectedAllocation}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True"
@@ -33,6 +38,11 @@
                     <MenuItem Header="Mark Attendance" Command="{Binding MarkAttendanceCommand}" />
                     <MenuItem Header="Mark Outcome" Command="{Binding MarkOutcomeCommand}" />
                     <MenuItem Header="Cancel Allocation" Command="{Binding CancelAllocationCommand}" />
+                    <Separator />
+                    <MenuItem Header="Create/Restore Commitment" Command="{Binding CreateOrRestoreCommitmentCommand}" />
+                    <MenuItem Header="Release Commitment" Command="{Binding ReleaseCommitmentCommand}" />
+                    <MenuItem Header="Mark Cost Spent" Command="{Binding MarkCostSpentCommand}" />
+                    <MenuItem Header="Reverse Spent Cost" Command="{Binding ReverseSpentCostCommand}" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>

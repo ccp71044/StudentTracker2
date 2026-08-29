@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using StudentTracker.Core.Models;
 using StudentTracker.Services;
 using StudentTracker.Wpf.Services;
@@ -11,6 +13,8 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
 {
     private readonly CreditService _creditService;
     private readonly BudgetService _budgetService;
+    private readonly BudgetSummaryService _budgetSummaryService;
+    private readonly ReportService _reportService;
     private readonly IDialogService _dialogService;
     private readonly Dictionary<Guid, (string Name, string? Provider, DateTime? ExpiryDate, string? Notes)> _creditEditSnapshots = new();
     private readonly Dictionary<Guid, (string Name, string? FinancialPeriod, string? Notes)> _budgetEditSnapshots = new();
@@ -20,6 +24,9 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
 
     [ObservableProperty]
     private ObservableCollection<BudgetPoolRow> _budgetPools = new();
+
+    [ObservableProperty]
+    private ObservableCollection<CompletionsRemaining> _completionsRemaining = new();
 
     [ObservableProperty]
     private BudgetPoolRow? _selectedBudgetPool;
@@ -36,10 +43,12 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isBudgetTableEditingEnabled;
 
-    public CreditsBudgetsViewModel(CreditService creditService, BudgetService budgetService, IDialogService dialogService)
+    public CreditsBudgetsViewModel(CreditService creditService, BudgetService budgetService, BudgetSummaryService budgetSummaryService, ReportService reportService, IDialogService dialogService)
     {
         _creditService = creditService;
         _budgetService = budgetService;
+        _budgetSummaryService = budgetSummaryService;
+        _reportService = reportService;
         _dialogService = dialogService;
         LoadAsync().ConfigureAwait(false);
     }
@@ -48,23 +57,40 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     {
         CreditPools = new ObservableCollection<CertificateCreditPool>(await _creditService.GetPoolsAsync(ShowInactive));
         var pools = await _budgetService.GetPoolsAsync(ShowInactive);
-        var rows = new List<BudgetPoolRow>();
-        foreach (var pool in pools)
+        var summaries = (await _budgetSummaryService.GetPoolSummariesAsync()).ToDictionary(s => s.PoolId);
+        BudgetPools = new ObservableCollection<BudgetPoolRow>(pools.Select(pool => new BudgetPoolRow
         {
-            rows.Add(new BudgetPoolRow
-            {
-                Pool = pool,
-                ActualAvailable = await _budgetService.GetActualAvailableAsync(pool.Id),
-                ForecastAvailable = await _budgetService.GetForecastAvailableAsync(pool.Id)
-            });
-        }
-        BudgetPools = new ObservableCollection<BudgetPoolRow>(rows);
+            Pool = pool,
+            Summary = summaries.GetValueOrDefault(pool.Id) ?? new PoolSummary { PoolId = pool.Id, Name = pool.Name }
+        }));
+        CompletionsRemaining = new ObservableCollection<CompletionsRemaining>(
+            await _budgetSummaryService.GetCompletionsRemainingAsync());
     }
 
     [RelayCommand]
     private async Task Refresh()
     {
         await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task ExportBudgetPositionCsv()
+    {
+        var dialog = new SaveFileDialog { Filter = "CSV files (*.csv)|*.csv", FileName = "budget-prepaid-position.csv" };
+        if (dialog.ShowDialog() != true) return;
+
+        var records = BudgetPools.Select(row => new BudgetPositionExportRow
+        {
+            Pool = row.Name,
+            FundsAdded = row.FundsAdded,
+            Committed = row.Committed,
+            Spent = row.Spent,
+            Available = row.Available,
+            UnassignedPlaceholderPlaces = row.UnassignedPlaceholderPlaces,
+            AssignedPendingPlaces = row.AssignedPendingPlaces,
+            CompletedAwaitingManualSpend = row.CompletedAwaitingManualSpend
+        }).ToList();
+        await File.WriteAllBytesAsync(dialog.FileName, await _reportService.ExportCsvAsync(records));
     }
 
     [RelayCommand]
@@ -292,11 +318,29 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     partial void OnShowInactiveChanged(bool value) => LoadAsync().ConfigureAwait(false);
 }
 
+public class BudgetPositionExportRow
+{
+    public string Pool { get; init; } = string.Empty;
+    public decimal FundsAdded { get; init; }
+    public decimal Committed { get; init; }
+    public decimal Spent { get; init; }
+    public decimal Available { get; init; }
+    public int UnassignedPlaceholderPlaces { get; init; }
+    public int AssignedPendingPlaces { get; init; }
+    public int CompletedAwaitingManualSpend { get; init; }
+}
+
 public class BudgetPoolRow
 {
     public BudgetPool Pool { get; set; } = null!;
-    public decimal ActualAvailable { get; set; }
-    public decimal ForecastAvailable { get; set; }
+    public PoolSummary Summary { get; set; } = null!;
+    public decimal FundsAdded => Summary.FundsAdded;
+    public decimal Committed => Summary.Committed;
+    public decimal Spent => Summary.Spent;
+    public decimal Available => Summary.Available;
+    public int UnassignedPlaceholderPlaces => Summary.UnassignedPlaceholderPlaces;
+    public int AssignedPendingPlaces => Summary.AssignedPendingPlaces;
+    public int CompletedAwaitingManualSpend => Summary.CompletedAwaitingManualSpend;
     public string Name
     {
         get => Pool.Name;

@@ -49,11 +49,13 @@
                       CanUserAddRows="False" Margin="0,0,0,20" MaxHeight="160">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Pool" Binding="{Binding Name}" Width="*" />
-                    <DataGridTextColumn Header="Topped up" Binding="{Binding FundsAdded, StringFormat=C}" Width="120" />
-                    <DataGridTextColumn Header="Spent" Binding="{Binding Spent, StringFormat=C}" Width="120" />
-                    <DataGridTextColumn Header="Committed" Binding="{Binding Committed, StringFormat=C}" Width="120" />
-                    <DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat=C}" Width="120" />
-                    <DataGridTextColumn Header="Free" Binding="{Binding Free, StringFormat=C}" Width="120" />
+                    <DataGridTextColumn Header="Funds added" Binding="{Binding FundsAdded, StringFormat=C}" Width="105" />
+                    <DataGridTextColumn Header="Committed" Binding="{Binding Committed, StringFormat=C}" Width="100" />
+                    <DataGridTextColumn Header="Spent" Binding="{Binding Spent, StringFormat=C}" Width="100" />
+                    <DataGridTextColumn Header="Available" Binding="{Binding Available, StringFormat=C}" Width="105" />
+                    <DataGridTextColumn Header="Unassigned placeholders" Binding="{Binding UnassignedPlaceholderPlaces}" Width="145" />
+                    <DataGridTextColumn Header="Assigned pending" Binding="{Binding AssignedPendingPlaces}" Width="120" />
+                    <DataGridTextColumn Header="Completed awaiting spend" Binding="{Binding CompletedAwaitingManualSpend}" Width="165" />
                 </DataGrid.Columns>
             </DataGrid>
 
@@ -67,9 +69,10 @@
                       AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
                       CanUserAddRows="False" Margin="0,0,0,10" MaxHeight="220">
                 <DataGrid.Columns>
+                    <DataGridTextColumn Header="Pool" Binding="{Binding PoolName}" Width="150" />
                     <DataGridTextColumn Header="Course" Binding="{Binding CourseCode}" Width="120" />
                     <DataGridTextColumn Header="Title" Binding="{Binding CourseTitle}" Width="*" />
-                    <DataGridTextColumn Header="Price" Binding="{Binding CompletionPrice, StringFormat=C}" Width="100" />
+                    <DataGridTextColumn Header="Allen cost" Binding="{Binding CompletionPrice, StringFormat=C}" Width="100" />
                     <DataGridTextColumn Header="Remaining" Binding="{Binding Remaining}" Width="100" />
                 </DataGrid.Columns>
             </DataGrid>

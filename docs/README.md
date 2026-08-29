@@ -8,12 +8,18 @@ A local, offline, single-user Windows desktop application for managing the compl
 - Course definitions and scheduled course deliveries
 - Student allocations and placeholder positions
 - Attendance, completion, withdrawal and non-completion tracking
-- Separate certificate-credit and cash-budget ledgers
+- Separate certificate-credit and cash-budget ledgers with personal and client-funded pool categories
+- Budget prepaid-place model with manual commit, spend and reversal actions
+- Position dashboard showing pool balances, completions remaining per course at current Allen cost, and reconciliation status
+- Allen/provider cost vs client charge distinction across budget operations and exports
 - Certificate ordering, delivery and billable-item tracking
 - Course Delivery Completion Sign-Off PDF generation
 - Document linking with checksums and missing-file detection
 - Standard reports with CSV and PDF export
+- Read-only Invoice Manager JSON/CSV cost-position snapshot exchange
 - Invoicer exchange import/export
+- Guided replace-all-data cutover from a canonical migration workbook
+- Conventional File/Actions/Data/View/Tools/Help menu bar
 - Audit history
 - Backup and restore
 

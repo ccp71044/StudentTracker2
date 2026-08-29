@@ -8,6 +8,9 @@
         mc:Ignorable="d"
         Title="Student Tracker" Height="700" Width="1200"
         Background="{StaticResource BackgroundBrush}">
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RefreshCurrentViewCommand}" />
+    </Window.InputBindings>
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
             <v:DashboardView />
@@ -63,23 +66,128 @@
             <ColumnDefinition Width="200" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
-            <StackPanel Margin="0">
-                <TextBlock Text="Student Tracker" FontSize="18" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Margin="15,15,15,5" />
-                <Button Content="Dashboard" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="DashboardButton" Command="{Binding ShowDashboardCommand}" />
-                <Button Content="Students" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="StudentsButton" Command="{Binding ShowStudentsCommand}" />
-                <Button Content="Courses" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="CoursesButton" Command="{Binding ShowCoursesCommand}" />
-                <Button Content="Deliveries" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="DeliveriesButton" Command="{Binding ShowDeliveriesCommand}" />
-                <Button Content="Allocations" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="AllocationsButton" Command="{Binding ShowAllocationsCommand}" />
-                <Button Content="Certificates" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="CertificatesButton" Command="{Binding ShowCertificatesCommand}" />
-                <Button Content="Credits &amp; Budgets" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="CreditsBudgetsButton" Command="{Binding ShowCreditsBudgetsCommand}" />
-                <Button Content="Documents" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="DocumentsButton" Command="{Binding ShowDocumentsCommand}" />
-                <Button Content="Reports" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="ReportsButton" Command="{Binding ShowReportsCommand}" />
-                <Button Content="Import / Export" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="ImportExportButton" Command="{Binding ShowImportExportCommand}" />
-                <Button Content="Settings" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="SettingsButton" Command="{Binding ShowSettingsCommand}" />
-            </StackPanel>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Sidebar navigation -->
+        <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="3"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,1,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0">
+                    <TextBlock Text="Student Tracker" FontSize="18" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Margin="15,15,15,5" />
+                    <TextBlock Text="Navigation" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="15,5,15,5" />
+                    <Button Content="Dashboard" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="DashboardButton" Command="{Binding ShowDashboardCommand}" />
+                    <Button Content="Students" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="StudentsButton" Command="{Binding ShowStudentsCommand}" />
+                    <Button Content="Courses" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="CoursesButton" Command="{Binding ShowCoursesCommand}" />
+                    <Button Content="Deliveries" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="DeliveriesButton" Command="{Binding ShowDeliveriesCommand}" />
+                    <Button Content="Allocations" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="AllocationsButton" Command="{Binding ShowAllocationsCommand}" />
+                    <Button Content="Certificates" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="CertificatesButton" Command="{Binding ShowCertificatesCommand}" />
+                    <Button Content="Credits &amp; Budgets" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="CreditsBudgetsButton" Command="{Binding ShowCreditsBudgetsCommand}" />
+                    <Button Content="Documents" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="DocumentsButton" Command="{Binding ShowDocumentsCommand}" />
+                    <Button Content="Reports" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="ReportsButton" Command="{Binding ShowReportsCommand}" />
+                    <Button Content="Import / Export" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="ImportExportButton" Command="{Binding ShowImportExportCommand}" />
+                    <Button Content="Settings" Style="{StaticResource SidebarButtonStyle}" AutomationProperties.AutomationId="SettingsButton" Command="{Binding ShowSettingsCommand}" />
+                </StackPanel>
+            </ScrollViewer>
         </Border>
-        <Border Grid.Column="1" Background="{StaticResource BackgroundBrush}">
+
+        <!-- Conventional menu bar -->
+        <Menu Grid.Column="1" Grid.Row="0"
+              Background="{StaticResource SurfaceBrush}"
+              BorderBrush="{StaticResource BorderBrush}"
+              BorderThickness="0,0,0,1"
+              Padding="4,2"
+              AutomationProperties.AutomationId="MainMenuBar">
+            <Menu.Resources>
+                <Style TargetType="MenuItem">
+                    <Setter Property="Padding" Value="10,4" />
+                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                </Style>
+            </Menu.Resources>
+
+            <MenuItem Header="_File" AutomationProperties.AutomationId="FileMenu">
+                <MenuItem Header="_Import Migration Package..." Command="{Binding ImportMigrationPackageCommand}" AutomationProperties.AutomationId="FileMenu_ImportMigrationPackage" />
+                <Separator />
+                <MenuItem Header="_Backup Now" Command="{Binding BackupNowCommand}" AutomationProperties.AutomationId="FileMenu_BackupNow" />
+                <MenuItem Header="_Restore Backup..." Command="{Binding RestoreBackupCommand}" AutomationProperties.AutomationId="FileMenu_RestoreBackup" />
+                <Separator />
+                <MenuItem Header="E_xit" Command="{Binding ExitApplicationCommand}" AutomationProperties.AutomationId="FileMenu_Exit" />
+            </MenuItem>
+
+            <MenuItem Header="_Actions" AutomationProperties.AutomationId="ActionsMenu">
+                <MenuItem Header="_Refresh Current View" InputGestureText="F5" Command="{Binding RefreshCurrentViewCommand}" AutomationProperties.AutomationId="ActionsMenu_RefreshCurrentView" />
+            </MenuItem>
+
+            <MenuItem Header="_Data" AutomationProperties.AutomationId="DataMenu">
+                <MenuItem Header="_Backup Now" Command="{Binding BackupNowCommand}" AutomationProperties.AutomationId="DataMenu_BackupNow" />
+                <MenuItem Header="_Restore Backup..." Command="{Binding RestoreBackupCommand}" AutomationProperties.AutomationId="DataMenu_RestoreBackup" />
+                <Separator />
+                <MenuItem Header="Replace All Data from Migration Package..." Command="{Binding ReplaceAllDataCommand}" AutomationProperties.AutomationId="DataMenu_ReplaceAllData" />
+                <Separator />
+                <MenuItem Header="_Compact Database" Command="{Binding CompactDatabaseCommand}" AutomationProperties.AutomationId="DataMenu_CompactDatabase" />
+            </MenuItem>
+
+            <MenuItem Header="_View" AutomationProperties.AutomationId="ViewMenu">
+                <MenuItem Header="_Dashboard" Command="{Binding ShowDashboardCommand}" AutomationProperties.AutomationId="ViewMenu_Dashboard" />
+                <MenuItem Header="_Students" Command="{Binding ShowStudentsCommand}" AutomationProperties.AutomationId="ViewMenu_Students" />
+                <MenuItem Header="_Courses" Command="{Binding ShowCoursesCommand}" AutomationProperties.AutomationId="ViewMenu_Courses" />
+                <MenuItem Header="_Deliveries" Command="{Binding ShowDeliveriesCommand}" AutomationProperties.AutomationId="ViewMenu_Deliveries" />
+                <MenuItem Header="_Allocations" Command="{Binding ShowAllocationsCommand}" AutomationProperties.AutomationId="ViewMenu_Allocations" />
+                <MenuItem Header="C_ertificates" Command="{Binding ShowCertificatesCommand}" AutomationProperties.AutomationId="ViewMenu_Certificates" />
+                <MenuItem Header="Credits &amp; _Budgets" Command="{Binding ShowCreditsBudgetsCommand}" AutomationProperties.AutomationId="ViewMenu_CreditsBudgets" />
+                <MenuItem Header="_Documents" Command="{Binding ShowDocumentsCommand}" AutomationProperties.AutomationId="ViewMenu_Documents" />
+                <MenuItem Header="_Reports" Command="{Binding ShowReportsCommand}" AutomationProperties.AutomationId="ViewMenu_Reports" />
+                <Separator />
+                <MenuItem Header="Import / _Export" Command="{Binding ShowImportExportCommand}" AutomationProperties.AutomationId="ViewMenu_ImportExport" />
+                <MenuItem Header="_Settings" Command="{Binding ShowSettingsCommand}" AutomationProperties.AutomationId="ViewMenu_Settings" />
+            </MenuItem>
+
+            <MenuItem Header="_Tools" AutomationProperties.AutomationId="ToolsMenu">
+                <MenuItem Header="Open _Data Folder" Command="{Binding OpenDataFolderCommand}" AutomationProperties.AutomationId="ToolsMenu_OpenDataFolder" />
+                <MenuItem Header="Open _Backups Folder" Command="{Binding OpenBackupsFolderCommand}" AutomationProperties.AutomationId="ToolsMenu_OpenBackupsFolder" />
+                <MenuItem Header="Open _Exports Folder" Command="{Binding OpenExportsFolderCommand}" AutomationProperties.AutomationId="ToolsMenu_OpenExportsFolder" />
+                <MenuItem Header="Open _Logs Folder" Command="{Binding OpenLogsFolderCommand}" AutomationProperties.AutomationId="ToolsMenu_OpenLogsFolder" />
+                <Separator />
+                <MenuItem Header="_Compact Database" Command="{Binding CompactDatabaseCommand}" AutomationProperties.AutomationId="ToolsMenu_CompactDatabase" />
+            </MenuItem>
+
+            <MenuItem Header="_Help" AutomationProperties.AutomationId="HelpMenu">
+                <MenuItem Header="_Documentation" Command="{Binding OpenDocumentationCommand}" AutomationProperties.AutomationId="HelpMenu_Documentation" />
+                <MenuItem Header="_About" Command="{Binding ShowAboutCommand}" AutomationProperties.AutomationId="HelpMenu_About" />
+            </MenuItem>
+        </Menu>
+
+        <!-- Header area to improve discoverability -->
+        <Border Grid.Column="1" Grid.Row="1"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <Grid Margin="15,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Title}"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource PrimaryDarkBrush}"
+                           VerticalAlignment="Center"
+                           AutomationProperties.AutomationId="MainHeaderTitle" />
+                <TextBlock Text="{Binding Version, StringFormat='Version {0}'}"
+                           Grid.Column="1"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           VerticalAlignment="Center"
+                           AutomationProperties.AutomationId="MainHeaderVersion" />
+            </Grid>
+        </Border>
+
+        <!-- Main content area -->
+        <Border Grid.Column="1" Grid.Row="2" Background="{StaticResource BackgroundBrush}">
             <ContentControl AutomationProperties.AutomationId="MainContentArea" Content="{Binding CurrentViewModel}" />
         </Border>
     </Grid>

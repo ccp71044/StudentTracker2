@@ -13,10 +13,12 @@
             <Button Content="Create Backup" Style="{StaticResource ActionButtonStyle}" Command="{Binding CreateBackupCommand}" HorizontalAlignment="Left" Width="180" />
             <Button Content="Restore Backup" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreBackupCommand}" HorizontalAlignment="Left" Width="180" />
             <Button Content="Export Invoicer Batch" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportInvoicerCommand}" HorizontalAlignment="Left" Width="180" />
+            <Button Content="Export Invoice Manager Cost Position" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportInvoiceManagerCostPositionCommand}" HorizontalAlignment="Left" Width="180" />
             <Button Content="Export Active Courses CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCourseDefinitionsCommand}" HorizontalAlignment="Left" Width="180" />
             <Button Content="Export Active Students CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportStudentsCommand}" HorizontalAlignment="Left" Width="180" />
             <Button Content="Export All Allocations CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportAllocationsCommand}" HorizontalAlignment="Left" Width="180" />
-            <Button Content="Import Migration Package" Style="{StaticResource ActionButtonStyle}" Command="{Binding ImportMigrationPackageCommand}" HorizontalAlignment="Left" Width="180" />
+            <Button Content="Import Migration Package" Style="{StaticResource ActionButtonStyle}" Command="{Binding ImportMigrationPackageCommand}" HorizontalAlignment="Left" Width="260" />
+            <Button Content="Replace All Data from Migration Package" AutomationProperties.AutomationId="ReplaceAllDataButton" Style="{StaticResource ActionButtonStyle}" Command="{Binding ReplaceAllDataCommand}" HorizontalAlignment="Left" Width="260" ToolTip="Destructive guided cutover with validation, backups, rollback, and reconciliation" />
             <Button Content="Import Price List CSV" AutomationProperties.AutomationId="ImportCompletionPricingButton" Style="{StaticResource ActionButtonStyle}" Command="{Binding ImportCompletionPricingCommand}" HorizontalAlignment="Left" Width="180" />
             <Button Content="Import Credit History CSV" AutomationProperties.AutomationId="ImportCreditHistoryButton" Style="{StaticResource ActionButtonStyle}" Command="{Binding ImportCreditHistoryCommand}" HorizontalAlignment="Left" Width="180" />
         </StackPanel>

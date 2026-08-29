@@ -125,7 +125,9 @@ public partial class App : Application
         services.AddScoped<PdfService>();
         services.AddScoped<ReportService>();
         services.AddScoped<InvoicerService>();
+        services.AddScoped<InvoicerReferenceExportService>();
         services.AddScoped<BackupService>();
+        services.AddScoped<DataCutoverService>();
         services.AddScoped<ImportService>(provider => new ImportService(
             provider.GetRequiredService<StudentTrackerDbContext>(),
             provider.GetRequiredService<DisplayIdGenerator>(),

@@ -18,6 +18,9 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <TextBlock Text="Course delivery:" VerticalAlignment="Center" Margin="0,4" Grid.Row="0" Grid.Column="0" />
@@ -27,8 +30,18 @@
             <TextBlock Text="Placeholder name:" VerticalAlignment="Center" Margin="0,4" Grid.Row="1" Grid.Column="0" />
             <TextBox Text="{Binding PlaceholderName, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="1" Margin="8,4" />
 
-            <TextBlock Text="Legacy reference:" VerticalAlignment="Center" Margin="0,4" Grid.Row="2" Grid.Column="0" />
-            <TextBox Text="{Binding LegacyReference, UpdateSourceTrigger=PropertyChanged}" Grid.Row="2" Grid.Column="1" Margin="8,4" />
+            <TextBlock Text="Quantity:" VerticalAlignment="Center" Margin="0,4" Grid.Row="2" Grid.Column="0" />
+            <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Grid.Row="2" Grid.Column="1" Margin="8,4" />
+
+            <TextBlock Text="Budget pool:" VerticalAlignment="Center" Margin="0,4" Grid.Row="3" Grid.Column="0" />
+            <ComboBox ItemsSource="{Binding AvailableBudgetPools}" SelectedItem="{Binding SelectedBudgetPool}"
+                      DisplayMemberPath="Name" Grid.Row="3" Grid.Column="1" Margin="8,4" />
+
+            <TextBlock Text="Allen cost per place:" VerticalAlignment="Center" Margin="0,4" Grid.Row="4" Grid.Column="0" />
+            <TextBox Text="{Binding CertificateCost, UpdateSourceTrigger=PropertyChanged}" Grid.Row="4" Grid.Column="1" Margin="8,4" />
+
+            <TextBlock Text="Legacy reference:" VerticalAlignment="Center" Margin="0,4" Grid.Row="5" Grid.Column="0" />
+            <TextBox Text="{Binding LegacyReference, UpdateSourceTrigger=PropertyChanged}" Grid.Row="5" Grid.Column="1" Margin="8,4" />
         </Grid>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2" Margin="0,10,0,0">
             <Button Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveCommand}" />

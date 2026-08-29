@@ -1,6 +1,6 @@
 # Student Tracker 2 Technical Reference
 
-Last updated: 2026-08-29
+Last updated: 2026-08-30
 
 ## 1. Purpose and operating model
 
@@ -166,6 +166,21 @@ Navigation areas:
 
 `MainWindow.xaml` maps view-model types to views with WPF data templates. Sidebar buttons and view headers carry automation IDs used by FlaUI tests.
 
+### Menu bar
+
+A conventional menu bar sits above the content area and provides an alternative to sidebar navigation plus access to operations that do not have their own navigation area:
+
+| Menu | Items |
+|---|---|
+| File | Import Migration Package, Backup Now, Restore Backup, Exit |
+| Actions | Refresh Current View (F5 key binding) |
+| Data | Backup Now, Restore Backup, Replace All Data from Migration Package, Compact Database |
+| View | Dashboard, Students, Courses, Deliveries, Allocations, Certificates, Credits & Budgets, Documents, Reports, Import / Export, Settings |
+| Tools | Open Data Folder, Open Backups Folder, Open Exports Folder, Open Logs Folder, Compact Database |
+| Help | Documentation, About |
+
+Menu commands delegate to the same `MainViewModel` relay commands used by sidebar buttons and Import/Export/Settings view models. All menu items carry automation IDs for FlaUI test access.
+
 ## 9. Dialog infrastructure
 
 `IDialogService` provides:
@@ -311,7 +326,17 @@ Available credit is derived from transaction categories. Release and reallocatio
 
 `BudgetService` manages budget pools and transactions.
 
-Pool operations:
+### Budget pool categories
+
+Each pool carries a `BudgetPoolCategory` enum:
+
+- `Personal` — spending from the business's own budget (personal / internal funds).
+- `ClientFunded` — spending on behalf of a specific client account, identified by the pool's `ClientName` field.
+- `Other` — uncategorised.
+
+Well-known pool names are defined in `PoolNames`: `SCJV` (client-funded), `General` (personal/internal), and `Allens Training Credit` (provider credit mirror).
+
+### Pool operations
 
 - Create.
 - Update.
@@ -319,19 +344,37 @@ Pool operations:
 - Archive.
 - Restore.
 
-Allocation financial operations:
+### Allocation financial operations
 
-- Create commitment.
-- Release commitment.
-- Recognise expense.
+- Create commitment — reserves budget funds; blocked when forecast available is insufficient.
+- Release commitment — returns reserved funds without recognising expense.
+- Recognise expense — releases the commitment and records actual expenditure in a single operation, setting cash commitment status to Spent.
+- Reverse expense — reverses a recognised expense, returning the spent amount to the pool and resetting cash commitment status to Released. Only available when the allocation is in Spent status.
 
-Calculated values:
+### Transaction types
 
-- Funds added.
-- Actual expenditure.
-- Pending commitments.
-- Actual available funds.
-- Forecast available funds.
+`BudgetTransactionType` includes:
+
+- `FundsAdded` — top-up.
+- `CommitmentCreated` — negative, reserves funds.
+- `CommitmentReleased` — positive, returns reserved funds.
+- `ExpenseRecognised` — negative, records actual spend.
+- `ExpenseReversed` — positive, reverses a recognised expense.
+- `Reimbursement`, `Adjustment`, `Reversal` — corrective entries.
+
+### Allen / provider cost vs client charge
+
+The completion price (Allen cost) is the training-provider charge per completion, resolved by `PricingService` from the `CoursePrices` table or the course definition's `DefaultCertificateCost`. This price is used to calculate completions remaining.
+
+The `CertificateCost` field on an allocation is the amount actually committed or spent against the budget pool for that student's place. It may differ from the provider price where negotiated rates, client-specific pricing, or manual overrides apply.
+
+### Calculated values
+
+- Funds added (including adjustments, reimbursements, and reversals).
+- Actual expenditure (net of expense-recognised and expense-reversed transactions).
+- Pending commitments (net of commitment-created and commitment-released transactions).
+- Actual available funds (funds added minus actual expenditure).
+- Forecast available funds (actual available minus pending commitments).
 
 Archive is blocked while pending commitments remain. Existing transactions are retained and continue to support historical reporting.
 
@@ -398,13 +441,91 @@ Current exports:
 
 `InvoicerService` selects billable unexported allocations, creates export batches/items, and associates allocations with their export batch to prevent accidental duplicate export.
 
-## 19. Backup and restore
+### Invoice Manager reference export
+
+`InvoicerReferenceExportService` produces read-only, file-based cost-position snapshots. Student Tracker remains the source of truth; the snapshot grants no invoice or payment authority and does not modify allocations or the general ledger.
+
+`ExportCostPositionSnapshotAsync()`:
+
+1. Queries active budget pools, all budget transactions, and all allocations with their course and student navigations.
+2. Resolves current provider completion prices through `PricingService`.
+3. Builds a `InvoicerCostPositionSnapshot` containing per-pool totals (funds, committed, spent, available, placeholder counts, assigned-pending counts, completed-awaiting-manual-spend counts, completions remaining) and per-course breakdowns within each pool (including provider cost and total allocations).
+4. Writes a versioned JSON snapshot and a flattened CSV snapshot to `Integration/InvoicerExport`. File names include a UTC timestamp; a counter suffix prevents collisions within the same second.
+5. Audits the export with snapshot ID, file paths, pool count, and course count.
+
+The snapshot schema version is `1.0`. The export is available from both the Import / Export view and the Reports view.
+
+## 19. Budget summary and position dashboard
+
+`BudgetSummaryService` answers the three operational questions the manual register was used for: how much is left, how much is already promised, and how many more students can be put through.
+
+`GetPoolSummariesAsync()` returns a `PoolSummary` per active budget pool containing:
+
+- Funds added (including adjustments, reimbursements, and reversals).
+- Spent (net of expense-recognised and expense-reversed).
+- Committed (net of commitment-created and commitment-released).
+- Balance (funds added minus spent).
+- Free / available (balance minus committed).
+- Unassigned placeholder places (placeholder allocations with no student).
+- Assigned pending places (student-allocated, outcome pending).
+- Completed awaiting manual spend (completed outcome but cash commitment not yet Spent).
+
+`GetCompletionsRemainingAsync()` calculates, per pool and per course, how many more completions the pool's free balance can fund at the current provider completion price.
+
+`ReconcileTopUpsAsync()` compares the register's FundsAdded budget transactions against the provider's credit-purchase history (CreditTransactions with TopUp type and ProviderHistory source). Matching is by amount and date (within three days). Unmatched entries or near-match discrepancies are reported as `ReconciliationDiscrepancy` items.
+
+The Dashboard view model (`DashboardViewModel`) displays:
+
+- Record counts for students, courses, deliveries, allocations, and pending certificate orders.
+- The pool summary table from `BudgetSummaryService`.
+- A negative-balance warning banner when any pool is overdrawn.
+- The completions-remaining table.
+- Reconciliation status text.
+
+The Credits & Budgets view's Budget Pools tab also shows the pool summary and completions-remaining tables.
+
+## 20. Data cutover
+
+`DataCutoverService` validates and atomically replaces database data from a canonical migration workbook. It is designed for the initial production cutover.
+
+### Preview
+
+`PreviewAsync(path)` validates the workbook against the expected sheet structure (Students, CourseDefinitions, CourseDeliveries, Allocations, and optional BudgetPools and CertificateCreditPools), checks for:
+
+- Missing required sheets and columns.
+- Duplicate identifiers within each sheet.
+- Broken cross-sheet references (delivery-to-course, allocation-to-student, allocation-to-delivery, allocation-to-pool).
+- Invalid enum values for all status columns.
+
+It returns a `CutoverPreview` containing current database counts, workbook counts, and validation errors.
+
+### Execute
+
+`ExecuteAsync(preview, typedConfirmation)`:
+
+1. Requires the typed confirmation phrase `REPLACE DATA` (case-sensitive).
+2. Re-validates the workbook and checks that counts have not changed since the preview.
+3. Runs `PRAGMA integrity_check` on the current database.
+4. Creates a verified pre-cutover backup (ZIP must contain a non-empty database snapshot).
+5. Opens a database transaction.
+6. Deletes all operational data in dependency order using `ExecuteDeleteAsync()`. AppSettings and EF migration history are preserved. Document files on disk are never touched.
+7. Imports the workbook using `MigrationPackageImporter`. Any import errors or review-queue items cause rollback.
+8. Reconciles imported counts against expected counts. Checks for broken delivery-to-course and allocation-to-student/delivery relationships.
+9. Records a `DataCutoverCompleted` audit entry.
+10. Commits the transaction.
+11. Creates a verified post-cutover backup.
+
+If any step after the backup fails, the transaction is rolled back and no database changes are committed.
+
+**Important:** the live production cutover has not yet been run.
+
+## 21. Backup and restore
 
 `BackupService` creates ZIP backups containing the database and managed application data selected by the service. Backup files are stored under the configured backup location.
 
 Restore replaces application data from a selected backup. Because restore changes persisted operational state, it should only be run when the user understands that the backup becomes the authoritative dataset.
 
-## 20. Audit trail
+## 22. Audit trail
 
 `AuditService.Record()` creates `AuditLog` rows within the active DbContext. Services call `SaveChangesAsync()` after recording to persist the entry.
 
@@ -428,14 +549,18 @@ Common actions include:
 - FundsAdded.
 - CommitmentCreated.
 - CommitmentReleased.
+- CommitmentBlocked.
 - ExpenseRecognised.
+- ExpenseReversed.
+- Exported.
+- DataCutoverCompleted.
 - Linked and Unlinked.
 
 Audit entries identify entity type, internal ID, display ID where available, and optional before/after contextual data.
 
 The audit database is the business-history record. Serilog files are the technical diagnostics record; the two mechanisms serve different purposes.
 
-## 21. Diagnostic logging
+## 23. Diagnostic logging
 
 Serilog writes daily files to:
 
@@ -463,7 +588,7 @@ Captured conditions include:
 
 Do not write credentials, API keys, or document contents into logs or audit metadata.
 
-## 22. Error-handling boundaries
+## 24. Error-handling boundaries
 
 Business-rule enforcement belongs in services. Examples include archive dependency checks, insufficient credit, certificate eligibility, duplicate allocation, and cancellation restrictions.
 
@@ -478,7 +603,7 @@ View models:
 
 Unexpected dispatcher errors are captured globally as a final boundary.
 
-## 23. UI automation
+## 25. UI automation
 
 Main navigation buttons and destination headers expose stable automation IDs. FlaUI tests use UIA3 and an interactive Windows session to launch the WPF app and verify navigation and visible controls.
 
@@ -489,7 +614,7 @@ When adding controls:
 - Prefer commands over logic in code-behind.
 - Use code-behind only for UI gestures such as DataGrid double-click, then delegate to the view-model command.
 
-## 24. Build and verification
+## 26. Build and verification
 
 Restore and build:
 
@@ -517,9 +642,9 @@ Recorded verification on 2026-08-29:
 
 - Release solution build: passed with 0 warnings and 0 errors.
 - Unit tests: 25 passed.
-- FlaUI tests: 11 passed.
+- FlaUI tests: 33 passed, including navigation and menu coverage.
 
-## 25. Publishing and release
+## 27. Publishing and release
 
 The publish script is `installer\publish.ps1`.
 
@@ -537,7 +662,7 @@ The product version is defined by `VersionPrefix` in `Directory.Build.props`. Ke
 
 CI builds, tests, and performs a publish smoke check on Windows. Tagged `v*` releases publish the self-contained archive through the release workflow.
 
-## 26. Extension guidance
+## 28. Extension guidance
 
 When adding a new domain workflow:
 
@@ -554,7 +679,7 @@ When adding a new domain workflow:
 
 For archive-like operations, prefer soft state changes over physical deletion, retain dependent history, provide restore where practical, guard active dependencies, and audit both successful and blocked attempts.
 
-## 27. Known architectural considerations
+## 29. Known architectural considerations
 
 - The application is designed for local single-user use; concurrent multi-user database access is not an established operating mode.
 - Delivery operational status is currently represented as a string, while most other status families are enums. Converting it to an enum would require a migration and compatibility review.

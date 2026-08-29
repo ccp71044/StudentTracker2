@@ -58,6 +58,11 @@ The design supports one student undertaking multiple courses because each studen
 - Display actual and forecast budget availability.
 - Use financial and credit lifecycle safeguards from allocation and certificate workflows.
 - Double-click and right-click actions on pool tables.
+- Budget pool categories: Personal (internal funds), Client-funded (with client name), and Other.
+- Well-known pool names: SCJV (client-funded), General (personal), Allens Training Credit (provider credit mirror).
+- Manual spend and reversal actions on allocations: Create/Restore Commitment, Release Commitment, Mark Cost Spent, and Reverse Spent Cost.
+- Provider (Allen) completion cost tracked separately from allocation certificate cost (client charge).
+- Completions-remaining calculation per pool per course using current Allen cost.
 
 ### Documents
 
@@ -67,6 +72,44 @@ The design supports one student undertaking multiple courses because each studen
 - Prevent duplicate links.
 - Check for missing physical files.
 - Table selection, double-click behavior, and right-click actions.
+
+### Position dashboard
+
+- Budget pools table on the Dashboard showing funds added, committed, spent, available, unassigned placeholder places, assigned pending places, and completed awaiting manual spend.
+- Negative-balance warning banner when any pool is overdrawn.
+- Completions remaining table per pool per course with current Allen cost.
+- Reconciliation status comparing register top-ups against provider credit-purchase history.
+- The same pool and completions-remaining tables appear in the Credits & Budgets view's Budget Pools tab.
+
+### Menu bar
+
+A conventional File/Actions/Data/View/Tools/Help menu bar sits above the content area:
+
+- **File:** Import Migration Package, Backup Now, Restore Backup, Exit.
+- **Actions:** Refresh Current View (F5).
+- **Data:** Backup Now, Restore Backup, Replace All Data from Migration Package, Compact Database.
+- **View:** All sidebar navigation areas (Dashboard through Settings).
+- **Tools:** Open Data/Backups/Exports/Logs folder, Compact Database.
+- **Help:** Documentation, About.
+
+### Invoice Manager reference exchange
+
+- Read-only, versioned JSON and CSV cost-position snapshots exported to `Integration/InvoicerExport`.
+- Snapshot includes per-pool and per-course totals: funds, committed, spent, available, placeholder counts, assigned-pending counts, completed-awaiting-spend counts, completions remaining, provider cost, and total allocations.
+- Export available from both Import / Export and Reports views.
+- Student Tracker remains source of truth; snapshot does not grant invoice/payment authority or modify data.
+
+### Guided replace-all-data cutover
+
+- **Data → Replace All Data from Migration Package** performs a validated, guided, destructive replacement of the database from a canonical migration workbook.
+- Workbook validation checks sheet structure, duplicate identifiers, broken cross-sheet references, and enum values.
+- Preview dialog shows current database vs workbook record counts.
+- Requires exact typed confirmation phrase `REPLACE DATA`.
+- Creates verified pre-cutover and post-cutover backups.
+- Re-validates the workbook and runs database integrity check immediately before the destructive operation.
+- Clears and re-imports all operational data inside a database transaction; reconciles imported counts and checks relational integrity.
+- Rolls back on any failure; no database changes are committed unless the entire pipeline succeeds.
+- **Important:** the live production cutover has not yet been run.
 
 ### Reports and exports
 
@@ -136,12 +179,12 @@ Validation previously confirmed:
 | Check | Result |
 |---|---:|
 | Release solution build | Passed |
-| Unit tests | 45 passed, 0 failed |
-| FlaUI tests | 11 passed, 0 failed |
+| Unit tests | 62 passed, 0 failed |
+| FlaUI tests | 33 passed, 0 failed |
 | Self-contained Windows publish | Passed |
 | Git synchronization before this report | Clean and synchronized |
 
-The 11 FlaUI tests are navigation and smoke tests. They do not yet automate every newly added dialog, context menu, confirmation, import, export, or end-to-end financial workflow.
+The 33 FlaUI tests cover navigation and the application menu structure. They do not yet automate every dialog, context menu, confirmation, import, export, or end-to-end financial workflow.
 
 ## Published application
 
@@ -155,17 +198,16 @@ Application data is stored by default under:
 
 ## Work needed next
 
-### 1. Load and reconcile the authoritative data
+### 1. Run the guided data cutover
 
-This is the immediate operational next step.
+This is the immediate operational next step. The **Replace All Data from Migration Package** tool (Data menu) now exists and automates the validated, transactional replacement workflow. It has been tested against the canonical workbook but the live production cutover has not yet been run.
 
-1. Back up the current application database.
-2. Inspect the current database for earlier incorrect or test imports.
-3. Decide whether to retain, archive, or replace those records before importing; do not append the authoritative workbook blindly if duplicate data already exists.
-4. Import the comprehensive migration workbook through **Import / Export → Import Migration Package**.
-5. Review all importer warnings.
-6. Reconcile counts and sample records across Students, Courses, Deliveries, Allocations, Credits/Budgets, and Reports.
-7. Create a post-import backup after acceptance.
+1. Use **Data → Replace All Data from Migration Package** and select the canonical migration workbook.
+2. Review the preview dialog showing current database counts and workbook counts.
+3. Type `REPLACE DATA` to confirm.
+4. The tool creates a verified pre-cutover backup, clears and re-imports all data within a transaction, reconciles counts and relationships, and creates a post-cutover backup.
+5. After success, verify counts and sample records across Students, Courses, Deliveries, Allocations, Credits/Budgets, and Reports.
+6. Verify budget pool positions on the Dashboard match expected values.
 
 ### 2. Perform structured user acceptance testing
 
@@ -176,9 +218,13 @@ Use representative real workflows to confirm:
 - Attendance and outcome updates appear in reports.
 - Certificate ordering and delivery update lifecycle and billable state correctly.
 - Budget and credit balances match source records.
+- Manual spend/reversal actions (Create/Restore Commitment, Release, Mark Cost Spent, Reverse Spent Cost) update pool balances and audit correctly.
+- Position dashboard pool totals, completions remaining, and reconciliation status match expectations.
+- Invoice Manager cost position snapshots produce valid JSON/CSV in `Integration/InvoicerExport`.
 - Document links open the intended files and records.
 - Archive, restore, and cancellation safeguards behave as expected.
 - CSV outputs match operational requirements.
+- Menu bar commands navigate and invoke operations correctly.
 
 ### 3. Expand FlaUI workflow coverage
 
@@ -192,6 +238,9 @@ Add end-to-end tests for:
 - Budget funding, credit top-up, and transaction history.
 - Document metadata and linking.
 - Migration import and report export.
+- Menu bar navigation and operations (File, Actions, Data, View, Tools, Help).
+- Replace All Data cutover preview and confirmation flow.
+- Invoice Manager cost position snapshot export.
 - Confirmation and error dialogs.
 
 ### 4. Strengthen duplicate-allocation protection

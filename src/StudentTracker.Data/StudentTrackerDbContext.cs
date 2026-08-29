@@ -42,6 +42,7 @@ public class StudentTrackerDbContext : DbContext
         modelBuilder.Entity<Allocation>().Property(a => a.CertificateDeliveryStatus).HasConversion<string>();
         modelBuilder.Entity<Allocation>().Property(a => a.CashCommitmentStatus).HasConversion<string>();
         modelBuilder.Entity<CertificateCreditTransaction>().Property(t => t.TransactionType).HasConversion<string>();
+        modelBuilder.Entity<BudgetPool>().Property(p => p.Category).HasConversion<string>();
         modelBuilder.Entity<BudgetTransaction>().Property(t => t.TransactionType).HasConversion<string>();
         modelBuilder.Entity<SignOff>().Property(s => s.Status).HasConversion<string>();
         modelBuilder.Entity<Document>().Property(d => d.Status).HasConversion<string>();

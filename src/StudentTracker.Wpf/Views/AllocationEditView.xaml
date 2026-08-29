@@ -84,17 +84,9 @@
                 <TextBox Text="{Binding OutcomeNotes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" 
                         Grid.Row="10" Grid.Column="1" Margin="8,4" />
 
-                <Separator Grid.Row="11" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,16" />
-
-                <!-- Credit Status -->
-                <TextBlock Text="Credit status:" VerticalAlignment="Center" Margin="0,4" Grid.Row="12" Grid.Column="0" />
-                <ComboBox ItemsSource="{Binding CreditStatusOptions}" SelectedItem="{Binding CreditStatus}" 
-                         Grid.Row="12" Grid.Column="1" Margin="8,4" VerticalContentAlignment="Center" />
-
-                <!-- Cash Commitment Status -->
-                <TextBlock Text="Cash commitment status:" VerticalAlignment="Center" Margin="0,4" Grid.Row="13" Grid.Column="0" />
-                <ComboBox ItemsSource="{Binding CashCommitmentStatusOptions}" SelectedItem="{Binding CashCommitmentStatus}" 
-                         Grid.Row="13" Grid.Column="1" Margin="8,4" VerticalContentAlignment="Center" />
+                <TextBlock Grid.Row="11" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,16"
+                           Text="Budget and credit status must be changed using the allocation action commands."
+                           TextWrapping="Wrap" Foreground="Gray" />
             </Grid>
         </ScrollViewer>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2" Margin="0,10,0,0">
