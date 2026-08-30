@@ -6,6 +6,41 @@
 
 ## 1. What has been completed
 
+## 1.1 Recent phase progress
+
+### Phase 1 — Client Prepaid Entitlement Ledger (completed)
+- Quantity-based `ClientPrepaidPool` and `ClientPrepaidEntitlementTransaction` added.
+- `ClientPrepaidEntitlementService` with top-up, reserve, assign, release, consume, transfer and position calculations.
+- Unit tests `MP-001` to `MP-013` passing.
+
+### Phase 2 — Allens Cost Snapshot Fields (completed)
+- `DefaultAllensCost` on `CourseDefinition` and `AllensCostAtAllocation` / `ActualAllensCost` on `Allocation`.
+- `AllocationService` snapshots the course default at allocation and records actual cost on spend.
+- Historical cost not overwritten when course default changes (MP-014).
+
+### Phase 3 — Pool Position Dashboard (completed)
+- `PoolPositionView` / `PoolPositionViewModel` with pool selection, loaded/consumed/unconsumed, reserved named/placeholder, carry-forward and Allen cost committed/incurred/forecast.
+- Added to `View` menu and `MainWindow` DataTemplate.
+
+### Phase 4 — Invoicer Import/Reference Panels (completed)
+- `InvoicerReferenceImportService` with idempotent CSV invoice import.
+- `InvoicerReferenceView` / `ViewModel` for import and client-prepaid snapshot export.
+- `InvoicerReferenceExportService` extended with `ExportClientPrepaidPositionSnapshotAsync`.
+- Unit tests for idempotent import (MP-011) and export.
+
+### Phase 5 — Reports and Workflow Test Coverage (in progress)
+- `ReportService` extended with `GetBillableCertificatesForInvoicerAsync` and `GetTbcCourseDeliveriesAsync`.
+- Reports wired into the `ReportsView` UI with DataGrids, export commands and menu items.
+- Workflow tests added: WF-001, WF-002, WF-003, WF-004, WF-005, WF-006, WF-007.
+- Unit test count: **125 passing**.
+
+## 1.2 Status as of latest sync
+- Branch: `main`
+- Working tree: clean
+- `origin/main` up to date
+- Release build: `0 errors, 0 warnings`
+- Unit tests: `125 passed, 0 failed, 0 skipped`
+
 ### Core feature integration
 - Receipt / credit top-up workflow with managed documents and transaction history.
 - Issued-certificate evidence storage and document linking.
@@ -24,8 +59,8 @@
 - Keyboard and double-click navigation retained where present.
 
 ### Testing and build
-- Release build: `0 errors`.
-- Unit tests: `97 passed`.
+- Release build: `0 errors, 0 warnings`.
+- Unit tests: `125 passed`.
 - FlaUI tests: `58/58 passed` (serial execution).
 - Published executable regenerated:
   - `release\StudentTracker-win-x64\StudentTracker.exe`
@@ -46,6 +81,15 @@
 ### Bug fixes
 - `DisplayIdGenerator.NextDisplayId` was parsing `BUD-0001` / `ALL-0001` as `-1`, causing all generated IDs to remain at `-0001`. Fixed by trimming the leading dash and only accepting positive numbers.
 - Duplicate `BudgetPool` and `Allocation` display IDs re-sequenced in the live database.
+
+## 2. Remaining gaps and outstanding tasks
+
+### Phase 5 remaining items
+1. Add remaining workflow tests: **WF-008** through **WF-010**.
+2. Add remaining mandatory reports: Funding Sources, Missing Documents, Credit Reallocation History, Certificate Credit Pool Summary, Credit Consumed Without Completion, Budget Pending Commitments / Actual vs Forecast.
+3. Wire any new `ReportService` queries to the `ReportsView` and `ReportsViewModel`.
+4. Update `TEST_RESULTS.md` after each new test batch.
+5. Re-publish `release/StudentTracker-win-x64` and `release/StudentTracker-win-x64-1.0.0.zip` when Phase 5 is complete.
 
 ## 2. Remaining gaps
 
