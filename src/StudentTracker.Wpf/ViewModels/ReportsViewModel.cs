@@ -190,47 +190,60 @@ public partial class ReportsViewModel : ViewModelBase
     private async Task LoadPrepaidPositionAsync()
     {
         var snapshot = await _referenceExportService.BuildSnapshotAsync("Prepaid position report");
-        var rows = snapshot.Pools
-            .SelectMany(p => p.Courses.Any()
-                ? p.Courses.Select(c => new PrepaidPositionReportItem
+        var rows = new List<PrepaidPositionReportItem>();
+
+        foreach (var p in snapshot.Pools)
+        {
+            if (p.Courses.Count == 0)
+            {
+                var unbilled = await _reportService.GetUnbilledCountAsync(p.PoolId);
+                rows.Add(new PrepaidPositionReportItem
                 {
                     PoolDisplayId = p.PoolDisplayId ?? p.PoolName,
                     PoolName = p.PoolName,
                     FinancialPeriod = p.FinancialPeriod,
-                    CourseCode = c.CourseCode,
-                    CourseTitle = c.CourseTitle,
-                    Provider = c.Provider,
                     FundsAdded = p.FundsAdded,
-                    Committed = c.Committed,
-                    Spent = c.Spent,
-                    Available = c.Available,
-                    ReservedPlaces = c.AnonymousReservedPlaces,
-                    AssignedPending = c.AssignedPending,
-                    CompletedAwaitingSpend = c.CompletedAwaitingManualSpend,
-                    CompletionsRemaining = c.CompletionsRemaining,
-                    TotalAllocations = c.TotalAllocations,
-                    AllenCost = c.ProviderCost
-                })
-                : new[]
+                    Committed = p.Committed,
+                    Spent = p.Spent,
+                    Available = p.Available,
+                    ReservedPlaces = p.AnonymousReservedPlaces,
+                    AssignedPending = p.AssignedPending,
+                    CompletedAwaitingSpend = p.CompletedAwaitingManualSpend,
+                    CompletionsRemaining = p.CompletionsRemaining,
+                    TotalAllocations = 0,
+                    BillableUnexported = unbilled,
+                    AllenCost = null
+                });
+            }
+            else
+            {
+                foreach (var c in p.Courses)
                 {
-                    new PrepaidPositionReportItem
+                    var unbilled = await _reportService.GetUnbilledCountAsync(p.PoolId, c.CourseId);
+                    rows.Add(new PrepaidPositionReportItem
                     {
                         PoolDisplayId = p.PoolDisplayId ?? p.PoolName,
                         PoolName = p.PoolName,
                         FinancialPeriod = p.FinancialPeriod,
+                        CourseCode = c.CourseCode,
+                        CourseTitle = c.CourseTitle,
+                        Provider = c.Provider,
                         FundsAdded = p.FundsAdded,
-                        Committed = p.Committed,
-                        Spent = p.Spent,
-                        Available = p.Available,
-                        ReservedPlaces = p.AnonymousReservedPlaces,
-                        AssignedPending = p.AssignedPending,
-                        CompletedAwaitingSpend = p.CompletedAwaitingManualSpend,
-                        CompletionsRemaining = p.CompletionsRemaining,
-                        TotalAllocations = 0,
-                        AllenCost = null
-                    }
-                })
-            .ToList();
+                        Committed = c.Committed,
+                        Spent = c.Spent,
+                        Available = c.Available,
+                        ReservedPlaces = c.AnonymousReservedPlaces,
+                        AssignedPending = c.AssignedPending,
+                        CompletedAwaitingSpend = c.CompletedAwaitingManualSpend,
+                        CompletionsRemaining = c.CompletionsRemaining,
+                        TotalAllocations = c.TotalAllocations,
+                        BillableUnexported = unbilled,
+                        AllenCost = c.ProviderCost
+                    });
+                }
+            }
+        }
+
         PrepaidPosition = new ObservableCollection<PrepaidPositionReportItem>(rows);
     }
 

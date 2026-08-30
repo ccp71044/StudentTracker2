@@ -145,5 +145,6 @@ public class PrepaidPositionReportItem
     public int CompletedAwaitingSpend { get; set; }
     public int CompletionsRemaining { get; set; }
     public int TotalAllocations { get; set; }
+    public int BillableUnexported { get; set; }
     public decimal? AllenCost { get; set; }
 }

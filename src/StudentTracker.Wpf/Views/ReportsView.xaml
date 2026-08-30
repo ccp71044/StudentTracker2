@@ -494,6 +494,7 @@
                             <DataGridTextColumn Header="Pending" Binding="{Binding AssignedPending}" Width="70" />
                             <DataGridTextColumn Header="Awaiting Spend" Binding="{Binding CompletedAwaitingSpend}" Width="100" />
                             <DataGridTextColumn Header="Remaining" Binding="{Binding CompletionsRemaining}" Width="80" />
+                            <DataGridTextColumn Header="To Bill" Binding="{Binding BillableUnexported}" Width="70" />
                             <DataGridTextColumn Header="Allen Cost" Binding="{Binding AllenCost, StringFormat=C}" Width="90" />
                         </DataGrid.Columns>
                     </DataGrid>

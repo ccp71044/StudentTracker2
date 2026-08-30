@@ -415,6 +415,20 @@ public class ReportService
     }
     #endregion
 
+    #region Prepaid position
+    public async Task<int> GetUnbilledCountAsync(Guid poolId, Guid? courseDefinitionId = null)
+    {
+        var q = _context.Allocations
+            .AsNoTracking()
+            .Where(a => a.BudgetPoolId == poolId && a.IsBillable && a.ExportedInBatchId == null);
+
+        if (courseDefinitionId.HasValue)
+            q = q.Where(a => a.CourseDelivery != null && a.CourseDelivery.CourseDefinitionId == courseDefinitionId.Value);
+
+        return await q.CountAsync();
+    }
+    #endregion
+
     #region CSV export
     public async Task<byte[]> ExportCsvAsync<T>(IEnumerable<T> records) where T : class
     {
