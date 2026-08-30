@@ -37,6 +37,7 @@
                             <MenuItem Header="_Upcoming" Command="{Binding ExportUpcomingDeliveriesCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportUpcomingCsv" />
                             <MenuItem Header="_Cancelled" Command="{Binding ExportCancelledDeliveriesCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportCancelledDeliveriesCsv" />
                             <MenuItem Header="_Completed" Command="{Binding ExportCompletedDeliveriesCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportCompletedDeliveriesCsv" />
+                            <MenuItem Header="_TBC" Command="{Binding ExportTbcDeliveriesCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportTbcDeliveriesCsv" />
                             <MenuItem Header="Ca_pacity" Command="{Binding ExportCapacityCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportCapacityCsv" />
                         </MenuItem>
                         <MenuItem Header="_Allocations" AutomationProperties.AutomationId="ReportsExportMenu_AllocationsCategory">
@@ -53,6 +54,7 @@
                             <MenuItem Header="Credit S_ummary" Command="{Binding ExportCreditSummaryCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportCreditSummaryCsv" />
                             <MenuItem Header="Credit _History" Command="{Binding ExportCreditHistoryCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportCreditHistoryCsv" />
                             <MenuItem Header="_Prepaid Position" Command="{Binding ExportPrepaidPositionCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportPrepaidPositionCsv" />
+                            <MenuItem Header="Billable _Certificates" Command="{Binding ExportBillableCertificatesCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportBillableCertificatesCsv" />
                         </MenuItem>
                         <MenuItem Header="_Administration" AutomationProperties.AutomationId="ReportsExportMenu_AdministrationCategory">
                             <MenuItem Header="_Audit Activity" Command="{Binding ExportAuditActivityCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportAuditActivityCsv" />
@@ -505,6 +507,50 @@
                                 <MenuItem Header="_Refresh" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="PrepaidPositionContextMenu_Refresh" />
                             </ContextMenu>
                         </DataGrid.ContextMenu>
+                    </DataGrid>
+
+                    <!-- Billable Certificates for Invoicer -->
+                    <DataGrid ItemsSource="{Binding BillableCertificates}" AutoGenerateColumns="False" IsReadOnly="True" AutomationProperties.AutomationId="BillableCertificatesReportGrid">
+                        <DataGrid.Style>
+                            <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedReport.Key}" Value="BillableCertificates">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Style>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Allocation" Binding="{Binding AllocationDisplayId}" Width="120" />
+                            <DataGridTextColumn Header="Student" Binding="{Binding StudentName}" Width="200" />
+                            <DataGridTextColumn Header="Course" Binding="{Binding CourseCode}" Width="120" />
+                            <DataGridTextColumn Header="Outcome Date" Binding="{Binding OutcomeDate, StringFormat=dd/MM/yyyy}" Width="120" />
+                            <DataGridTextColumn Header="Certificate Cost" Binding="{Binding CertificateCost, StringFormat=C}" Width="120" />
+                            <DataGridCheckBoxColumn Header="Exported" Binding="{Binding IsExported}" Width="80" />
+                            <DataGridTextColumn Header="Batch" Binding="{Binding ExportBatchId}" Width="100" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- TBC Course Deliveries -->
+                    <DataGrid ItemsSource="{Binding TbcDeliveries}" AutoGenerateColumns="False" IsReadOnly="True" AutomationProperties.AutomationId="TbcDeliveriesReportGrid">
+                        <DataGrid.Style>
+                            <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedReport.Key}" Value="TbcDeliveries">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Style>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Course" Binding="{Binding CourseCode}" Width="120" />
+                            <DataGridTextColumn Header="Title" Binding="{Binding CourseTitle}" Width="200" />
+                            <DataGridTextColumn Header="Location" Binding="{Binding Location}" Width="120" />
+                            <DataGridTextColumn Header="Trainer" Binding="{Binding TrainerName}" Width="120" />
+                            <DataGridTextColumn Header="Status" Binding="{Binding DeliveryStatus}" Width="100" />
+                        </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
             </Border>

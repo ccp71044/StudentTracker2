@@ -91,6 +91,12 @@ public partial class ReportsViewModel : ViewModelBase
     private ObservableCollection<PrepaidPositionReportItem> _prepaidPosition = new();
 
     [ObservableProperty]
+    private ObservableCollection<BillableCertificateReportItem> _billableCertificates = new();
+
+    [ObservableProperty]
+    private ObservableCollection<TbcDeliveryReportItem> _tbcDeliveries = new();
+
+    [ObservableProperty]
     private bool _includeCostsInWithdrawn = true;
 
     [ObservableProperty]
@@ -132,6 +138,7 @@ public partial class ReportsViewModel : ViewModelBase
             new ReportItem("UpcomingDeliveries", "Upcoming Deliveries", "Deliveries"),
             new ReportItem("CancelledDeliveries", "Cancelled Deliveries", "Deliveries"),
             new ReportItem("CompletedDeliveries", "Completed Deliveries", "Deliveries"),
+            new ReportItem("TbcDeliveries", "TBC Deliveries", "Deliveries"),
             new ReportItem("CapacityReport", "Capacity", "Deliveries"),
             new ReportItem("ActiveAllocations", "Active Allocations", "Allocations"),
             new ReportItem("TransferredAllocations", "Transferred Allocations", "Allocations"),
@@ -144,6 +151,7 @@ public partial class ReportsViewModel : ViewModelBase
             new ReportItem("CreditSummary", "Credit Summary", "Financial"),
             new ReportItem("CreditHistory", "Credit History", "Financial"),
             new ReportItem("PrepaidPosition", "Prepaid Position", "Financial"),
+            new ReportItem("BillableCertificates", "Billable Certificates for Invoicer", "Financial"),
             new ReportItem("AuditActivity", "Audit Activity", "Administration"),
             new ReportItem("ImportReviewQueue", "Import Review Queue", "Administration"),
             new ReportItem("CertificateOrders", "Certificate Orders", "Administration"),
@@ -164,6 +172,7 @@ public partial class ReportsViewModel : ViewModelBase
         UpcomingDeliveries = new ObservableCollection<DeliveryReportItem>(await _reportService.GetUpcomingCourseDeliveriesAsync(FromDate));
         CancelledDeliveries = new ObservableCollection<DeliveryReportItem>(await _reportService.GetCancelledCourseDeliveriesAsync());
         CompletedDeliveries = new ObservableCollection<DeliveryReportItem>(await _reportService.GetCompletedCourseDeliveriesAsync());
+        TbcDeliveries = new ObservableCollection<TbcDeliveryReportItem>(await _reportService.GetTbcCourseDeliveriesAsync());
         CapacityReport = new ObservableCollection<DeliveryReportItem>(await _reportService.GetCapacityReportAsync());
 
         ActiveAllocations = new ObservableCollection<AllocationReportItem>(await _reportService.GetActiveAllocationsAsync(IncludeArchived));
@@ -179,6 +188,7 @@ public partial class ReportsViewModel : ViewModelBase
 
         CreditSummary = new ObservableCollection<CreditTransactionSummaryItem>(await _reportService.GetCreditTransactionSummaryAsync());
         CreditHistory = new ObservableCollection<CreditTransactionHistoryItem>(await _reportService.GetCreditTransactionHistoryAsync(FromDate, ToDate));
+        BillableCertificates = new ObservableCollection<BillableCertificateReportItem>(await _reportService.GetBillableCertificatesForInvoicerAsync(IncludeArchived));
 
         AuditActivity = new ObservableCollection<AuditLogReportItem>(await _reportService.GetAuditActivityReportAsync(FromDate, ToDate));
         ImportReviewQueue = new ObservableCollection<ImportReviewQueueReportItem>(await _reportService.GetImportReviewQueueReportAsync());
@@ -317,6 +327,18 @@ public partial class ReportsViewModel : ViewModelBase
     private async Task ExportPrepaidPositionCsv()
     {
         await ExportAsync("prepaid-position.csv", PrepaidPosition.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportBillableCertificatesCsv()
+    {
+        await ExportAsync("billable-certificates.csv", BillableCertificates.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportTbcDeliveriesCsv()
+    {
+        await ExportAsync("tbc-deliveries.csv", TbcDeliveries.ToList());
     }
 
     [RelayCommand]
