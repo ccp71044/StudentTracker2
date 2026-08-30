@@ -133,6 +133,8 @@ public class PrepaidPositionReportItem
     public string PoolDisplayId { get; set; } = string.Empty;
     public string PoolName { get; set; } = string.Empty;
     public string? FinancialPeriod { get; set; }
+    public string? DeliveryDisplayId { get; set; }
+    public DateTime? DeliveryDate { get; set; }
     public string CourseCode { get; set; } = string.Empty;
     public string CourseTitle { get; set; } = string.Empty;
     public string? Provider { get; set; }

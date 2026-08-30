@@ -12,10 +12,14 @@ namespace StudentTracker.Services;
 public class ReportService
 {
     private readonly StudentTrackerDbContext _context;
+    private readonly BudgetSummaryService _budgetSummary;
+    private readonly PricingService _pricing;
 
-    public ReportService(StudentTrackerDbContext context)
+    public ReportService(StudentTrackerDbContext context, BudgetSummaryService budgetSummary, PricingService pricing)
     {
         _context = context;
+        _budgetSummary = budgetSummary;
+        _pricing = pricing;
     }
 
     #region Legacy allocation reports
@@ -416,6 +420,97 @@ public class ReportService
     #endregion
 
     #region Prepaid position
+    public async Task<List<PrepaidPositionReportItem>> GetPrepaidPositionByDeliveryAsync()
+    {
+        var pools = await _context.BudgetPools
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.Name)
+            .ToListAsync();
+        var poolSummaries = (await _budgetSummary.GetPoolSummariesAsync()).ToDictionary(s => s.PoolId);
+        var prices = await _pricing.GetCurrentPricesAsync();
+
+        var allocations = await _context.Allocations
+            .Where(a => a.BudgetPoolId != null)
+            .Include(a => a.CourseDelivery).ThenInclude(d => d!.CourseDefinition)
+            .Include(a => a.Student)
+            .AsNoTracking()
+            .ToListAsync();
+
+        var rows = new List<PrepaidPositionReportItem>();
+        foreach (var pool in pools)
+        {
+            var poolAllocs = allocations.Where(a => a.BudgetPoolId == pool.Id).ToList();
+            var summary = poolSummaries.GetValueOrDefault(pool.Id);
+            var poolFunds = summary?.FundsAdded ?? 0m;
+            var poolAvailable = summary?.Free ?? 0m;
+            var poolCommitted = summary?.Committed ?? 0m;
+            var poolSpent = summary?.Spent ?? 0m;
+
+            var deliveryGroups = poolAllocs
+                .Where(a => a.CourseDelivery != null)
+                .GroupBy(a => a.CourseDelivery!)
+                .OrderBy(g => g.Key.StartDate)
+                .ToList();
+
+            if (deliveryGroups.Count == 0)
+            {
+                rows.Add(new PrepaidPositionReportItem
+                {
+                    PoolDisplayId = pool.DisplayId ?? pool.Name,
+                    PoolName = pool.Name,
+                    FinancialPeriod = pool.FinancialPeriod,
+                    FundsAdded = poolFunds,
+                    Available = poolAvailable,
+                    Committed = poolCommitted,
+                    Spent = poolSpent,
+                    CompletionsRemaining = 0
+                });
+            }
+
+            foreach (var group in deliveryGroups)
+            {
+                var delivery = group.Key;
+                var course = delivery.CourseDefinition;
+                var price = course != null && prices.TryGetValue(course.Id, out var p) ? p : course?.DefaultCertificateCost;
+
+                var reserved = group.Count(a => !string.IsNullOrEmpty(a.PlaceholderName) && a.AllocationStatus == AllocationStatus.Reserved);
+                var pending = group.Count(a => a.StudentId.HasValue && a.OutcomeStatus == OutcomeStatus.Pending);
+                var completedAwaiting = group.Count(a => a.OutcomeStatus == OutcomeStatus.Completed && a.CashCommitmentStatus == CashCommitmentStatus.Pending);
+                var toBill = group.Count(a => a.IsBillable && a.ExportedInBatchId == null);
+                var committed = group.Where(a => a.CashCommitmentStatus == CashCommitmentStatus.Pending).Sum(a => a.CertificateCost ?? price ?? 0m);
+                var spent = group.Where(a => a.CashCommitmentStatus == CashCommitmentStatus.Spent).Sum(a => a.CertificateCost ?? price ?? 0m);
+                var completionsRemaining = price.HasValue && price.Value > 0 && poolAvailable > 0
+                    ? (int)Math.Floor(poolAvailable / price.Value)
+                    : 0;
+
+                rows.Add(new PrepaidPositionReportItem
+                {
+                    PoolDisplayId = pool.DisplayId ?? pool.Name,
+                    PoolName = pool.Name,
+                    FinancialPeriod = pool.FinancialPeriod,
+                    DeliveryDisplayId = delivery.DisplayId,
+                    DeliveryDate = delivery.StartDate,
+                    CourseCode = course?.CourseCode ?? "",
+                    CourseTitle = course?.CourseTitle ?? "",
+                    Provider = course?.Provider,
+                    FundsAdded = poolFunds,
+                    Available = poolAvailable,
+                    Committed = committed,
+                    Spent = spent,
+                    ReservedPlaces = reserved,
+                    AssignedPending = pending,
+                    CompletedAwaitingSpend = completedAwaiting,
+                    CompletionsRemaining = completionsRemaining,
+                    TotalAllocations = group.Count(),
+                    BillableUnexported = toBill,
+                    AllenCost = price
+                });
+            }
+        }
+
+        return rows;
+    }
+
     public async Task<int> GetUnbilledCountAsync(Guid poolId, Guid? courseDefinitionId = null)
     {
         var q = _context.Allocations

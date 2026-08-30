@@ -486,6 +486,8 @@
                             <DataGridTextColumn Header="Pool" Binding="{Binding PoolName}" Width="140" />
                             <DataGridTextColumn Header="Course" Binding="{Binding CourseCode}" Width="80" />
                             <DataGridTextColumn Header="Title" Binding="{Binding CourseTitle}" Width="180" />
+                            <DataGridTextColumn Header="Delivery" Binding="{Binding DeliveryDisplayId}" Width="100" />
+                            <DataGridTextColumn Header="Date" Binding="{Binding DeliveryDate, StringFormat=dd/MM/yyyy}" Width="90" />
                             <DataGridTextColumn Header="Funds" Binding="{Binding FundsAdded, StringFormat=C}" Width="90" />
                             <DataGridTextColumn Header="Committed" Binding="{Binding Committed, StringFormat=C}" Width="90" />
                             <DataGridTextColumn Header="Spent" Binding="{Binding Spent, StringFormat=C}" Width="90" />

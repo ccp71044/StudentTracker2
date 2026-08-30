@@ -29,7 +29,7 @@ public class ReportServiceTests
         });
         context.SaveChanges();
 
-        var service = new ReportService(context);
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
         var result = await service.GetAwaitingOrderReportAsync();
 
         Assert.Equal(2, result.Count);
@@ -45,7 +45,7 @@ public class ReportServiceTests
         context.Allocations.Add(new Allocation { CourseDeliveryId = delivery.Id, PlaceholderName = "Hold" });
         context.SaveChanges();
 
-        var service = new ReportService(context);
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
         var result = await service.GetCapacityReportAsync();
 
         Assert.Single(result);
@@ -63,7 +63,7 @@ public class ReportServiceTests
         context.Allocations.Add(new Allocation { CourseDeliveryId = delivery.Id, PlaceholderName = "Team A" });
         context.SaveChanges();
 
-        var service = new ReportService(context);
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
         Assert.Single(await service.GetActiveAllocationsAsync());
         Assert.Single(await service.GetCancelledAllocationsAsync());
         Assert.Single(await service.GetPlaceholderAllocationsAsync());
@@ -78,7 +78,7 @@ public class ReportServiceTests
         context.Allocations.Add(new Allocation { StudentId = student.Id, CourseDeliveryId = delivery.Id, AttendanceStatus = AttendanceStatus.NotRecorded });
         context.SaveChanges();
 
-        var service = new ReportService(context);
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
         var result = await service.GetAttendanceReportAsync();
 
         Assert.Single(result);
@@ -94,7 +94,7 @@ public class ReportServiceTests
         context.Allocations.Add(new Allocation { StudentId = student.Id, CourseDeliveryId = delivery.Id, OutcomeStatus = OutcomeStatus.Withdrawn });
         context.SaveChanges();
 
-        var service = new ReportService(context);
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
         var result = await service.GetCourseUtilizationReportAsync();
 
         Assert.Single(result);
@@ -114,7 +114,7 @@ public class ReportServiceTests
         context.BudgetTransactions.Add(new BudgetTransaction { PoolId = pool.Id, TransactionType = BudgetTransactionType.FundsAdded, Amount = 200 });
         context.SaveChanges();
 
-        var service = new ReportService(context);
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
         var result = await service.GetBudgetTransactionSummaryAsync();
 
         Assert.Single(result);
@@ -132,7 +132,7 @@ public class ReportServiceTests
         context.CertificateCreditTransactions.Add(new CertificateCreditTransaction { PoolId = pool.Id, TransactionType = CreditTransactionType.TopUp, Amount = 20, Quantity = 2 });
         context.SaveChanges();
 
-        var service = new ReportService(context);
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
         var result = await service.GetCreditTransactionSummaryAsync();
 
         Assert.Single(result);
@@ -167,7 +167,7 @@ public class ReportServiceTests
         });
         context.SaveChanges();
 
-        var service = new ReportService(context);
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
         var result = await service.GetCertificateOrderReportAsync();
 
         Assert.Single(result);
@@ -183,7 +183,7 @@ public class ReportServiceTests
         context.ImportReviewQueues.Add(new ImportReviewQueue { SourceFileName = "f.xlsx", SourceSheet = "s", SourceRow = 2, EntityType = "Student", ProposedAction = "Create", Status = "Approved" });
         context.SaveChanges();
 
-        var service = new ReportService(context);
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
         var result = await service.GetImportReviewQueueReportAsync();
 
         Assert.Single(result);
@@ -198,7 +198,7 @@ public class ReportServiceTests
         context.AuditLogs.Add(new AuditLog { Timestamp = DateTime.UtcNow, Action = "Update", EntityType = "Student" });
         context.SaveChanges();
 
-        var service = new ReportService(context);
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
         var result = await service.GetAuditActivityReportAsync(DateTime.UtcNow.AddDays(-1), null);
 
         Assert.Single(result);
@@ -209,7 +209,7 @@ public class ReportServiceTests
     public async Task ExportCsvAsync_WritesBytesForReportItems()
     {
         using var context = TestDbContextFactory.Create();
-        var service = new ReportService(context);
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
         var items = new List<AwaitingOrderReportItem>
         {
             new() { StudentName = "A", CourseCode = "C1", CertificateOrderStatus = "Ready", CashCommitmentStatus = "Pending" }
