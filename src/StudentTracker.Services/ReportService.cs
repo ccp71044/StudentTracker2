@@ -524,6 +524,49 @@ public class ReportService
     }
     #endregion
 
+    #region Invoicer / documents
+    public async Task<List<BillableCertificateReportItem>> GetBillableCertificatesForInvoicerAsync(bool includeArchived = false)
+    {
+        var q = _context.Allocations
+            .Where(a => a.IsBillable)
+            .Include(a => a.Student)
+            .Include(a => a.CourseDelivery).ThenInclude(d => d!.CourseDefinition)
+            .AsNoTracking();
+
+        if (!includeArchived) q = q.Where(a => a.Student == null || !a.Student.IsArchived);
+
+        var list = await q.ToListAsync();
+        return list.Select(a => new BillableCertificateReportItem
+        {
+            AllocationDisplayId = a.DisplayId,
+            StudentName = a.Student?.FullName ?? a.PlaceholderName ?? "",
+            CourseCode = a.CourseDelivery?.CourseDefinition?.CourseCode ?? "",
+            OutcomeDate = a.OutcomeDate,
+            CertificateCost = a.CertificateCost,
+            IsExported = a.ExportedInBatchId.HasValue,
+            ExportBatchId = a.ExportedInBatchId?.ToString("N")[..8]
+        }).ToList();
+    }
+
+    public async Task<List<TbcDeliveryReportItem>> GetTbcCourseDeliveriesAsync()
+    {
+        var deliveries = await _context.CourseDeliveries
+            .Where(d => d.DeliveryStatus == "TBC")
+            .Include(d => d.CourseDefinition)
+            .AsNoTracking()
+            .ToListAsync();
+
+        return deliveries.Select(d => new TbcDeliveryReportItem
+        {
+            CourseCode = d.CourseDefinition?.CourseCode ?? "",
+            CourseTitle = d.CourseDefinition?.CourseTitle ?? "",
+            Location = d.Location,
+            TrainerName = d.TrainerName,
+            DeliveryStatus = d.DeliveryStatus ?? "TBC"
+        }).ToList();
+    }
+    #endregion
+
     #region CSV export
     public async Task<byte[]> ExportCsvAsync<T>(IEnumerable<T> records) where T : class
     {

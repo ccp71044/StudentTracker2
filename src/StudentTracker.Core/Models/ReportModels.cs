@@ -150,3 +150,23 @@ public class PrepaidPositionReportItem
     public int BillableUnexported { get; set; }
     public decimal? AllenCost { get; set; }
 }
+
+public class BillableCertificateReportItem
+{
+    public string? AllocationDisplayId { get; set; }
+    public string? StudentName { get; set; }
+    public string CourseCode { get; set; } = string.Empty;
+    public DateTime? OutcomeDate { get; set; }
+    public decimal? CertificateCost { get; set; }
+    public bool IsExported { get; set; }
+    public string? ExportBatchId { get; set; }
+}
+
+public class TbcDeliveryReportItem
+{
+    public string CourseCode { get; set; } = string.Empty;
+    public string CourseTitle { get; set; } = string.Empty;
+    public string? Location { get; set; }
+    public string? TrainerName { get; set; }
+    public string DeliveryStatus { get; set; } = string.Empty;
+}

@@ -224,6 +224,39 @@ public class ReportServiceTests
         Assert.Contains("C1", text);
     }
 
+    [Fact]
+    public async Task GetBillableCertificatesForInvoicerAsync_ReturnsBillableOnly()
+    {
+        using var context = TestDbContextFactory.Create();
+        SeedStudentAndCourse(context, out var student, out var delivery);
+        context.Allocations.Add(new Allocation { StudentId = student.Id, CourseDeliveryId = delivery.Id, IsBillable = true, CertificateCost = 120 });
+        context.Allocations.Add(new Allocation { StudentId = student.Id, CourseDeliveryId = delivery.Id, IsBillable = false, CertificateCost = 120 });
+        context.SaveChanges();
+
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
+        var result = await service.GetBillableCertificatesForInvoicerAsync();
+
+        Assert.Single(result);
+        Assert.Equal(120m, result[0].CertificateCost);
+        Assert.False(result[0].IsExported);
+    }
+
+    [Fact]
+    public async Task GetTbcCourseDeliveriesAsync_ReturnsTbcOnly()
+    {
+        using var context = TestDbContextFactory.Create();
+        SeedStudentAndCourse(context, out _, out var delivery);
+        context.CourseDeliveries.Add(new CourseDelivery { CourseDefinitionId = delivery.CourseDefinitionId, DeliveryStatus = "TBC", DisplayId = "DEL-TBC" });
+        context.CourseDeliveries.Add(new CourseDelivery { CourseDefinitionId = delivery.CourseDefinitionId, DeliveryStatus = "Scheduled", DisplayId = "DEL-SCH" });
+        context.SaveChanges();
+
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
+        var result = await service.GetTbcCourseDeliveriesAsync();
+
+        Assert.Single(result);
+        Assert.Equal("TBC", result[0].DeliveryStatus);
+    }
+
     private static void SeedStudentAndCourse(StudentTrackerDbContext context, out Student student, out CourseDelivery delivery)
     {
         student = new Student { FirstName = "A", LastName = "B" };
