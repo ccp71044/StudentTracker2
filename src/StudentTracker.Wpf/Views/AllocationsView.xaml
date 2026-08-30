@@ -28,6 +28,7 @@
                     <Separator />
                     <MenuItem Header="Add Placeholder" Command="{Binding AddPlaceholderCommand}" AutomationProperties.AutomationId="AllocationsContextMenu_AddPlaceholder" />
                     <MenuItem Header="Replace Placeholder" Command="{Binding ReplacePlaceholderCommand}" AutomationProperties.AutomationId="AllocationsContextMenu_ReplacePlaceholder" />
+                    <MenuItem Header="Carry Forward Placeholder" Command="{Binding CarryForwardPlaceholderCommand}" AutomationProperties.AutomationId="AllocationsContextMenu_CarryForward" />
                     <MenuItem Header="Transfer Allocation" Command="{Binding TransferAllocationCommand}" AutomationProperties.AutomationId="AllocationsContextMenu_Transfer" />
                     <MenuItem Header="Cancel Allocation" Command="{Binding CancelAllocationCommand}" AutomationProperties.AutomationId="AllocationsContextMenu_Cancel" />
                     <Separator />

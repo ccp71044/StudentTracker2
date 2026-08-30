@@ -484,4 +484,40 @@ public class AllocationService
         _audit.Record("ExpenseReversed", "Allocation", allocation.Id, allocation.DisplayId, null, new { Amount = expense, PoolId = allocation.BudgetPoolId });
         await _context.SaveChangesAsync();
     }
+
+    public async Task<Allocation> CarryForwardPlaceholderAsync(Guid sourceAllocationId, Guid targetDeliveryId, string? reason = null)
+    {
+        var source = await _context.Allocations
+            .Include(a => a.CourseDelivery).ThenInclude(d => d!.CourseDefinition)
+            .FirstOrDefaultAsync(a => a.Id == sourceAllocationId)
+            ?? throw new ArgumentException("Source allocation not found");
+
+        if (string.IsNullOrWhiteSpace(source.PlaceholderName) || source.StudentId.HasValue)
+            throw new InvalidOperationException("Only unassigned placeholder allocations can be carried forward.");
+
+        var target = await _context.CourseDeliveries
+            .Include(d => d.CourseDefinition)
+            .FirstOrDefaultAsync(d => d.Id == targetDeliveryId)
+            ?? throw new ArgumentException("Target delivery not found");
+
+        if (source.CourseDelivery?.CourseDefinitionId != target.CourseDefinition?.Id)
+            throw new InvalidOperationException("Carry-forward is only allowed between deliveries of the same course.");
+
+        var oldDeliveryId = source.CourseDeliveryId;
+        source.CourseDeliveryId = targetDeliveryId;
+        source.UpdatedAt = DateTime.UtcNow;
+        source.PlaceholderName = $"{source.PlaceholderName} (carried)";
+
+        await _context.SaveChangesAsync();
+        _audit.Record(
+            "CarriedForward",
+            "Allocation",
+            source.Id,
+            source.DisplayId,
+            new { CourseDeliveryId = oldDeliveryId },
+            new { CourseDeliveryId = targetDeliveryId, Reason = reason });
+        await _context.SaveChangesAsync();
+
+        return source;
+    }
 }

@@ -92,6 +92,26 @@ public partial class AllocationsViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand(CanExecute = nameof(CanCarryForwardPlaceholder))]
+    private async Task CarryForwardPlaceholder()
+    {
+        if (SelectedAllocation == null) return;
+        var vm = new CarryForwardViewModel(SelectedAllocation, _courseService);
+        await vm.LoadAsync();
+        if (_dialogService.ShowDialog(vm) == true && vm.SelectedDelivery != null)
+        {
+            try
+            {
+                await _allocationService.CarryForwardPlaceholderAsync(SelectedAllocation.Id, vm.SelectedDelivery.Id, vm.Reason);
+                await LoadAsync();
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowError("The placeholder could not be carried forward.", ex);
+            }
+        }
+    }
+
     [RelayCommand(CanExecute = nameof(CanEditAllocation))]
     private async Task MarkAttendance()
     {
@@ -217,6 +237,7 @@ public partial class AllocationsViewModel : ViewModelBase
     private bool CanEditAllocation => SelectedAllocation != null;
     private bool CanCancelAllocation => SelectedAllocation != null && SelectedAllocation.AllocationStatus != Core.Enums.AllocationStatus.Cancelled && SelectedAllocation.AllocationStatus != Core.Enums.AllocationStatus.Finalised;
     private bool CanReplacePlaceholder => SelectedAllocation != null && !string.IsNullOrEmpty(SelectedAllocation.PlaceholderName);
+    private bool CanCarryForwardPlaceholder => SelectedAllocation != null && !string.IsNullOrEmpty(SelectedAllocation.PlaceholderName) && !SelectedAllocation.StudentId.HasValue;
     private bool CanTransferAllocation => SelectedAllocation != null && SelectedAllocation.StudentId.HasValue &&
         (SelectedAllocation.AllocationStatus == Core.Enums.AllocationStatus.Enrolled || SelectedAllocation.AllocationStatus == Core.Enums.AllocationStatus.Active);
     private bool CanCreateCommitment => SelectedAllocation != null && SelectedAllocation.BudgetPoolId.HasValue &&
@@ -232,6 +253,7 @@ public partial class AllocationsViewModel : ViewModelBase
         MarkOutcomeCommand.NotifyCanExecuteChanged();
         CancelAllocationCommand.NotifyCanExecuteChanged();
         ReplacePlaceholderCommand.NotifyCanExecuteChanged();
+        CarryForwardPlaceholderCommand.NotifyCanExecuteChanged();
         TransferAllocationCommand.NotifyCanExecuteChanged();
         CreateOrRestoreCommitmentCommand.NotifyCanExecuteChanged();
         ReleaseCommitmentCommand.NotifyCanExecuteChanged();
