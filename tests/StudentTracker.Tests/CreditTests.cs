@@ -125,6 +125,39 @@ public class CreditTopUpReceiptTests
         }
     }
 
+    [Fact]
+    public async Task WF003_AllocateCreditForAllocation_WithdrawnBeforeCompletion_ReleasesCredit()
+    {
+        using var context = TestDbContextFactory.Create();
+        context.AppSettings.Add(new());
+        await context.SaveChangesAsync();
+
+        var service = CreateService(context, Path.GetTempPath());
+        var pool = await service.CreatePoolAsync(new CertificateCreditPool { Name = "Pool" });
+        await service.TopUpWithReceiptAsync(pool.Id, 1m, 1m, reference: "REF-1", reason: "Top-up");
+
+        var student = new Student { FirstName = "A", LastName = "B" };
+        context.Students.Add(student);
+        var course = new CourseDefinition { CourseCode = "C1", CourseTitle = "Course" };
+        context.CourseDefinitions.Add(course);
+        var delivery = new CourseDelivery { CourseDefinitionId = course.Id };
+        context.CourseDeliveries.Add(delivery);
+        var allocation = new Allocation { StudentId = student.Id, CourseDeliveryId = delivery.Id };
+        context.Allocations.Add(allocation);
+        await context.SaveChangesAsync();
+
+        await service.AllocateAsync(pool.Id, allocation.Id, 1m, 1m);
+        Assert.Equal(1m, await service.GetAllocatedAsync(pool.Id));
+        Assert.Equal(0m, await service.GetConsumedAsync(pool.Id));
+
+        allocation.OutcomeStatus = OutcomeStatus.Withdrawn;
+        await context.SaveChangesAsync();
+
+        await service.ReleaseAsync(pool.Id, allocation.Id, 1m, reason: "Withdrawn before completion");
+        Assert.Equal(0m, await service.GetAllocatedAsync(pool.Id));
+        Assert.Equal(0m, await service.GetConsumedAsync(pool.Id));
+    }
+
     private static CreditService CreateService(StudentTracker.Data.StudentTrackerDbContext context, string dataRoot)
     {
         var settings = new AppSettings { DataRootPath = dataRoot };
