@@ -362,4 +362,79 @@ public class ClientPrepaidEntitlementTests
         Assert.Equal(6m, position.PlacesConsumed);
         Assert.Equal(0m, position.UnassignedCarryForward);
     }
+
+    [Fact]
+    public async Task MP009_Release_ReplenishesUnassignedAndCanBeReassigned()
+    {
+        var (context, gen, _, service) = CreateService();
+
+        var course = new CourseDefinition { CourseCode = "HLTAID011", CourseTitle = "First Aid" };
+        context.CourseDefinitions.Add(course);
+        var delivery = new CourseDelivery { CourseDefinitionId = course.Id, DisplayId = "DEL-0001" };
+        context.CourseDeliveries.Add(delivery);
+        var pool = await service.CreatePoolAsync(new ClientPrepaidPool { Name = "T&C" });
+        await service.AddPrepaidPlacesAsync(pool.Id, 1m);
+
+        var s1 = new Student { FirstName = "A", LastName = "A", Email = "a@example.com" };
+        var s2 = new Student { FirstName = "B", LastName = "B", Email = "b@example.com" };
+        context.Students.AddRange(s1, s2);
+        var a1 = new Allocation { DisplayId = gen.NextDisplayId<Allocation>("ALL"), CourseDeliveryId = delivery.Id, StudentId = s1.Id };
+        var a2 = new Allocation { DisplayId = gen.NextDisplayId<Allocation>("ALL"), CourseDeliveryId = delivery.Id, StudentId = s2.Id };
+        context.Allocations.AddRange(a1, a2);
+        context.SaveChanges();
+
+        await service.ReservePlaceAsync(pool.Id, a1.Id, 1m);
+        var reserved = await service.GetPoolPositionAsync(pool.Id);
+        Assert.Equal(0m, reserved.UnassignedCarryForward);
+
+        await service.ReleasePlaceAsync(pool.Id, a1.Id, 1m);
+        var released = await service.GetPoolPositionAsync(pool.Id);
+        Assert.Equal(1m, released.UnassignedCarryForward);
+
+        await service.ReservePlaceAsync(pool.Id, a2.Id, 1m);
+        var reassign = await service.GetPoolPositionAsync(pool.Id);
+        Assert.Equal(0m, reassign.UnassignedCarryForward);
+        Assert.Equal(1m, reassign.ReservedToNamedStudents);
+    }
+
+    [Fact]
+    public async Task WF002_ReserveReleaseAndReassign_FullPlaceholderToNamedFlow()
+    {
+        var (context, gen, _, service) = CreateService();
+
+        var course = new CourseDefinition { CourseCode = "HLTAID011", CourseTitle = "First Aid" };
+        context.CourseDefinitions.Add(course);
+        var delivery = new CourseDelivery { CourseDefinitionId = course.Id, DisplayId = "DEL-0001" };
+        context.CourseDeliveries.Add(delivery);
+        var pool = await service.CreatePoolAsync(new ClientPrepaidPool { Name = "T&C" });
+        await service.AddPrepaidPlacesAsync(pool.Id, 2m);
+
+        // Reserve as placeholder for team A
+        var placeholder = new Allocation { DisplayId = gen.NextDisplayId<Allocation>("ALL"), CourseDeliveryId = delivery.Id, PlaceholderName = "Team A" };
+        context.Allocations.Add(placeholder);
+        context.SaveChanges();
+
+        await service.ReservePlaceAsync(pool.Id, placeholder.Id, 1m);
+        var reserved = await service.GetPoolPositionAsync(pool.Id);
+        Assert.Equal(1m, reserved.ReservedPlaceholders);
+
+        // Release placeholder and reserve for named student instead
+        await service.ReleasePlaceAsync(pool.Id, placeholder.Id, 1m);
+
+        var s1 = new Student { FirstName = "A", LastName = "A", Email = "a@example.com" };
+        context.Students.Add(s1);
+        var named = new Allocation { DisplayId = gen.NextDisplayId<Allocation>("ALL"), CourseDeliveryId = delivery.Id, StudentId = s1.Id };
+        context.Allocations.Add(named);
+        context.SaveChanges();
+
+        await service.ReservePlaceAsync(pool.Id, named.Id, 1m);
+        await service.AssignPlaceAsync(pool.Id, named.Id, 1m);
+        await service.ConsumePlaceAsync(pool.Id, named.Id, 1m);
+
+        var final = await service.GetPoolPositionAsync(pool.Id);
+        Assert.Equal(1m, final.PlacesConsumed);
+        Assert.Equal(1m, final.UnassignedCarryForward);
+        Assert.Equal(0m, final.ReservedPlaceholders);
+        Assert.Equal(0m, final.ReservedToNamedStudents);
+    }
 }
