@@ -186,15 +186,15 @@ public class CreditTopUpReceiptTests
 public class CreditTests
 {
     [Fact]
-    public void TopUpThenAllocate_ConsumesBalance()
+    public async Task TopUpThenAllocate_ConsumesBalance()
     {
         using var context = TestDbContextFactory.Create();
         context.AppSettings.Add(new());
         context.SaveChanges();
         var service = CreateService(context);
 
-        var pool = service.CreatePoolAsync(new CertificateCreditPool { Name = "Pool" }).Result;
-        service.TopUpAsync(pool.Id, 10m, 10m).Wait();
+        var pool = await service.CreatePoolAsync(new CertificateCreditPool { Name = "Pool" });
+        await service.TopUpAsync(pool.Id, 10m, 10m);
 
         var student = new Student { FirstName = "S", LastName = "A" };
         context.Students.Add(student);
@@ -214,24 +214,24 @@ public class CreditTests
         context.Allocations.Add(alloc);
         context.SaveChanges();
 
-        service.AllocateAsync(pool.Id, alloc.Id, 1m).Wait();
+        await service.AllocateAsync(pool.Id, alloc.Id, 1m);
 
-        var available = service.GetAvailableAsync(pool.Id).Result;
+        var available = await service.GetAvailableAsync(pool.Id);
         Assert.Equal(9m, available);
     }
 
     [Fact]
-    public void OverAllocation_IsBlocked()
+    public async Task OverAllocation_IsBlocked()
     {
         using var context = TestDbContextFactory.Create();
         context.AppSettings.Add(new());
         context.SaveChanges();
         var service = CreateService(context);
 
-        var pool = service.CreatePoolAsync(new CertificateCreditPool { Name = "Pool" }).Result;
-        service.TopUpAsync(pool.Id, 1m, 1m).Wait();
+        var pool = await service.CreatePoolAsync(new CertificateCreditPool { Name = "Pool" });
+        await service.TopUpAsync(pool.Id, 1m, 1m);
 
-        Assert.Throws<AggregateException>(() => service.AllocateAsync(pool.Id, Guid.NewGuid(), 2m).Wait());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.AllocateAsync(pool.Id, Guid.NewGuid(), 2m));
     }
 
     private static CreditService CreateService(StudentTracker.Data.StudentTrackerDbContext context)

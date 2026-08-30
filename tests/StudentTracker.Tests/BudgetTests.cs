@@ -17,15 +17,15 @@ public class BudgetTests
     }
 
     [Fact]
-    public void AddFundsAndCommit_ForecastReflectsPending()
+    public async Task AddFundsAndCommit_ForecastReflectsPending()
     {
         using var context = CreateContext();
         var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
         var service = new BudgetService(context, gen, audit);
 
-        var pool = service.CreatePoolAsync(new BudgetPool { Name = "Budget" }).Result;
-        service.AddFundsAsync(pool.Id, 1000m).Wait();
+        var pool = await service.CreatePoolAsync(new BudgetPool { Name = "Budget" });
+        await service.AddFundsAsync(pool.Id, 1000m);
         var student = new Student { FirstName = "S", LastName = "A" };
         context.Students.Add(student);
         var course = new CourseDefinition { CourseCode = "C1", CourseTitle = "Course" };
@@ -36,14 +36,14 @@ public class BudgetTests
         context.Allocations.Add(alloc);
         context.SaveChanges();
 
-        service.CreateCommitmentAsync(pool.Id, alloc.Id, 200m).Wait();
+        await service.CreateCommitmentAsync(pool.Id, alloc.Id, 200m);
 
-        Assert.Equal(1000m, service.GetActualAvailableAsync(pool.Id).Result);
-        Assert.Equal(800m, service.GetForecastAvailableAsync(pool.Id).Result);
+        Assert.Equal(1000m, await service.GetActualAvailableAsync(pool.Id));
+        Assert.Equal(800m, await service.GetForecastAvailableAsync(pool.Id));
     }
 
     [Fact]
-    public void CreatePlaceholderAllocations_AtomicallyReservesBudget()
+    public async Task CreatePlaceholderAllocations_AtomicallyReservesBudget()
     {
         using var context = CreateContext();
         var gen = new DisplayIdGenerator(context);
@@ -51,8 +51,8 @@ public class BudgetTests
         var budgetService = new BudgetService(context, gen, audit);
         var allocationService = new AllocationService(context, gen, audit, budgetService);
 
-        var pool = budgetService.CreatePoolAsync(new BudgetPool { Name = "Client Fund", Category = BudgetPoolCategory.ClientFunded, ClientName = "Acme" }).Result;
-        budgetService.AddFundsAsync(pool.Id, 1000m).Wait();
+        var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Client Fund", Category = BudgetPoolCategory.ClientFunded, ClientName = "Acme" });
+        await budgetService.AddFundsAsync(pool.Id, 1000m);
 
         var course = new CourseDefinition { CourseCode = "C1", CourseTitle = "Course" };
         context.CourseDefinitions.Add(course);
@@ -60,17 +60,17 @@ public class BudgetTests
         context.CourseDeliveries.Add(delivery);
         context.SaveChanges();
 
-        var allocations = allocationService.CreatePlaceholderAllocationsAsync(delivery.Id, "Group booking", 3, 200m, pool.Id).Result;
+        var allocations = await allocationService.CreatePlaceholderAllocationsAsync(delivery.Id, "Group booking", 3, 200m, pool.Id);
 
         Assert.Equal(3, allocations.Count);
         Assert.All(allocations, a => Assert.Equal(CashCommitmentStatus.Pending, a.CashCommitmentStatus));
-        Assert.Equal(1000m, budgetService.GetActualAvailableAsync(pool.Id).Result);
-        Assert.Equal(400m, budgetService.GetForecastAvailableAsync(pool.Id).Result);
-        Assert.Equal(600m, budgetService.GetPendingCommitmentsAsync(pool.Id).Result);
+        Assert.Equal(1000m, await budgetService.GetActualAvailableAsync(pool.Id));
+        Assert.Equal(400m, await budgetService.GetForecastAvailableAsync(pool.Id));
+        Assert.Equal(600m, await budgetService.GetPendingCommitmentsAsync(pool.Id));
     }
 
     [Fact]
-    public void CreatePlaceholderAllocations_InsufficientFunds_IsBlocked()
+    public async Task CreatePlaceholderAllocations_InsufficientFunds_IsBlocked()
     {
         using var context = CreateContext();
         var gen = new DisplayIdGenerator(context);
@@ -78,8 +78,8 @@ public class BudgetTests
         var budgetService = new BudgetService(context, gen, audit);
         var allocationService = new AllocationService(context, gen, audit, budgetService);
 
-        var pool = budgetService.CreatePoolAsync(new BudgetPool { Name = "Small Budget" }).Result;
-        budgetService.AddFundsAsync(pool.Id, 100m).Wait();
+        var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Small Budget" });
+        await budgetService.AddFundsAsync(pool.Id, 100m);
 
         var course = new CourseDefinition { CourseCode = "C1", CourseTitle = "Course" };
         context.CourseDefinitions.Add(course);
@@ -87,12 +87,12 @@ public class BudgetTests
         context.CourseDeliveries.Add(delivery);
         context.SaveChanges();
 
-        var ex = Assert.Throws<AggregateException>(() => allocationService.CreatePlaceholderAllocationsAsync(delivery.Id, "Group booking", 2, 200m, pool.Id).Wait());
-        Assert.Contains("Insufficient budget funds", ex.InnerException?.Message ?? ex.Message);
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => allocationService.CreatePlaceholderAllocationsAsync(delivery.Id, "Group booking", 2, 200m, pool.Id));
+        Assert.Contains("Insufficient budget funds", ex.Message);
     }
 
     [Fact]
-    public void ReplacePlaceholder_PreservesBudgetCommitment()
+    public async Task ReplacePlaceholder_PreservesBudgetCommitment()
     {
         using var context = CreateContext();
         var gen = new DisplayIdGenerator(context);
@@ -100,8 +100,8 @@ public class BudgetTests
         var budgetService = new BudgetService(context, gen, audit);
         var allocationService = new AllocationService(context, gen, audit, budgetService);
 
-        var pool = budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" }).Result;
-        budgetService.AddFundsAsync(pool.Id, 1000m).Wait();
+        var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" });
+        await budgetService.AddFundsAsync(pool.Id, 1000m);
 
         var student = new Student { FirstName = "S", LastName = "A" };
         context.Students.Add(student);
@@ -111,16 +111,16 @@ public class BudgetTests
         context.CourseDeliveries.Add(delivery);
         context.SaveChanges();
 
-        var placeholder = allocationService.CreatePlaceholderAllocationsAsync(delivery.Id, "Placeholder", 1, 250m, pool.Id).Result.Single();
+        var placeholder = (await allocationService.CreatePlaceholderAllocationsAsync(delivery.Id, "Placeholder", 1, 250m, pool.Id)).Single();
         Assert.Equal(CashCommitmentStatus.Pending, placeholder.CashCommitmentStatus);
 
-        var replaced = allocationService.ReplacePlaceholderAsync(placeholder.Id, student.Id).Result;
+        var replaced = await allocationService.ReplacePlaceholderAsync(placeholder.Id, student.Id);
         Assert.Equal(CashCommitmentStatus.Pending, replaced.CashCommitmentStatus);
-        Assert.Equal(250m, budgetService.GetPendingCommitmentsAsync(pool.Id).Result);
+        Assert.Equal(250m, await budgetService.GetPendingCommitmentsAsync(pool.Id));
     }
 
     [Fact]
-    public void ReleaseCommitment_RestoresForecast()
+    public async Task ReleaseCommitment_RestoresForecast()
     {
         using var context = CreateContext();
         var gen = new DisplayIdGenerator(context);
@@ -128,8 +128,8 @@ public class BudgetTests
         var budgetService = new BudgetService(context, gen, audit);
         var allocationService = new AllocationService(context, gen, audit, budgetService);
 
-        var pool = budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" }).Result;
-        budgetService.AddFundsAsync(pool.Id, 1000m).Wait();
+        var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" });
+        await budgetService.AddFundsAsync(pool.Id, 1000m);
 
         var student = new Student { FirstName = "S", LastName = "A" };
         context.Students.Add(student);
@@ -139,18 +139,18 @@ public class BudgetTests
         context.CourseDeliveries.Add(delivery);
         context.SaveChanges();
 
-        var alloc = allocationService.AllocateStudentAsync(delivery.Id, student.Id, 300m, pool.Id).Result;
-        allocationService.CreateOrRestoreCommitmentAsync(alloc.Id, 300m).Wait();
-        Assert.Equal(700m, budgetService.GetForecastAvailableAsync(pool.Id).Result);
+        var alloc = await allocationService.AllocateStudentAsync(delivery.Id, student.Id, 300m, pool.Id);
+        await allocationService.CreateOrRestoreCommitmentAsync(alloc.Id, 300m);
+        Assert.Equal(700m, await budgetService.GetForecastAvailableAsync(pool.Id));
 
-        allocationService.ReleaseCommitmentAsync(alloc.Id).Wait();
+        await allocationService.ReleaseCommitmentAsync(alloc.Id);
         Assert.Equal(CashCommitmentStatus.Released, context.Allocations.Find(alloc.Id)!.CashCommitmentStatus);
-        Assert.Equal(1000m, budgetService.GetForecastAvailableAsync(pool.Id).Result);
-        Assert.Equal(0m, budgetService.GetPendingCommitmentsAsync(pool.Id).Result);
+        Assert.Equal(1000m, await budgetService.GetForecastAvailableAsync(pool.Id));
+        Assert.Equal(0m, await budgetService.GetPendingCommitmentsAsync(pool.Id));
     }
 
     [Fact]
-    public void MarkCostSpent_RecognisesExpense()
+    public async Task MarkCostSpent_RecognisesExpense()
     {
         using var context = CreateContext();
         var gen = new DisplayIdGenerator(context);
@@ -158,8 +158,8 @@ public class BudgetTests
         var budgetService = new BudgetService(context, gen, audit);
         var allocationService = new AllocationService(context, gen, audit, budgetService);
 
-        var pool = budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" }).Result;
-        budgetService.AddFundsAsync(pool.Id, 1000m).Wait();
+        var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" });
+        await budgetService.AddFundsAsync(pool.Id, 1000m);
 
         var student = new Student { FirstName = "S", LastName = "A" };
         context.Students.Add(student);
@@ -169,19 +169,19 @@ public class BudgetTests
         context.CourseDeliveries.Add(delivery);
         context.SaveChanges();
 
-        var alloc = allocationService.AllocateStudentAsync(delivery.Id, student.Id, 300m, pool.Id).Result;
-        allocationService.CreateOrRestoreCommitmentAsync(alloc.Id, 300m).Wait();
-        allocationService.MarkOutcomeAsync(alloc.Id, OutcomeStatus.Completed).Wait();
+        var alloc = await allocationService.AllocateStudentAsync(delivery.Id, student.Id, 300m, pool.Id);
+        await allocationService.CreateOrRestoreCommitmentAsync(alloc.Id, 300m);
+        await allocationService.MarkOutcomeAsync(alloc.Id, OutcomeStatus.Completed);
 
-        allocationService.MarkCostSpentAsync(alloc.Id).Wait();
+        await allocationService.MarkCostSpentAsync(alloc.Id);
         Assert.Equal(CashCommitmentStatus.Spent, context.Allocations.Find(alloc.Id)!.CashCommitmentStatus);
-        Assert.Equal(300m, budgetService.GetActualExpenditureAsync(pool.Id).Result);
-        Assert.Equal(700m, budgetService.GetActualAvailableAsync(pool.Id).Result);
-        Assert.Equal(0m, budgetService.GetPendingCommitmentsAsync(pool.Id).Result);
+        Assert.Equal(300m, await budgetService.GetActualExpenditureAsync(pool.Id));
+        Assert.Equal(700m, await budgetService.GetActualAvailableAsync(pool.Id));
+        Assert.Equal(0m, await budgetService.GetPendingCommitmentsAsync(pool.Id));
     }
 
     [Fact]
-    public void MarkCostSpent_BlocksIfNotCompletedUnlessForced()
+    public async Task MarkCostSpent_BlocksIfNotCompletedUnlessForced()
     {
         using var context = CreateContext();
         var gen = new DisplayIdGenerator(context);
@@ -189,8 +189,8 @@ public class BudgetTests
         var budgetService = new BudgetService(context, gen, audit);
         var allocationService = new AllocationService(context, gen, audit, budgetService);
 
-        var pool = budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" }).Result;
-        budgetService.AddFundsAsync(pool.Id, 1000m).Wait();
+        var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" });
+        await budgetService.AddFundsAsync(pool.Id, 1000m);
 
         var student = new Student { FirstName = "S", LastName = "A" };
         context.Students.Add(student);
@@ -200,18 +200,18 @@ public class BudgetTests
         context.CourseDeliveries.Add(delivery);
         context.SaveChanges();
 
-        var alloc = allocationService.AllocateStudentAsync(delivery.Id, student.Id, 300m, pool.Id).Result;
-        allocationService.CreateOrRestoreCommitmentAsync(alloc.Id, 300m).Wait();
+        var alloc = await allocationService.AllocateStudentAsync(delivery.Id, student.Id, 300m, pool.Id);
+        await allocationService.CreateOrRestoreCommitmentAsync(alloc.Id, 300m);
 
-        var ex = Assert.Throws<AggregateException>(() => allocationService.MarkCostSpentAsync(alloc.Id).Wait());
-        Assert.Contains("override", ex.InnerException?.Message ?? ex.Message);
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => allocationService.MarkCostSpentAsync(alloc.Id));
+        Assert.Contains("override", ex.Message);
 
-        allocationService.MarkCostSpentAsync(alloc.Id, force: true).Wait();
+        await allocationService.MarkCostSpentAsync(alloc.Id, force: true);
         Assert.Equal(CashCommitmentStatus.Spent, context.Allocations.Find(alloc.Id)!.CashCommitmentStatus);
     }
 
     [Fact]
-    public void ReverseSpentCost_RestoresActualFunds()
+    public async Task ReverseSpentCost_RestoresActualFunds()
     {
         using var context = CreateContext();
         var gen = new DisplayIdGenerator(context);
@@ -219,8 +219,8 @@ public class BudgetTests
         var budgetService = new BudgetService(context, gen, audit);
         var allocationService = new AllocationService(context, gen, audit, budgetService);
 
-        var pool = budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" }).Result;
-        budgetService.AddFundsAsync(pool.Id, 1000m).Wait();
+        var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" });
+        await budgetService.AddFundsAsync(pool.Id, 1000m);
 
         var student = new Student { FirstName = "S", LastName = "A" };
         context.Students.Add(student);
@@ -230,19 +230,19 @@ public class BudgetTests
         context.CourseDeliveries.Add(delivery);
         context.SaveChanges();
 
-        var alloc = allocationService.AllocateStudentAsync(delivery.Id, student.Id, 300m, pool.Id).Result;
-        allocationService.CreateOrRestoreCommitmentAsync(alloc.Id, 300m).Wait();
-        allocationService.MarkOutcomeAsync(alloc.Id, OutcomeStatus.Completed).Wait();
-        allocationService.MarkCostSpentAsync(alloc.Id).Wait();
+        var alloc = await allocationService.AllocateStudentAsync(delivery.Id, student.Id, 300m, pool.Id);
+        await allocationService.CreateOrRestoreCommitmentAsync(alloc.Id, 300m);
+        await allocationService.MarkOutcomeAsync(alloc.Id, OutcomeStatus.Completed);
+        await allocationService.MarkCostSpentAsync(alloc.Id);
 
-        allocationService.ReverseSpentCostAsync(alloc.Id).Wait();
+        await allocationService.ReverseSpentCostAsync(alloc.Id);
         Assert.Equal(CashCommitmentStatus.Released, context.Allocations.Find(alloc.Id)!.CashCommitmentStatus);
-        Assert.Equal(0m, budgetService.GetActualExpenditureAsync(pool.Id).Result);
-        Assert.Equal(1000m, budgetService.GetActualAvailableAsync(pool.Id).Result);
+        Assert.Equal(0m, await budgetService.GetActualExpenditureAsync(pool.Id));
+        Assert.Equal(1000m, await budgetService.GetActualAvailableAsync(pool.Id));
     }
 
     [Fact]
-    public void CreateOrRestoreCommitment_CanRestoreReleasedCommitment()
+    public async Task CreateOrRestoreCommitment_CanRestoreReleasedCommitment()
     {
         using var context = CreateContext();
         var gen = new DisplayIdGenerator(context);
@@ -250,8 +250,8 @@ public class BudgetTests
         var budgetService = new BudgetService(context, gen, audit);
         var allocationService = new AllocationService(context, gen, audit, budgetService);
 
-        var pool = budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" }).Result;
-        budgetService.AddFundsAsync(pool.Id, 1000m).Wait();
+        var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" });
+        await budgetService.AddFundsAsync(pool.Id, 1000m);
 
         var student = new Student { FirstName = "S", LastName = "A" };
         context.Students.Add(student);
@@ -261,32 +261,32 @@ public class BudgetTests
         context.CourseDeliveries.Add(delivery);
         context.SaveChanges();
 
-        var alloc = allocationService.AllocateStudentAsync(delivery.Id, student.Id, 300m, pool.Id).Result;
-        allocationService.CreateOrRestoreCommitmentAsync(alloc.Id, 300m).Wait();
-        allocationService.ReleaseCommitmentAsync(alloc.Id).Wait();
+        var alloc = await allocationService.AllocateStudentAsync(delivery.Id, student.Id, 300m, pool.Id);
+        await allocationService.CreateOrRestoreCommitmentAsync(alloc.Id, 300m);
+        await allocationService.ReleaseCommitmentAsync(alloc.Id);
         Assert.Equal(CashCommitmentStatus.Released, context.Allocations.Find(alloc.Id)!.CashCommitmentStatus);
 
-        allocationService.CreateOrRestoreCommitmentAsync(alloc.Id, 300m).Wait();
+        await allocationService.CreateOrRestoreCommitmentAsync(alloc.Id, 300m);
         Assert.Equal(CashCommitmentStatus.Pending, context.Allocations.Find(alloc.Id)!.CashCommitmentStatus);
-        Assert.Equal(700m, budgetService.GetForecastAvailableAsync(pool.Id).Result);
+        Assert.Equal(700m, await budgetService.GetForecastAvailableAsync(pool.Id));
     }
 
     [Fact]
-    public void BudgetPool_CategoryAndClientName_Persisted()
+    public async Task BudgetPool_CategoryAndClientName_Persisted()
     {
         using var context = CreateContext();
         var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
         var service = new BudgetService(context, gen, audit);
 
-        var pool = service.CreatePoolAsync(new BudgetPool
+        var pool = await service.CreatePoolAsync(new BudgetPool
         {
             Name = "Client Fund",
             Category = BudgetPoolCategory.ClientFunded,
             ClientName = "Acme Corp"
-        }).Result;
+        });
 
-        var reloaded = service.GetPoolAsync(pool.Id).Result;
+        var reloaded = await service.GetPoolAsync(pool.Id);
         Assert.Equal(BudgetPoolCategory.ClientFunded, reloaded!.Category);
         Assert.Equal("Acme Corp", reloaded.ClientName);
     }
