@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using StudentTracker.Services;
+using StudentTracker.Wpf.Services;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -11,6 +12,8 @@ namespace StudentTracker.Wpf.ViewModels;
 public partial class MainViewModel : ViewModelBase
 {
     private readonly DataLocationService _dataLocation;
+    private readonly IDialogService _dialogService;
+    private readonly DataBrowserViewModel _dataBrowser;
 
     [ObservableProperty]
     private ViewModelBase _currentViewModel;
@@ -34,6 +37,7 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel(
         DataLocationService dataLocation,
+        IDialogService dialogService,
         DashboardViewModel dashboard,
         StudentsViewModel students,
         CoursesViewModel courses,
@@ -44,9 +48,12 @@ public partial class MainViewModel : ViewModelBase
         DocumentsViewModel documents,
         ReportsViewModel reports,
         ImportExportViewModel importExport,
-        SettingsViewModel settings)
+        SettingsViewModel settings,
+        DataBrowserViewModel dataBrowser)
     {
         _dataLocation = dataLocation;
+        _dialogService = dialogService;
+        _dataBrowser = dataBrowser;
         DashboardViewModel = dashboard;
         StudentsViewModel = students;
         CoursesViewModel = courses;
@@ -93,6 +100,9 @@ public partial class MainViewModel : ViewModelBase
 
     [RelayCommand]
     private void ShowSettings() => CurrentViewModel = SettingsViewModel;
+
+    [RelayCommand]
+    private void ShowDataBrowser() => _dialogService.ShowDialog(_dataBrowser);
 
     [RelayCommand]
     private void ExitApplication()

@@ -150,6 +150,7 @@ public partial class App : Application
         services.AddScoped<ReportsViewModel>();
         services.AddScoped<ImportExportViewModel>();
         services.AddScoped<SettingsViewModel>();
+        services.AddScoped<DataBrowserViewModel>();
     }
 
     protected override void OnExit(ExitEventArgs e)

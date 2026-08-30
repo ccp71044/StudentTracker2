@@ -124,6 +124,8 @@
             </MenuItem>
 
             <MenuItem Header="_Data" AutomationProperties.AutomationId="DataMenu">
+                <MenuItem Header="_Data Browser" Command="{Binding ShowDataBrowserCommand}" AutomationProperties.AutomationId="DataMenu_DataBrowser" />
+                <Separator />
                 <MenuItem Header="_Backup Now" Command="{Binding BackupNowCommand}" AutomationProperties.AutomationId="DataMenu_BackupNow" />
                 <MenuItem Header="_Restore Backup..." Command="{Binding RestoreBackupCommand}" AutomationProperties.AutomationId="DataMenu_RestoreBackup" />
                 <Separator />
