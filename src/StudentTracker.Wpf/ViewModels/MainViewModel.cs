@@ -37,6 +37,8 @@ public partial class MainViewModel : ViewModelBase
     public InvoicerReferenceViewModel InvoicerReferenceViewModel { get; }
     public ImportExportViewModel ImportExportViewModel { get; }
     public SettingsViewModel SettingsViewModel { get; }
+    public StudentOverviewViewModel StudentOverviewViewModel { get; }
+    public CourseDeliveryOverviewViewModel CourseDeliveryOverviewViewModel { get; }
 
     public MainViewModel(
         DataLocationService dataLocation,
@@ -55,7 +57,9 @@ public partial class MainViewModel : ViewModelBase
         InvoicerReferenceViewModel invoicerReference,
         ImportExportViewModel importExport,
         SettingsViewModel settings,
-        DataBrowserViewModel dataBrowser)
+        DataBrowserViewModel dataBrowser,
+        StudentOverviewViewModel studentOverview,
+        CourseDeliveryOverviewViewModel courseDeliveryOverview)
     {
         _dataLocation = dataLocation;
         _dialogService = dialogService;
@@ -74,6 +78,8 @@ public partial class MainViewModel : ViewModelBase
         InvoicerReferenceViewModel = invoicerReference;
         ImportExportViewModel = importExport;
         SettingsViewModel = settings;
+        StudentOverviewViewModel = studentOverview;
+        CourseDeliveryOverviewViewModel = courseDeliveryOverview;
         _currentViewModel = dashboard;
     }
 
@@ -118,6 +124,12 @@ public partial class MainViewModel : ViewModelBase
 
     [RelayCommand]
     private void ShowSettings() => CurrentViewModel = SettingsViewModel;
+
+    [RelayCommand]
+    private void ShowStudentOverview() => CurrentViewModel = StudentOverviewViewModel;
+
+    [RelayCommand]
+    private void ShowCourseDeliveryOverview() => CurrentViewModel = CourseDeliveryOverviewViewModel;
 
     [RelayCommand]
     private void ShowDataBrowser() => _dialogService.ShowDialog(_dataBrowser);

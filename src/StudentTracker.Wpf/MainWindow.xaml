@@ -66,6 +66,12 @@
         <DataTemplate DataType="{x:Type vm:InvoicerReferenceViewModel}">
             <v:InvoicerReferenceView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:StudentOverviewViewModel}">
+            <v:StudentOverviewView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CourseDeliveryOverviewViewModel}">
+            <v:CourseDeliveryOverviewView />
+        </DataTemplate>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -143,6 +149,8 @@
             <MenuItem Header="_View" AutomationProperties.AutomationId="ViewMenu">
                 <MenuItem Header="_Dashboard" Command="{Binding ShowDashboardCommand}" AutomationProperties.AutomationId="ViewMenu_Dashboard" />
                 <MenuItem Header="_Students" Command="{Binding ShowStudentsCommand}" AutomationProperties.AutomationId="ViewMenu_Students" />
+                <MenuItem Header="Student _Overview" Command="{Binding ShowStudentOverviewCommand}" AutomationProperties.AutomationId="ViewMenu_StudentOverview" />
+                <MenuItem Header="_Course Delivery Overview" Command="{Binding ShowCourseDeliveryOverviewCommand}" AutomationProperties.AutomationId="ViewMenu_CourseDeliveryOverview" />
                 <MenuItem Header="_Courses" Command="{Binding ShowCoursesCommand}" AutomationProperties.AutomationId="ViewMenu_Courses" />
                 <MenuItem Header="_Deliveries" Command="{Binding ShowDeliveriesCommand}" AutomationProperties.AutomationId="ViewMenu_Deliveries" />
                 <MenuItem Header="_Allocations" Command="{Binding ShowAllocationsCommand}" AutomationProperties.AutomationId="ViewMenu_Allocations" />
