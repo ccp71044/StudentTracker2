@@ -1,3 +1,4 @@
+using StudentTracker.Core.Enums;
 using StudentTracker.Core.Models;
 using StudentTracker.Data;
 using StudentTracker.Services;
@@ -190,5 +191,175 @@ public class ClientPrepaidEntitlementTests
 
         await service.ReservePlaceAsync(pool.Id, a1.Id, 1m);
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.ReservePlaceAsync(pool.Id, a2.Id, 1m));
+    }
+
+    [Fact]
+    public async Task MP001_MultiplePools_RemainIndependent()
+    {
+        var (context, _, _, service) = CreateService();
+
+        var poolA = await service.CreatePoolAsync(new ClientPrepaidPool { Name = "A" });
+        var poolB = await service.CreatePoolAsync(new ClientPrepaidPool { Name = "B" });
+
+        await service.AddPrepaidPlacesAsync(poolA.Id, 10m);
+        await service.AddPrepaidPlacesAsync(poolB.Id, 10m);
+
+        var course = new CourseDefinition { CourseCode = "GAS", CourseTitle = "Gas" };
+        context.CourseDefinitions.Add(course);
+        var delivery = new CourseDelivery { CourseDefinitionId = course.Id, DisplayId = "DEL-0001" };
+        context.CourseDeliveries.Add(delivery);
+        var student = new Student { FirstName = "S", LastName = "A", Email = "s@example.com" };
+        context.Students.Add(student);
+        var alloc = new Allocation { DisplayId = "ALL-0001", CourseDeliveryId = delivery.Id, StudentId = student.Id };
+        context.Allocations.Add(alloc);
+        context.SaveChanges();
+
+        // consume 8 from pool A
+        for (int i = 0; i < 8; i++)
+        {
+            var a = new Allocation { DisplayId = $"ALL-{i + 2:0000}", CourseDeliveryId = delivery.Id, StudentId = student.Id };
+            context.Allocations.Add(a);
+            context.SaveChanges();
+            await service.ReservePlaceAsync(poolA.Id, a.Id, 1m);
+            await service.AssignPlaceAsync(poolA.Id, a.Id, 1m);
+            await service.ConsumePlaceAsync(poolA.Id, a.Id, 1m);
+        }
+
+        var posA = await service.GetPoolPositionAsync(poolA.Id);
+        var posB = await service.GetPoolPositionAsync(poolB.Id);
+
+        Assert.Equal(2m, posA.UnassignedCarryForward);
+        Assert.Equal(10m, posB.UnassignedCarryForward);
+    }
+
+    [Fact]
+    public async Task MP008_Placeholder_ReserveAssignAndPreserveHistory()
+    {
+        var (context, gen, _, service) = CreateService();
+
+        var course = new CourseDefinition { CourseCode = "HLTAID011", CourseTitle = "First Aid" };
+        context.CourseDefinitions.Add(course);
+        var delivery = new CourseDelivery { CourseDefinitionId = course.Id, DisplayId = "DEL-0001" };
+        context.CourseDeliveries.Add(delivery);
+        var pool = await service.CreatePoolAsync(new ClientPrepaidPool { Name = "T&C" });
+        await service.AddPrepaidPlacesAsync(pool.Id, 3m);
+
+        var alloc = new Allocation { DisplayId = gen.NextDisplayId<Allocation>("ALL"), CourseDeliveryId = delivery.Id, PlaceholderName = "Placeholder 1" };
+        context.Allocations.Add(alloc);
+        context.SaveChanges();
+
+        await service.ReservePlaceAsync(pool.Id, alloc.Id, 1m);
+        var reserved = await service.GetPoolPositionAsync(pool.Id);
+        Assert.Equal(1m, reserved.ReservedPlaceholders);
+        Assert.Equal(0m, reserved.ReservedToNamedStudents);
+
+        await service.AssignPlaceAsync(pool.Id, alloc.Id, 1m);
+        var assigned = await service.GetPoolPositionAsync(pool.Id);
+        Assert.Equal(1m, assigned.ReservedPlaceholders);
+        Assert.Equal(0m, assigned.ReservedToNamedStudents);
+    }
+
+    [Fact]
+    public async Task MP010_ConsumeThenRelease_BlockedOrDoesNotReturn()
+    {
+        var (context, gen, _, service) = CreateService();
+
+        var course = new CourseDefinition { CourseCode = "HLTAID011", CourseTitle = "First Aid" };
+        context.CourseDefinitions.Add(course);
+        var delivery = new CourseDelivery { CourseDefinitionId = course.Id, DisplayId = "DEL-0001" };
+        context.CourseDeliveries.Add(delivery);
+        var pool = await service.CreatePoolAsync(new ClientPrepaidPool { Name = "T&C" });
+        await service.AddPrepaidPlacesAsync(pool.Id, 2m);
+
+        var student = new Student { FirstName = "S", LastName = "A", Email = "s@example.com" };
+        context.Students.Add(student);
+        var alloc = new Allocation { DisplayId = gen.NextDisplayId<Allocation>("ALL"), CourseDeliveryId = delivery.Id, StudentId = student.Id };
+        context.Allocations.Add(alloc);
+        context.SaveChanges();
+
+        await service.ReservePlaceAsync(pool.Id, alloc.Id, 1m);
+        await service.AssignPlaceAsync(pool.Id, alloc.Id, 1m);
+        await service.ConsumePlaceAsync(pool.Id, alloc.Id, 1m);
+
+        var before = await service.GetPoolPositionAsync(pool.Id);
+        Assert.Equal(1m, before.PlacesConsumed);
+        Assert.Equal(1m, before.UnassignedCarryForward);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.ReleasePlaceAsync(pool.Id, alloc.Id, 1m));
+    }
+
+    [Fact]
+    public async Task MP013_AdjustmentAndReversal_RecalculatesBalances()
+    {
+        var (context, _, _, service) = CreateService();
+
+        var pool = await service.CreatePoolAsync(new ClientPrepaidPool { Name = "T&C" });
+        await service.AddPrepaidPlacesAsync(pool.Id, 10m);
+
+        var txAdjust = new ClientPrepaidEntitlementTransaction
+        {
+            DisplayId = "CPT-0002",
+            PoolId = pool.Id,
+            TransactionType = ClientPrepaidEntitlementTransactionType.PlaceAdjustment,
+            Quantity = 2m,
+            Reason = "Adjustment",
+            TransactionDate = DateTime.UtcNow
+        };
+        context.ClientPrepaidEntitlementTransactions.Add(txAdjust);
+
+        var txReverse = new ClientPrepaidEntitlementTransaction
+        {
+            DisplayId = "CPT-0003",
+            PoolId = pool.Id,
+            TransactionType = ClientPrepaidEntitlementTransactionType.PlaceReversal,
+            Quantity = -5m,
+            Reason = "Reversal",
+            TransactionDate = DateTime.UtcNow
+        };
+        context.ClientPrepaidEntitlementTransactions.Add(txReverse);
+        await context.SaveChangesAsync();
+
+        var position = await service.GetPoolPositionAsync(pool.Id);
+        Assert.Equal(7m, position.PrepaidPlacesLoaded); // 10 + 2 - 5 = 7 net loaded
+        Assert.Equal(7m, position.UnassignedCarryForward);
+    }
+
+    [Fact]
+    public async Task WF001_FullClientPrepaidFlow()
+    {
+        var (context, gen, _, service) = CreateService();
+
+        var course = new CourseDefinition { CourseCode = "HLTAID011", CourseTitle = "First Aid" };
+        context.CourseDefinitions.Add(course);
+        var delivery = new CourseDelivery { CourseDefinitionId = course.Id, DisplayId = "DEL-0001" };
+        context.CourseDeliveries.Add(delivery);
+        var pool = await service.CreatePoolAsync(new ClientPrepaidPool { Name = "T&C First Aid" });
+        await service.AddPrepaidPlacesAsync(pool.Id, 2m);
+
+        // Request for six with two carried forward, top-up four, then complete all six.
+        var funding = await service.CalculateFundingAsync(pool.Id, 6m, 4m);
+        Assert.Equal(4m, funding.AdditionalFundingRequired);
+        Assert.Equal(2m, funding.CoveredByCarryForward);
+        Assert.Equal(0m, funding.ForecastCarryForward);
+
+        await service.AddPrepaidPlacesAsync(pool.Id, 4m);
+
+        for (int i = 0; i < 6; i++)
+        {
+            var student = new Student { FirstName = $"S{i}", LastName = "A", Email = $"s{i}@example.com" };
+            context.Students.Add(student);
+            var alloc = new Allocation { DisplayId = $"ALL-{i + 1:0000}", CourseDeliveryId = delivery.Id, StudentId = student.Id };
+            context.Allocations.Add(alloc);
+            context.SaveChanges();
+
+            await service.ReservePlaceAsync(pool.Id, alloc.Id, 1m);
+            await service.AssignPlaceAsync(pool.Id, alloc.Id, 1m);
+            await service.ConsumePlaceAsync(pool.Id, alloc.Id, 1m);
+        }
+
+        var position = await service.GetPoolPositionAsync(pool.Id);
+        Assert.Equal(6m, position.PrepaidPlacesLoaded);
+        Assert.Equal(6m, position.PlacesConsumed);
+        Assert.Equal(0m, position.UnassignedCarryForward);
     }
 }
