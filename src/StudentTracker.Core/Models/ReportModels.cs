@@ -174,9 +174,11 @@ public class TbcDeliveryReportItem
 public class FundingSourceReportItem
 {
     public string SourceName { get; set; } = string.Empty;
-    public decimal TotalIn { get; set; }
-    public decimal TotalOut { get; set; }
-    public decimal Net { get; set; }
+    public decimal PrepaidPlacesAdded { get; set; }
+    public decimal PrepaidValue { get; set; }
+    public decimal InvoiceAmountAssigned { get; set; }
+    public decimal BudgetFundsAdded { get; set; }
+    public decimal NetFunding { get; set; }
 }
 
 public class MissingDocumentReportItem

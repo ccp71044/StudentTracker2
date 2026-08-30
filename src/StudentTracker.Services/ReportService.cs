@@ -570,26 +570,66 @@ public class ReportService
     #region Additional reports
     public async Task<List<FundingSourceReportItem>> GetFundingSourcesAsync(DateTime? from = null, DateTime? to = null)
     {
-        var q = _context.BudgetTransactions
-            .Where(t => t.FundingSourceId != null)
+        var fromDate = from ?? DateTime.MinValue;
+        var toDate = to.HasValue ? to.Value.Date.AddDays(1) : DateTime.MaxValue;
+
+        var prepaid = await _context.ClientPrepaidEntitlementTransactions
+            .Where(t => t.TransactionType == ClientPrepaidEntitlementTransactionType.PrepaidPlacesAdded && t.TransactionDate >= fromDate && t.TransactionDate < toDate)
+            .Include(t => t.Invoice)
+            .AsNoTracking()
+            .ToListAsync();
+
+        var invoices = await _context.Invoices
+            .Where(i => i.AmountAssignedToStudentTracker > 0 && i.InvoiceDate >= fromDate && i.InvoiceDate < toDate)
+            .AsNoTracking()
+            .ToListAsync();
+
+        var budgetFunds = await _context.BudgetTransactions
+            .Where(t => t.TransactionType == BudgetTransactionType.FundsAdded && t.TransactionDate >= fromDate && t.TransactionDate < toDate)
             .Include(t => t.FundingSource)
             .AsNoTracking()
-            .AsQueryable();
+            .ToListAsync();
 
-        if (from.HasValue) q = q.Where(t => t.TransactionDate >= from);
-        if (to.HasValue) q = q.Where(t => t.TransactionDate < to.Value.Date.AddDays(1));
+        var bySource = new Dictionary<string, FundingSourceReportItem>(StringComparer.OrdinalIgnoreCase);
 
-        var rows = await q.ToListAsync();
-        return rows
-            .GroupBy(t => t.FundingSource?.Name ?? "Unknown")
-            .Select(g => new FundingSourceReportItem
+        foreach (var p in prepaid)
+        {
+            var name = p.Invoice?.Customer ?? p.Reason ?? "Prepaid";
+            if (!bySource.TryGetValue(name, out var item))
             {
-                SourceName = g.Key,
-                TotalIn = g.Where(t => t.Amount > 0).Sum(t => t.Amount),
-                TotalOut = g.Where(t => t.Amount < 0).Sum(t => -t.Amount),
-                Net = g.Sum(t => t.Amount)
-            })
-            .ToList();
+                item = new FundingSourceReportItem { SourceName = name };
+                bySource[name] = item;
+            }
+            item.PrepaidPlacesAdded += p.Quantity;
+            item.PrepaidValue += p.MonetaryReferenceValue ?? 0m;
+        }
+
+        foreach (var inv in invoices)
+        {
+            var name = string.IsNullOrWhiteSpace(inv.Customer) ? $"Invoice {inv.InvoiceNumber}" : inv.Customer;
+            if (!bySource.TryGetValue(name, out var item))
+            {
+                item = new FundingSourceReportItem { SourceName = name };
+                bySource[name] = item;
+            }
+            item.InvoiceAmountAssigned += inv.AmountAssignedToStudentTracker ?? 0m;
+        }
+
+        foreach (var b in budgetFunds)
+        {
+            var name = b.FundingSource?.Name ?? b.Reason ?? "Budget Top-up";
+            if (!bySource.TryGetValue(name, out var item))
+            {
+                item = new FundingSourceReportItem { SourceName = name };
+                bySource[name] = item;
+            }
+            item.BudgetFundsAdded += b.Amount;
+        }
+
+        foreach (var item in bySource.Values)
+            item.NetFunding = item.PrepaidValue + item.InvoiceAmountAssigned + item.BudgetFundsAdded;
+
+        return bySource.Values.OrderByDescending(x => x.NetFunding).ToList();
     }
 
     public async Task<List<MissingDocumentReportItem>> GetMissingDocumentsAsync()

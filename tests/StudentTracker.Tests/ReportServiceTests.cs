@@ -290,24 +290,38 @@ public class ReportServiceTests
     }
 
     [Fact]
-    public async Task GetFundingSourcesAsync_GroupsBySource()
+    public async Task GetFundingSourcesAsync_CombinesPrepaidInvoiceAndBudgetFunding()
     {
         using var context = TestDbContextFactory.Create();
         var pool = new BudgetPool { Name = "B1" };
         context.BudgetPools.Add(pool);
-        var source = new FundingSource { Name = "Grant A" };
+        var source = new FundingSource { Name = "T&C" };
         context.FundingSources.Add(source);
         context.BudgetTransactions.Add(new BudgetTransaction { PoolId = pool.Id, FundingSourceId = source.Id, TransactionType = BudgetTransactionType.FundsAdded, Amount = 500 });
-        context.BudgetTransactions.Add(new BudgetTransaction { PoolId = pool.Id, FundingSourceId = source.Id, TransactionType = BudgetTransactionType.ExpenseRecognised, Amount = -100 });
+        var invoice = new Invoice { Customer = "T&C", InvoiceNumber = "INV-1", InvoiceDate = new DateTime(2025, 1, 1), AmountAssignedToStudentTracker = 600 };
+        context.Invoices.Add(invoice);
+        var prepaid = new ClientPrepaidPool { Name = "T&C Prepaid" };
+        context.ClientPrepaidPools.Add(prepaid);
+        context.ClientPrepaidEntitlementTransactions.Add(new ClientPrepaidEntitlementTransaction
+        {
+            PoolId = prepaid.Id,
+            TransactionType = ClientPrepaidEntitlementTransactionType.PrepaidPlacesAdded,
+            Quantity = 10m,
+            MonetaryReferenceValue = 800m,
+            InvoiceId = invoice.Id
+        });
         context.SaveChanges();
 
         var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
         var result = await service.GetFundingSourcesAsync();
 
         Assert.Single(result);
-        Assert.Equal(500m, result[0].TotalIn);
-        Assert.Equal(100m, result[0].TotalOut);
-        Assert.Equal(400m, result[0].Net);
+        Assert.Equal("T&C", result[0].SourceName);
+        Assert.Equal(10m, result[0].PrepaidPlacesAdded);
+        Assert.Equal(800m, result[0].PrepaidValue);
+        Assert.Equal(600m, result[0].InvoiceAmountAssigned);
+        Assert.Equal(500m, result[0].BudgetFundsAdded);
+        Assert.Equal(1900m, result[0].NetFunding);
     }
 
     [Fact]
