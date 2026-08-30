@@ -101,4 +101,44 @@ public class AllensCostSnapshotTests
         Assert.NotNull(reloaded);
         Assert.Equal(20m, reloaded.ActualAllensCost);
     }
+
+    [Fact]
+    public async Task WF004_AllenCost_FullCommitmentAndSpend_Workflow()
+    {
+        var (context, allocation, budget) = CreateService();
+
+        var course = new CourseDefinition
+        {
+            CourseCode = "HLTAID011",
+            CourseTitle = "Provide First Aid",
+            DefaultCertificateCost = 30m,
+            DefaultAllensCost = 20m
+        };
+        context.CourseDefinitions.Add(course);
+
+        var delivery = new CourseDelivery { CourseDefinitionId = course.Id, DisplayId = "DEL-0001" };
+        context.CourseDeliveries.Add(delivery);
+
+        var student = new Student { FirstName = "Alex", LastName = "Sample", Email = "a@example.com" };
+        context.Students.Add(student);
+
+        var pool = await budget.CreatePoolAsync(new BudgetPool { Name = "Budget" });
+        await budget.AddFundsAsync(pool.Id, 1000m);
+
+        await context.SaveChangesAsync();
+
+        var alloc = await allocation.AllocateStudentAsync(delivery.Id, student.Id, budgetPoolId: pool.Id);
+        Assert.Equal(20m, alloc.AllensCostAtAllocation);
+        await allocation.CreateOrRestoreCommitmentAsync(alloc.Id, 30m);
+
+        await allocation.MarkOutcomeAsync(alloc.Id, OutcomeStatus.Completed);
+        await allocation.MarkCostSpentAsync(alloc.Id);
+
+        var reloaded = await context.Allocations.AsNoTracking().FirstOrDefaultAsync(a => a.Id == alloc.Id);
+        Assert.NotNull(reloaded);
+        Assert.Equal(20m, reloaded.ActualAllensCost);
+        Assert.Equal(CashCommitmentStatus.Spent, reloaded.CashCommitmentStatus);
+        Assert.Equal(970m, await budget.GetActualAvailableAsync(pool.Id));
+        Assert.Equal(970m, await budget.GetForecastAvailableAsync(pool.Id));
+    }
 }
