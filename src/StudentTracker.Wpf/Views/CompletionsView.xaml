@@ -1,0 +1,75 @@
+<UserControl x:Class="StudentTracker.Wpf.Views.CompletionsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800"
+             AutomationProperties.AutomationId="CompletionsView">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Completions" FontSize="20" FontWeight="Bold" Margin="0,0,0,12" AutomationProperties.AutomationId="CompletionsHeader" />
+
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                <TextBlock Text="Budget Pool" FontWeight="SemiBold" Margin="0,0,0,4" />
+                <ComboBox ItemsSource="{Binding BudgetPools}" SelectedItem="{Binding SelectedBudgetPool, Mode=TwoWay}" DisplayMemberPath="Name" AutomationProperties.AutomationId="CompletionsBudgetCombo" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                <TextBlock Text="Unit (Course)" FontWeight="SemiBold" Margin="0,0,0,4" />
+                <ComboBox ItemsSource="{Binding Courses}" SelectedItem="{Binding SelectedCourse, Mode=TwoWay}" DisplayMemberPath="CourseTitle" AutomationProperties.AutomationId="CompletionsCourseCombo" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Margin="3,0">
+                <TextBlock Text="Funds" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding FundsAdded, StringFormat=C}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="3,0">
+                <TextBlock Text="Committed" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Committed, StringFormat=C}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Margin="3,0">
+                <TextBlock Text="Spent" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Spent, StringFormat=C}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="3" Margin="3,0">
+                <TextBlock Text="Available" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Available, StringFormat=C}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="4" Margin="3,0">
+                <TextBlock Text="Cost / Student" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding CostPerStudent, StringFormat=C, TargetNullValue=-}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="3" Background="White" BorderBrush="LightGray" BorderThickness="1" Padding="20">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Completions Available" FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                <TextBlock Text="{Binding CompletionsAvailable}" FontSize="48" FontWeight="Bold" HorizontalAlignment="Center" AutomationProperties.AutomationId="CompletionsAvailableValue" />
+                <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,12,0,0" Foreground="DimGray" AutomationProperties.AutomationId="CompletionsStatusText" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

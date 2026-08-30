@@ -148,6 +148,7 @@ public partial class App : Application
         services.AddScoped<CreditPoolEditViewModel>();
         services.AddScoped<DocumentsViewModel>();
         services.AddScoped<ReportsViewModel>();
+        services.AddScoped<CompletionsViewModel>();
         services.AddScoped<ImportExportViewModel>();
         services.AddScoped<SettingsViewModel>();
         services.AddScoped<DataBrowserViewModel>();

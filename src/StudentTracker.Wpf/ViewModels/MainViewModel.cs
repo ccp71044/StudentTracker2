@@ -32,6 +32,7 @@ public partial class MainViewModel : ViewModelBase
     public CreditsBudgetsViewModel CreditsBudgetsViewModel { get; }
     public DocumentsViewModel DocumentsViewModel { get; }
     public ReportsViewModel ReportsViewModel { get; }
+    public CompletionsViewModel CompletionsViewModel { get; }
     public ImportExportViewModel ImportExportViewModel { get; }
     public SettingsViewModel SettingsViewModel { get; }
 
@@ -47,6 +48,7 @@ public partial class MainViewModel : ViewModelBase
         CreditsBudgetsViewModel creditsBudgets,
         DocumentsViewModel documents,
         ReportsViewModel reports,
+        CompletionsViewModel completions,
         ImportExportViewModel importExport,
         SettingsViewModel settings,
         DataBrowserViewModel dataBrowser)
@@ -63,6 +65,7 @@ public partial class MainViewModel : ViewModelBase
         CreditsBudgetsViewModel = creditsBudgets;
         DocumentsViewModel = documents;
         ReportsViewModel = reports;
+        CompletionsViewModel = completions;
         ImportExportViewModel = importExport;
         SettingsViewModel = settings;
         _currentViewModel = dashboard;
@@ -94,6 +97,9 @@ public partial class MainViewModel : ViewModelBase
 
     [RelayCommand]
     private void ShowReports() => CurrentViewModel = ReportsViewModel;
+
+    [RelayCommand]
+    private void ShowCompletions() => CurrentViewModel = CompletionsViewModel;
 
     [RelayCommand]
     private void ShowImportExport() => CurrentViewModel = ImportExportViewModel;

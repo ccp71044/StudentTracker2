@@ -143,6 +143,7 @@
                 <MenuItem Header="C_ertificates" Command="{Binding ShowCertificatesCommand}" AutomationProperties.AutomationId="ViewMenu_Certificates" />
                 <MenuItem Header="Credits &amp; _Budgets" Command="{Binding ShowCreditsBudgetsCommand}" AutomationProperties.AutomationId="ViewMenu_CreditsBudgets" />
                 <MenuItem Header="_Documents" Command="{Binding ShowDocumentsCommand}" AutomationProperties.AutomationId="ViewMenu_Documents" />
+                <MenuItem Header="C_ompletions" Command="{Binding ShowCompletionsCommand}" AutomationProperties.AutomationId="ViewMenu_Completions" />
                 <MenuItem Header="_Reports" Command="{Binding ShowReportsCommand}" AutomationProperties.AutomationId="ViewMenu_Reports" />
                 <Separator />
                 <MenuItem Header="Import / _Export" Command="{Binding ShowImportExportCommand}" AutomationProperties.AutomationId="ViewMenu_ImportExport" />
