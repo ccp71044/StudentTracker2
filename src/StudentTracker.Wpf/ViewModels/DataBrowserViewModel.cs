@@ -12,6 +12,7 @@ namespace StudentTracker.Wpf.ViewModels;
 public partial class DataBrowserViewModel : ViewModelBase, ICloseable
 {
     private readonly StudentTrackerDbContext _context;
+    private Type? _entityType;
 
     public event Action<bool?>? RequestClose;
 
@@ -25,10 +26,13 @@ public partial class DataBrowserViewModel : ViewModelBase, ICloseable
     private string? _selectedTable;
 
     [ObservableProperty]
-    private IList _rows = new ArrayList();
+    private ObservableCollection<object> _rows = new();
 
     [ObservableProperty]
-    private string _statusText = "Select a table to view its rows.";
+    private object? _selectedRow;
+
+    [ObservableProperty]
+    private string _statusText = "Select a table to view and edit its rows.";
 
     public DataBrowserViewModel(StudentTrackerDbContext context)
     {
@@ -45,8 +49,9 @@ public partial class DataBrowserViewModel : ViewModelBase, ICloseable
     {
         if (string.IsNullOrWhiteSpace(tableName))
         {
-            Rows = new ArrayList();
-            StatusText = "Select a table to view its rows.";
+            Rows = new ObservableCollection<object>();
+            _entityType = null;
+            StatusText = "Select a table to view and edit its rows.";
             return;
         }
 
@@ -59,15 +64,15 @@ public partial class DataBrowserViewModel : ViewModelBase, ICloseable
                 return;
             }
 
-            var entityType = property.PropertyType.GetGenericArguments().FirstOrDefault();
-            if (entityType == null)
+            _entityType = property.PropertyType.GetGenericArguments().FirstOrDefault();
+            if (_entityType == null)
             {
                 StatusText = $"Cannot determine entity type for '{tableName}'.";
                 return;
             }
 
             var set = _context.GetType().GetMethod(nameof(_context.Set), Type.EmptyTypes)!
-                .MakeGenericMethod(entityType)
+                .MakeGenericMethod(_entityType)
                 .Invoke(_context, null);
 
             var queryable = (IQueryable)set!;
@@ -75,21 +80,91 @@ public partial class DataBrowserViewModel : ViewModelBase, ICloseable
                 .GetMethods(BindingFlags.Static | BindingFlags.Public)
                 .Where(m => m.Name == nameof(EntityFrameworkQueryableExtensions.ToListAsync) && m.GetParameters().Length == 2)
                 .First(m => m.GetGenericArguments().Length == 1)
-                .MakeGenericMethod(entityType);
+                .MakeGenericMethod(_entityType);
 
             var task = (Task)listMethod.Invoke(null, new object[] { queryable, CancellationToken.None })!;
             await task;
 
             var resultProperty = task.GetType().GetProperty("Result");
-            var list = (IList)resultProperty!.GetValue(task)!;
+            var list = (IEnumerable)resultProperty!.GetValue(task)!;
 
-            Rows = list;
-            StatusText = $"{list.Count} row(s) in {tableName}.";
+            Rows = new ObservableCollection<object>(list.Cast<object>());
+            StatusText = $"{Rows.Count} row(s) in {tableName}. Use Save to persist cell edits.";
         }
         catch (Exception ex)
         {
             StatusText = $"Error loading {tableName}: {ex.Message}";
         }
+    }
+
+    [RelayCommand]
+    private void AddRow()
+    {
+        if (_entityType == null)
+            return;
+
+        try
+        {
+            var newItem = Activator.CreateInstance(_entityType);
+            if (newItem == null)
+                return;
+
+            _context.Add(newItem);
+            Rows.Add(newItem);
+            SelectedRow = newItem;
+            StatusText = "New row added. Edit the row, then Save.";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Could not add row: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteRow()
+    {
+        if (SelectedRow == null)
+            return;
+
+        try
+        {
+            _context.Remove(SelectedRow);
+            Rows.Remove(SelectedRow);
+            await _context.SaveChangesAsync();
+            SelectedRow = null;
+            StatusText = "Row deleted.";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Could not delete row: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task SaveChanges()
+    {
+        try
+        {
+            var saved = await _context.SaveChangesAsync();
+            StatusText = $"Saved {saved} change(s).";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Save failed: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task Refresh()
+    {
+        if (SelectedTable != null)
+            await LoadRowsAsync(SelectedTable);
+    }
+
+    [RelayCommand]
+    private void Close()
+    {
+        RequestClose?.Invoke(true);
     }
 
     private static List<string> GetDbSetPropertyNames()
@@ -100,11 +175,5 @@ public partial class DataBrowserViewModel : ViewModelBase, ICloseable
             .Select(p => p.Name)
             .OrderBy(n => n)
             .ToList();
-    }
-
-    [RelayCommand]
-    private void Close()
-    {
-        RequestClose?.Invoke(true);
     }
 }

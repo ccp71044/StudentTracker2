@@ -1,7 +1,7 @@
 <UserControl x:Class="StudentTracker.Wpf.Views.DataBrowserView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             MinWidth="700" MinHeight="500">
+             MinWidth="800" MinHeight="500">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -30,8 +30,9 @@
 
             <Border Grid.Column="1" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6">
                 <DataGrid ItemsSource="{Binding Rows}"
+                          SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
                           AutoGenerateColumns="True"
-                          IsReadOnly="True"
+                          IsReadOnly="False"
                           CanUserAddRows="False"
                           CanUserDeleteRows="False"
                           CanUserReorderColumns="True"
@@ -42,6 +43,10 @@
         </Grid>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Add Row" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddRowCommand}" AutomationProperties.AutomationId="DataBrowserAddRowButton" />
+            <Button Content="Delete Row" Style="{StaticResource ActionButtonStyle}" Command="{Binding DeleteRowCommand}" AutomationProperties.AutomationId="DataBrowserDeleteRowButton" />
+            <Button Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveChangesCommand}" AutomationProperties.AutomationId="DataBrowserSaveButton" />
+            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="DataBrowserRefreshButton" />
             <Button Content="Close" Style="{StaticResource ActionButtonStyle}" Command="{Binding CloseCommand}" AutomationProperties.AutomationId="DataBrowserCloseButton" />
         </StackPanel>
     </Grid>
