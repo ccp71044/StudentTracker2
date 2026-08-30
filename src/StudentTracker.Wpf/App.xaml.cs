@@ -127,6 +127,7 @@ public partial class App : Application
         services.AddScoped<PricingService>();
         services.AddScoped<BudgetSummaryService>();
         services.AddScoped<ClientPrepaidEntitlementService>();
+        services.AddScoped<InvoicerReferenceImportService>();
         services.AddScoped<CompletionPricingImporter>();
         services.AddScoped<ProviderCreditHistoryImporter>();
         services.AddScoped<CertificateService>();
@@ -160,6 +161,7 @@ public partial class App : Application
         services.AddScoped<ReportsViewModel>();
         services.AddScoped<CompletionsViewModel>();
         services.AddScoped<PoolPositionViewModel>();
+        services.AddScoped<InvoicerReferenceViewModel>();
         services.AddScoped<ImportExportViewModel>();
         services.AddScoped<SettingsViewModel>();
         services.AddScoped<DataBrowserViewModel>();

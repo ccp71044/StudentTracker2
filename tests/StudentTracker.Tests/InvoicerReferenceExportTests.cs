@@ -36,8 +36,10 @@ public class InvoicerReferenceExportTests : IDisposable
         var location = new DataLocationService(settings);
         location.EnsureDirectories();
         var pricing = new PricingService(context);
+        var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
-        return new InvoicerReferenceExportService(context, location, pricing, audit);
+        var entitlement = new ClientPrepaidEntitlementService(context, gen, audit);
+        return new InvoicerReferenceExportService(context, location, pricing, entitlement, audit);
     }
 
     [Fact]

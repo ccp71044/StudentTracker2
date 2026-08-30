@@ -22,13 +22,15 @@ public class InvoicerReferenceExportService
     private readonly StudentTrackerDbContext _context;
     private readonly DataLocationService _dataLocation;
     private readonly PricingService _pricing;
+    private readonly ClientPrepaidEntitlementService _entitlement;
     private readonly AuditService _audit;
 
-    public InvoicerReferenceExportService(StudentTrackerDbContext context, DataLocationService dataLocation, PricingService pricing, AuditService audit)
+    public InvoicerReferenceExportService(StudentTrackerDbContext context, DataLocationService dataLocation, PricingService pricing, ClientPrepaidEntitlementService entitlement, AuditService audit)
     {
         _context = context;
         _dataLocation = dataLocation;
         _pricing = pricing;
+        _entitlement = entitlement;
         _audit = audit;
     }
 
@@ -102,6 +104,84 @@ public class InvoicerReferenceExportService
                 return path;
             counter++;
         }
+    }
+
+    public async Task<ClientPrepaidPositionExportResult> ExportClientPrepaidPositionSnapshotAsync(string? notes = null)
+    {
+        var snapshot = await BuildClientPrepaidPositionSnapshotAsync(notes);
+        var exportDir = Path.Combine(_dataLocation.IntegrationPath, "InvoicerExport");
+        Directory.CreateDirectory(exportDir);
+
+        var timestamp = snapshot.GeneratedAt;
+        var baseName = $"invoicer-client-prepaid-position-{timestamp:yyyyMMdd-HHmmss}";
+        var jsonPath = GetUniquePath(exportDir, baseName, ".json");
+        var csvPath = Path.ChangeExtension(jsonPath, ".csv");
+
+        await File.WriteAllTextAsync(jsonPath, JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true }), Encoding.UTF8);
+
+        await using (var writer = new StreamWriter(csvPath, false, Encoding.UTF8))
+        await using (var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.InvariantCulture) { Encoding = Encoding.UTF8 }))
+        {
+            await csv.WriteRecordsAsync(snapshot.Pools);
+        }
+
+        _audit.Record(
+            "Exported",
+            "ClientPrepaidPositionSnapshot",
+            snapshot.SnapshotId,
+            snapshot.SnapshotId.ToString("N")[..8],
+            null,
+            new { JsonPath = jsonPath, CsvPath = csvPath, PoolCount = snapshot.Pools.Count },
+            notes);
+        await _context.SaveChangesAsync();
+
+        return new ClientPrepaidPositionExportResult
+        {
+            SnapshotId = snapshot.SnapshotId,
+            JsonPath = jsonPath,
+            CsvPath = csvPath,
+            GeneratedAt = snapshot.GeneratedAt,
+            PoolCount = snapshot.Pools.Count
+        };
+    }
+
+    public async Task<ClientPrepaidPositionSnapshot> BuildClientPrepaidPositionSnapshotAsync(string? notes)
+    {
+        var pools = await _context.ClientPrepaidPools
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.Name)
+            .ToListAsync();
+
+        var snapshot = new ClientPrepaidPositionSnapshot
+        {
+            SnapshotId = Guid.NewGuid(),
+            GeneratedAt = DateTime.UtcNow,
+            Notes = notes,
+            Pools = new List<ClientPrepaidPositionCsvRow>()
+        };
+
+        foreach (var pool in pools)
+        {
+            var position = await _entitlement.GetPoolPositionAsync(pool.Id);
+            snapshot.Pools.Add(new ClientPrepaidPositionCsvRow
+            {
+                PoolId = pool.Id,
+                PoolDisplayId = pool.DisplayId,
+                PoolName = pool.Name ?? string.Empty,
+                Client = pool.Client,
+                PrepaidPlacesLoaded = position.PrepaidPlacesLoaded,
+                PlacesConsumed = position.PlacesConsumed,
+                TotalUnconsumed = position.TotalUnconsumed,
+                ReservedToNamedStudents = position.ReservedToNamedStudents,
+                ReservedPlaceholders = position.ReservedPlaceholders,
+                UnassignedCarryForward = position.UnassignedCarryForward,
+                AllensCostCommitted = position.AllensCostCommitted,
+                AllensCostIncurred = position.AllensCostIncurred,
+                AllensCostForecast = position.AllensCostForecast
+            });
+        }
+
+        return snapshot;
     }
 
     public async Task<InvoicerCostPositionSnapshot> BuildSnapshotAsync(string? notes)
@@ -381,4 +461,40 @@ public class InvoicerCostPositionExportResult
     public DateTime GeneratedAt { get; set; }
     public int PoolCount { get; set; }
     public int CourseCount { get; set; }
+}
+
+public class ClientPrepaidPositionSnapshot
+{
+    public string SchemaVersion { get; set; } = InvoicerReferenceExportService.SchemaVersion;
+    public Guid SnapshotId { get; set; }
+    public DateTime GeneratedAt { get; set; }
+    public string SourceApplication { get; set; } = "StudentTracker";
+    public string? Notes { get; set; }
+    public List<ClientPrepaidPositionCsvRow> Pools { get; set; } = new();
+}
+
+public class ClientPrepaidPositionCsvRow
+{
+    public Guid PoolId { get; set; }
+    public string? PoolDisplayId { get; set; }
+    public string PoolName { get; set; } = string.Empty;
+    public string? Client { get; set; }
+    public decimal PrepaidPlacesLoaded { get; set; }
+    public decimal PlacesConsumed { get; set; }
+    public decimal TotalUnconsumed { get; set; }
+    public decimal ReservedToNamedStudents { get; set; }
+    public decimal ReservedPlaceholders { get; set; }
+    public decimal UnassignedCarryForward { get; set; }
+    public decimal AllensCostCommitted { get; set; }
+    public decimal AllensCostIncurred { get; set; }
+    public decimal AllensCostForecast { get; set; }
+}
+
+public class ClientPrepaidPositionExportResult
+{
+    public Guid SnapshotId { get; set; }
+    public string JsonPath { get; set; } = string.Empty;
+    public string CsvPath { get; set; } = string.Empty;
+    public DateTime GeneratedAt { get; set; }
+    public int PoolCount { get; set; }
 }
