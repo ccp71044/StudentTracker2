@@ -13,6 +13,7 @@ public class CourseDefinition : EntityBase, IDisplayId
     public string? Description { get; set; }
     public string? Provider { get; set; }
     public decimal? DefaultCertificateCost { get; set; }
+    public decimal? DefaultAllensCost { get; set; }
     public int? CourseDurationDays { get; set; }
     public decimal? DefaultCreditQuantity { get; set; }
     public bool IsActive { get; set; } = true;

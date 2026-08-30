@@ -21,10 +21,16 @@ public class Allocation : EntityBase, IDisplayId
     public OutcomeReason? OutcomeReason { get; set; }
     public string? OutcomeNotes { get; set; }
     public decimal? CertificateCost { get; set; }
+    public decimal? AllensCostAtAllocation { get; set; }
+    public decimal? ActualAllensCost { get; set; }
     public Guid? BudgetPoolId { get; set; }
     public BudgetPool? BudgetPool { get; set; }
     public Guid? CreditPoolId { get; set; }
     public CertificateCreditPool? CreditPool { get; set; }
+    public Guid? ClientPrepaidPoolId { get; set; }
+    public ClientPrepaidPool? ClientPrepaidPool { get; set; }
+    public Guid? ClientPrepaidEntitlementTransactionId { get; set; }
+    public ClientPrepaidEntitlementTransaction? ClientPrepaidEntitlementTransaction { get; set; }
     public CashCommitmentStatus CashCommitmentStatus { get; set; } = CashCommitmentStatus.None;
     public CreditStatus CreditStatus { get; set; } = CreditStatus.None;
     public CertificateOrderStatus CertificateOrderStatus { get; set; } = CertificateOrderStatus.NotReady;

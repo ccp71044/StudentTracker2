@@ -10,7 +10,6 @@ public class ClientPrepaidEntitlementTransaction : EntityBase, IDisplayId
     public ClientPrepaidPool? Pool { get; set; }
 
     public Guid? AllocationId { get; set; }
-    public Allocation? Allocation { get; set; }
 
     public Guid? LinkedTransactionId { get; set; }
     public ClientPrepaidEntitlementTransaction? LinkedTransaction { get; set; }

@@ -56,9 +56,12 @@ public class AllocationService
             .AnyAsync(a => a.CourseDeliveryId == deliveryId && a.StudentId == studentId && a.AllocationStatus != AllocationStatus.Cancelled);
         if (existing) throw new InvalidOperationException("Student is already allocated to this delivery.");
 
-        var delivery = await _context.CourseDeliveries.FindAsync(deliveryId) ?? throw new ArgumentException("Delivery not found");
+        var delivery = await _context.CourseDeliveries
+            .Include(d => d.CourseDefinition)
+            .FirstOrDefaultAsync(d => d.Id == deliveryId) ?? throw new ArgumentException("Delivery not found");
         var defaultCost = delivery.CourseDefinition?.DefaultCertificateCost;
         var cost = certificateCost ?? defaultCost;
+        var allensCost = delivery.CourseDefinition?.DefaultAllensCost ?? delivery.CourseDefinition?.DefaultCertificateCost;
 
         if (createCashCommitment && budgetPoolId.HasValue && cost.HasValue && cost.Value > 0)
         {
@@ -73,6 +76,7 @@ public class AllocationService
             CourseDeliveryId = deliveryId,
             StudentId = studentId,
             CertificateCost = cost,
+            AllensCostAtAllocation = allensCost,
             BudgetPoolId = budgetPoolId,
             CreditPoolId = creditPoolId,
             AllocationStatus = AllocationStatus.Enrolled,
@@ -110,12 +114,18 @@ public class AllocationService
 
     public async Task<Allocation> CreatePlaceholderAsync(Guid deliveryId, string placeholderName, string? legacyReference = null)
     {
+        var delivery = await _context.CourseDeliveries
+            .Include(d => d.CourseDefinition)
+            .FirstOrDefaultAsync(d => d.Id == deliveryId) ?? throw new ArgumentException("Delivery not found");
+        var allensCost = delivery.CourseDefinition?.DefaultAllensCost ?? delivery.CourseDefinition?.DefaultCertificateCost;
+
         var allocation = new Allocation
         {
             DisplayId = _idGenerator.NextDisplayId<Allocation>("ALL"),
             CourseDeliveryId = deliveryId,
             PlaceholderName = placeholderName,
             LegacyReference = legacyReference,
+            AllensCostAtAllocation = allensCost,
             AllocationStatus = AllocationStatus.Reserved,
             AttendanceStatus = AttendanceStatus.NotRecorded,
             OutcomeStatus = OutcomeStatus.Pending,
@@ -138,8 +148,11 @@ public class AllocationService
         if (string.IsNullOrWhiteSpace(placeholderName))
             throw new ArgumentException("Placeholder name is required.", nameof(placeholderName));
 
-        var delivery = await _context.CourseDeliveries.FindAsync(deliveryId) ?? throw new ArgumentException("Delivery not found");
+        var delivery = await _context.CourseDeliveries
+            .Include(d => d.CourseDefinition)
+            .FirstOrDefaultAsync(d => d.Id == deliveryId) ?? throw new ArgumentException("Delivery not found");
         var cost = certificateCost ?? delivery.CourseDefinition?.DefaultCertificateCost;
+        var allensCost = delivery.CourseDefinition?.DefaultAllensCost ?? delivery.CourseDefinition?.DefaultCertificateCost;
         var totalCost = cost.GetValueOrDefault() * quantity;
 
         if (budgetPoolId.HasValue && totalCost > 0)
@@ -171,7 +184,8 @@ public class AllocationService
                 CertificateDeliveryStatus = CertificateDeliveryStatus.NotApplicable,
                 CashCommitmentStatus = CashCommitmentStatus.None,
                 BudgetPoolId = budgetPoolId,
-                CertificateCost = cost
+                CertificateCost = cost,
+                AllensCostAtAllocation = allensCost
             };
             _context.Allocations.Add(allocation);
             allocations.Add(allocation);
@@ -450,6 +464,7 @@ public class AllocationService
             TransactionDate = DateTime.UtcNow
         });
         allocation.CashCommitmentStatus = CashCommitmentStatus.Spent;
+        allocation.ActualAllensCost = allocation.AllensCostAtAllocation ?? 0;
         allocation.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         _audit.Record("ExpenseRecognised", "Allocation", allocation.Id, allocation.DisplayId, null, new { Amount = committed, PoolId = poolId, Forced = force });

@@ -68,6 +68,18 @@ public class StudentTrackerDbContext : DbContext
             .HasForeignKey(p => p.RestrictedToCourseDefinitionId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        modelBuilder.Entity<Allocation>()
+            .HasOne(a => a.ClientPrepaidPool)
+            .WithMany()
+            .HasForeignKey(a => a.ClientPrepaidPoolId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Allocation>()
+            .HasOne(a => a.ClientPrepaidEntitlementTransaction)
+            .WithMany()
+            .HasForeignKey(a => a.ClientPrepaidEntitlementTransactionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         modelBuilder.Entity<Allocation>().HasIndex(a => new { a.StudentId, a.CourseDeliveryId });
         modelBuilder.Entity<DocumentLink>().HasIndex(l => new { l.EntityType, l.EntityId });
         modelBuilder.Entity<AuditLog>().HasIndex(a => a.EntityType);
