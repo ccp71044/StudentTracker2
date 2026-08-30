@@ -10,13 +10,13 @@
         </Grid.RowDefinitions>
         <TextBlock Text="Course Deliveries" AutomationProperties.AutomationId="DeliveriesHeader" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="1">
-            <Button Content="Add Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddDeliveryCommand}" />
-            <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditDeliveryCommand}" />
-            <Button Content="View Allocations" Style="{StaticResource ActionButtonStyle}" Command="{Binding ViewAllocationsCommand}" ToolTip="View allocations for the selected delivery." />
-            <Button Content="Add Allocation" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddAllocationCommand}" ToolTip="Create a new allocation for the selected delivery." />
-            <Button Content="Cancel Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelDeliveryCommand}" />
-            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
-            <CheckBox Content="Edit Table" IsChecked="{Binding IsInlineEditingEnabled}" VerticalAlignment="Center" Margin="10,0" />
+            <Button Content="Add Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddDeliveryCommand}" AutomationProperties.AutomationId="AddDeliveryButton" ToolTip="Create a new delivery" />
+            <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditDeliveryCommand}" AutomationProperties.AutomationId="EditDeliveryButton" />
+            <Button Content="Add Allocation" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddAllocationCommand}" ToolTip="Create a new allocation for the selected delivery." AutomationProperties.AutomationId="DeliveriesAddAllocationButton" />
+            <Button Content="Record of Completion" Style="{StaticResource ActionButtonStyle}" Command="{Binding RecordOfCompletionCommand}" ToolTip="Manage sign-off records of completion for the selected delivery." AutomationProperties.AutomationId="DeliveriesRecordOfCompletionButton" />
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,0" />
+            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="RefreshDeliveriesButton" />
+            <CheckBox Content="Edit Table" IsChecked="{Binding IsInlineEditingEnabled}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="DeliveriesEditTableCheckBox" />
         </StackPanel>
         <DataGrid x:Name="DeliveriesDataGrid" ItemsSource="{Binding Deliveries}" SelectedItem="{Binding SelectedDelivery}" AutoGenerateColumns="False" Grid.Row="2" Margin="10"
                  IsReadOnly="{Binding IsInlineEditingEnabled, Converter={StaticResource InvertedBooleanConverter}}"
@@ -26,11 +26,12 @@
                  PreviewMouseRightButtonDown="DataGrid_PreviewMouseRightButtonDown">
             <DataGrid.ContextMenu>
                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                    <MenuItem Header="Edit" Command="{Binding EditDeliveryCommand}" />
-                    <MenuItem Header="View Allocations" Command="{Binding ViewAllocationsCommand}" />
-                    <MenuItem Header="Add Allocation" Command="{Binding AddAllocationCommand}" />
+                    <MenuItem Header="Edit" Command="{Binding EditDeliveryCommand}" AutomationProperties.AutomationId="DeliveriesContextMenu_Edit" />
+                    <MenuItem Header="View Allocations" Command="{Binding ViewAllocationsCommand}" AutomationProperties.AutomationId="DeliveriesContextMenu_ViewAllocations" />
+                    <MenuItem Header="Add Allocation" Command="{Binding AddAllocationCommand}" AutomationProperties.AutomationId="DeliveriesContextMenu_AddAllocation" />
+                    <MenuItem Header="Record of Completion" Command="{Binding RecordOfCompletionCommand}" AutomationProperties.AutomationId="DeliveriesContextMenu_RecordOfCompletion" />
                     <Separator />
-                    <MenuItem Header="Cancel Delivery" Command="{Binding CancelDeliveryCommand}" />
+                    <MenuItem Header="Cancel Delivery" Command="{Binding CancelDeliveryCommand}" AutomationProperties.AutomationId="DeliveriesContextMenu_CancelDelivery" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>

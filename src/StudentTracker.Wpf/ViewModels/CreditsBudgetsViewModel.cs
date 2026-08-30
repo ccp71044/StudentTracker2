@@ -198,10 +198,21 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     }
 
     [RelayCommand(CanExecute = nameof(CanEditCreditPool))]
+    private async Task AddCreditsWithReceipt()
+    {
+        if (SelectedCreditPool == null) return;
+        var vm = new CreditTopUpReceiptViewModel(SelectedCreditPool, _creditService, _dialogService);
+        if (_dialogService.ShowDialog(vm) == true)
+        {
+            await LoadAsync();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditCreditPool))]
     private void CreditTransactionHistory()
     {
         if (SelectedCreditPool == null) return;
-        var vm = new CreditTransactionHistoryViewModel(SelectedCreditPool, _creditService);
+        var vm = new CreditTransactionHistoryViewModel(SelectedCreditPool, _creditService, _dialogService);
         _dialogService.ShowDialog(vm);
     }
 
@@ -310,6 +321,7 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     {
         EditCreditPoolCommand.NotifyCanExecuteChanged();
         AddCreditsCommand.NotifyCanExecuteChanged();
+        AddCreditsWithReceiptCommand.NotifyCanExecuteChanged();
         CreditTransactionHistoryCommand.NotifyCanExecuteChanged();
         ArchiveCreditPoolCommand.NotifyCanExecuteChanged();
         RestoreCreditPoolCommand.NotifyCanExecuteChanged();

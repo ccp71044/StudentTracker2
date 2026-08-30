@@ -102,9 +102,70 @@ For each allocation you can mark attendance, completion, withdrawal or non-compl
 
 Allocate certificate credits from a pool, order certificates, and record delivery. Credit balances are calculated from transactions and cannot be edited directly.
 
-## Sign-Offs
+### Allen/provider top-up receipts
 
-Generate a Course Delivery Completion Sign-Off PDF from a delivery. The PDF lists participants, delivery dates and signatory blocks.
+Use **Add Credits + Receipt** from the selected credit pool's context menu when recording an Allen/provider top-up. Enter the amount, quantity, transaction date, external reference, reason, and notes, then optionally select the receipt PDF or image.
+
+The application stores the receipt once in the managed document store and links it to both the credit top-up transaction and credit pool. Open **Transactions** for the pool to see the linked receipt and use **Open Receipt** to view it. The top-up, managed document, links, and audit records form one workflow; no separate receipt register is maintained.
+
+### Issued certificate files
+
+When recording certificate delivery, select the issued certificate PDF or image or choose an existing managed document. The file is stored once and linked to the certificate delivery, certificate order, allocation, and student. From Certificate delivery history, use **View issued certificate** to open the evidence file.
+
+## Records of Completion (Sign-Offs)
+
+Records of completion are formal sign-off documents that certify a group of students attended and completed a course delivery. The workflow is accessed from the **Deliveries** view.
+
+### Opening the workflow
+
+1. Select a delivery in the **Deliveries** view.
+2. Click **Record of Completion** in the toolbar, or right-click and choose **Record of Completion** from the context menu.
+3. The **Records of Completion** dialog shows all existing sign-offs for that delivery, ordered by version (newest first).
+
+### Generating a new record
+
+1. Click **Generate New** in the sign-off list dialog.
+2. In the edit form, eligible allocations are pre-selected (those marked Attended/Confirmed or Completed). Use the checkboxes, **Select All** or **Select None** to adjust.
+3. Review and edit the trainer name, business details, authorised-by and verified-by fields. Defaults are populated from application settings.
+4. Click **Generate PDF**. This:
+   - Creates a versioned draft sign-off record (version auto-increments per delivery).
+   - Generates a PDF via QuestPDF listing participants, delivery dates and signatory blocks.
+   - Saves the PDF as a managed document via the Document Service.
+   - Links the document to the sign-off, delivery, each included allocation, and each student.
+
+### Importing a signed PDF
+
+After distributing the draft PDF for wet signatures and receiving the signed copy back:
+
+1. Open the sign-off from the list and click **Import Signed PDF**.
+2. Select the signed PDF file. This:
+   - Imports the signed PDF as a new managed document.
+   - Reassigns the sign-off's file reference to the signed document.
+   - Preserves the original generated draft document and its links for full traceability.
+   - Promotes the sign-off status to **ReadyForSignature**.
+   - Links the signed document to the delivery, sign-off, allocations and students.
+   - Persists any signed-date or detail edits from the form.
+
+### Capturing signed dates
+
+Use the date pickers for **Trainer signed**, **Authorised signed date** and **Verified signed date** to record when each party signed. Click **Save Details** to persist changes without locking.
+
+### Locking as Signed
+
+Click **Lock as Signed** to permanently lock the sign-off. This:
+- Sets the status to **Signed** and records the locked date.
+- Creates an audit entry.
+- Prevents any further edits to the sign-off.
+
+This action cannot be undone. To create a corrected record, generate a new version (which supersedes the previous draft).
+
+### Versioning and history
+
+Each delivery can have multiple sign-off versions. When regenerating from an existing sign-off, the previous version is marked **Superseded** and a new version is created. All versions remain visible in the list for audit purposes.
+
+### Viewing generated PDFs
+
+Click **Open PDF** in either the list or edit dialog to open the attached PDF in the system's default viewer.
 
 ## Backups
 

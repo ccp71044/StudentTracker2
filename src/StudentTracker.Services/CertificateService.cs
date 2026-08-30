@@ -92,7 +92,18 @@ public class CertificateService
 
     public async Task<CertificateDelivery> RecordDeliveryAsync(Guid certificateOrderId, DateTime deliveredDate, string method, string deliveredTo, string? notes = null, Guid? evidenceDocumentId = null, string? recipientDetails = null)
     {
-        var order = await _context.CertificateOrders.FindAsync(certificateOrderId) ?? throw new ArgumentException("Certificate order not found");
+        var order = await _context.CertificateOrders
+            .Include(o => o.Allocation)
+            .FirstOrDefaultAsync(o => o.Id == certificateOrderId) ?? throw new ArgumentException("Certificate order not found");
+        Document? evidenceDocument = null;
+        if (evidenceDocumentId.HasValue)
+        {
+            evidenceDocument = await _context.Documents.FindAsync(evidenceDocumentId.Value)
+                ?? throw new ArgumentException("Evidence document not found", nameof(evidenceDocumentId));
+            if (evidenceDocument.Status != DocumentStatus.Active)
+                throw new InvalidOperationException("Certificate evidence must be an active document.");
+        }
+
         var delivery = new CertificateDelivery
         {
             DisplayId = _idGenerator.NextDisplayId<CertificateDelivery>("CDV"),
@@ -106,12 +117,38 @@ public class CertificateService
         };
         _context.CertificateDeliveries.Add(delivery);
 
-        var allocation = await _context.Allocations.FindAsync(order.AllocationId) ?? throw new ArgumentException("Allocation not found");
+        var allocation = order.Allocation ?? throw new ArgumentException("Allocation not found");
         allocation.CertificateDeliveryStatus = CertificateDeliveryStatus.Delivered;
         allocation.UpdatedAt = DateTime.UtcNow;
 
+        if (evidenceDocument != null)
+        {
+            var targets = new List<(string EntityType, Guid EntityId)>
+            {
+                ("CertificateDelivery", delivery.Id),
+                ("CertificateOrder", order.Id),
+                ("Allocation", allocation.Id)
+            };
+            if (allocation.StudentId.HasValue)
+                targets.Add(("Student", allocation.StudentId.Value));
+            foreach (var target in targets.Distinct())
+            {
+                var link = new DocumentLink
+                {
+                    DocumentId = evidenceDocument.Id,
+                    EntityType = target.EntityType,
+                    EntityId = target.EntityId,
+                    LinkPurpose = "Issued certificate evidence"
+                };
+                _context.DocumentLinks.Add(link);
+                _audit.Record("Linked", "DocumentLink", link.Id, null, null,
+                    new { evidenceDocumentId = evidenceDocument.Id, target.EntityType, target.EntityId, CertificateDeliveryId = delivery.Id });
+            }
+        }
+
         await _context.SaveChangesAsync();
-        _audit.Record("Delivered", "CertificateDelivery", delivery.Id, delivery.DisplayId);
+        _audit.Record("Delivered", "CertificateDelivery", delivery.Id, delivery.DisplayId, null,
+            new { delivery.EvidenceDocumentId, order.AllocationId, allocation.StudentId });
 
         await UpdateBillableAsync(allocation);
         await _context.SaveChangesAsync();

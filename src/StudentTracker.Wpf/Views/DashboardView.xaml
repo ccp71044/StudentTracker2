@@ -82,9 +82,9 @@
 
             <TextBlock Text="Quick actions" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10" />
             <StackPanel Orientation="Horizontal">
-                <Button Content="Add Student" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddStudentCommand}" />
-                <Button Content="Add Course" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddCourseCommand}" />
-                <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
+                <Button Content="Add Student" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddStudentCommand}" AutomationProperties.AutomationId="DashboardAddStudentButton" />
+                <Button Content="Add Course" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddCourseCommand}" AutomationProperties.AutomationId="DashboardAddCourseButton" />
+                <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="DashboardRefreshButton" />
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

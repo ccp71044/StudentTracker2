@@ -10,16 +10,16 @@
         </Grid.RowDefinitions>
         <TextBlock Text="Course Definitions" AutomationProperties.AutomationId="CoursesHeader" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="1">
-            <TextBox Text="{Binding SearchText}" Width="200" Margin="0,0,10,0" VerticalContentAlignment="Center" />
-            <Button Content="Search" Style="{StaticResource ActionButtonStyle}" Command="{Binding SearchCommand}" />
-            <Button Content="Add Course" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddCourseCommand}" />
-            <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditCourseCommand}" />
-            <Button Content="Add Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddDeliveryCommand}" ToolTip="Create a new delivery for the selected course." />
-            <Button Content="Archive" Style="{StaticResource ActionButtonStyle}" Command="{Binding DeleteCourseCommand}" ToolTip="Deactivate the selected course." />
-            <Button Content="Restore" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreCourseCommand}" />
-            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
-            <CheckBox Content="Show inactive" IsChecked="{Binding ShowInactive}" VerticalAlignment="Center" Margin="10,0" />
-            <CheckBox Content="Edit Table" IsChecked="{Binding IsInlineEditingEnabled}" VerticalAlignment="Center" Margin="10,0" />
+            <TextBox Text="{Binding SearchText}" Width="200" Margin="0,0,10,0" VerticalContentAlignment="Center" AutomationProperties.AutomationId="CoursesSearchTextBox" />
+            <Button Content="Search" Style="{StaticResource ActionButtonStyle}" Command="{Binding SearchCommand}" AutomationProperties.AutomationId="CoursesSearchButton" />
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,0" />
+            <Button Content="Add Course" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddCourseCommand}" AutomationProperties.AutomationId="AddCourseButton" />
+            <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditCourseCommand}" AutomationProperties.AutomationId="EditCourseButton" />
+            <Button Content="Add Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddDeliveryCommand}" ToolTip="Create a new delivery for the selected course." AutomationProperties.AutomationId="CoursesAddDeliveryButton" />
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,0" />
+            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="RefreshCoursesButton" />
+            <CheckBox Content="Show inactive" IsChecked="{Binding ShowInactive}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="CoursesShowInactiveCheckBox" />
+            <CheckBox Content="Edit Table" IsChecked="{Binding IsInlineEditingEnabled}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="CoursesEditTableCheckBox" />
         </StackPanel>
         <DataGrid x:Name="CoursesDataGrid" ItemsSource="{Binding Courses}" SelectedItem="{Binding SelectedCourse}" AutoGenerateColumns="False" Grid.Row="2" Margin="10"
                  IsReadOnly="{Binding IsInlineEditingEnabled, Converter={StaticResource InvertedBooleanConverter}}"
@@ -29,11 +29,11 @@
                  PreviewMouseRightButtonDown="DataGrid_PreviewMouseRightButtonDown">
             <DataGrid.ContextMenu>
                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                    <MenuItem Header="Edit" Command="{Binding EditCourseCommand}" />
-                    <MenuItem Header="Add Delivery" Command="{Binding AddDeliveryCommand}" />
+                    <MenuItem Header="Edit" Command="{Binding EditCourseCommand}" AutomationProperties.AutomationId="CoursesContextMenu_Edit" />
+                    <MenuItem Header="Add Delivery" Command="{Binding AddDeliveryCommand}" AutomationProperties.AutomationId="CoursesContextMenu_AddDelivery" />
                     <Separator />
-                    <MenuItem Header="Archive" Command="{Binding DeleteCourseCommand}" />
-                    <MenuItem Header="Restore" Command="{Binding RestoreCourseCommand}" />
+                    <MenuItem Header="Archive" Command="{Binding DeleteCourseCommand}" AutomationProperties.AutomationId="CoursesContextMenu_Archive" />
+                    <MenuItem Header="Restore" Command="{Binding RestoreCourseCommand}" AutomationProperties.AutomationId="CoursesContextMenu_Restore" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>

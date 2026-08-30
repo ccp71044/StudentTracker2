@@ -21,6 +21,7 @@ public class MenuTests : IClassFixture<AppUiTestFixture>, IDisposable
     {
         try
         {
+            Keyboard.Press(FlaUI.Core.WindowsAPI.VirtualKeyShort.ESCAPE);
             var element = Retry.Find(
                 () => _mainWindow.FindFirstDescendant(cf => cf.ByAutomationId("DashboardButton")),
                 new RetrySettings { Timeout = TimeSpan.FromSeconds(2), Interval = TimeSpan.FromMilliseconds(200) });
@@ -66,8 +67,9 @@ public class MenuTests : IClassFixture<AppUiTestFixture>, IDisposable
 
         ExpandMenu(parent!);
 
-        var child = FindByAutomationId(_mainWindow, menuItemId);
+        var child = FindByAutomationId(_fixture.Automation.GetDesktop(), menuItemId);
         Assert.NotNull(child);
+        parent!.AsMenuItem().Collapse();
     }
 
     [Fact]
@@ -84,7 +86,7 @@ public class MenuTests : IClassFixture<AppUiTestFixture>, IDisposable
 
         ExpandMenu(viewMenu!);
 
-        var dashboardItem = FindByAutomationId(_mainWindow, "ViewMenu_Dashboard");
+        var dashboardItem = FindByAutomationId(_fixture.Automation.GetDesktop(), "ViewMenu_Dashboard");
         Assert.NotNull(dashboardItem);
 
         InvokeMenuItem(dashboardItem!);

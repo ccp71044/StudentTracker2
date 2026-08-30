@@ -14,6 +14,9 @@ public partial class DeliveriesViewModel : ViewModelBase
     private readonly StudentService _studentService;
     private readonly CreditService _creditService;
     private readonly BudgetService _budgetService;
+    private readonly SignOffService _signOffService;
+    private readonly PdfService _pdfService;
+    private readonly DocumentService _documentService;
     private readonly IDialogService _dialogService;
 
     [ObservableProperty]
@@ -25,13 +28,16 @@ public partial class DeliveriesViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isInlineEditingEnabled;
 
-    public DeliveriesViewModel(CourseService courseService, AllocationService allocationService, StudentService studentService, CreditService creditService, BudgetService budgetService, IDialogService dialogService)
+    public DeliveriesViewModel(CourseService courseService, AllocationService allocationService, StudentService studentService, CreditService creditService, BudgetService budgetService, SignOffService signOffService, PdfService pdfService, DocumentService documentService, IDialogService dialogService)
     {
         _courseService = courseService;
         _allocationService = allocationService;
         _studentService = studentService;
         _creditService = creditService;
         _budgetService = budgetService;
+        _signOffService = signOffService;
+        _pdfService = pdfService;
+        _documentService = documentService;
         _dialogService = dialogService;
         LoadAsync().ConfigureAwait(false);
     }
@@ -142,6 +148,20 @@ public partial class DeliveriesViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand(CanExecute = nameof(CanEditDelivery))]
+    private void RecordOfCompletion()
+    {
+        if (SelectedDelivery == null) return;
+        var vm = new SignOffListViewModel(
+            SelectedDelivery,
+            _signOffService,
+            _allocationService,
+            _pdfService,
+            _documentService,
+            _dialogService);
+        _dialogService.ShowDialog(vm);
+    }
+
     private bool CanEditDelivery => SelectedDelivery != null;
     private bool CanCancelDelivery => SelectedDelivery != null && SelectedDelivery.DeliveryStatus != "Cancelled" && SelectedDelivery.DeliveryStatus != "Completed";
 
@@ -151,5 +171,6 @@ public partial class DeliveriesViewModel : ViewModelBase
         CancelDeliveryCommand.NotifyCanExecuteChanged();
         ViewAllocationsCommand.NotifyCanExecuteChanged();
         AddAllocationCommand.NotifyCanExecuteChanged();
+        RecordOfCompletionCommand.NotifyCanExecuteChanged();
     }
 }

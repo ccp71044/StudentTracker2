@@ -1,0 +1,38 @@
+<UserControl x:Class="StudentTracker.Wpf.Views.SignOffListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             MinWidth="750" MinHeight="420">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="{Binding Title}" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
+        <TextBlock Text="{Binding DeliveryInfo}" Margin="0,0,0,8" Grid.Row="1" />
+        <StackPanel Orientation="Horizontal" Margin="0,4" Grid.Row="2">
+            <Button Content="Generate New" Style="{StaticResource ActionButtonStyle}" Command="{Binding GenerateNewCommand}" />
+            <Button Content="Edit / View" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditSignOffCommand}" />
+            <Button Content="Open PDF" Style="{StaticResource ActionButtonStyle}" Command="{Binding OpenPdfCommand}" />
+        </StackPanel>
+        <DataGrid ItemsSource="{Binding SignOffs}" SelectedItem="{Binding SelectedSignOff}" AutoGenerateColumns="False"
+                  IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" Grid.Row="3" Margin="0,4">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding DisplayId}" Width="100" />
+                <DataGridTextColumn Header="Version" Binding="{Binding Version}" Width="60" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="110" />
+                <DataGridTextColumn Header="Generated" Binding="{Binding GeneratedDate, StringFormat=dd/MM/yyyy HH:mm}" Width="140" />
+                <DataGridTextColumn Header="Locked" Binding="{Binding LockedDate, StringFormat=dd/MM/yyyy HH:mm}" Width="140" />
+                <DataGridTextColumn Header="Trainer Signed" Binding="{Binding TrainerSignedDate, StringFormat=dd/MM/yyyy}" Width="110" />
+                <DataGridTextColumn Header="Authorised Signed" Binding="{Binding AuthorisedSignedDate, StringFormat=dd/MM/yyyy}" Width="120" />
+                <DataGridTextColumn Header="Verified Signed" Binding="{Binding VerifiedSignedDate, StringFormat=dd/MM/yyyy}" Width="110" />
+                <DataGridTextColumn Header="Participants" Binding="{Binding Participants.Count}" Width="85" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="4" Margin="0,10,0,0">
+            <Button Content="Close" Style="{StaticResource ActionButtonStyle}" Command="{Binding CloseCommand}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

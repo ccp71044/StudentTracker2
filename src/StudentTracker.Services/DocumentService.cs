@@ -11,7 +11,15 @@ public sealed record DocumentLinkTarget(Guid Id, string DisplayId, string Descri
     public string FriendlyName => string.IsNullOrWhiteSpace(Description) ? DisplayId : $"{DisplayId} — {Description}";
 }
 
-public class DocumentService
+public interface IDocumentService
+{
+    Task<Document> AddDocumentAsync(string sourcePath, string categoryFolder, string? displayName = null, string? description = null, string? mimeType = null, DateTime? receivedDate = null);
+    Task<DocumentLink> LinkDocumentAsync(Guid documentId, string entityType, Guid entityId, string? purpose = null);
+    Task<List<Document>> GetDocumentsForEntityAsync(string entityType, Guid entityId, bool includeArchived = false);
+    string GetFullPath(Document document);
+}
+
+public class DocumentService : IDocumentService
 {
     private readonly StudentTrackerDbContext _context;
     private readonly DataLocationService _dataLocation;
@@ -38,27 +46,48 @@ public class DocumentService
         Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
         File.Copy(sourcePath, dest, overwrite: true);
 
-        var sha = await ComputeSha256Async(dest);
-        var doc = new Document
+        try
         {
-            DisplayId = _idGenerator.NextDisplayId<Document>("DOC"),
-            OriginalFileName = originalName,
-            StoredFileName = managedName,
-            RelativePath = relative,
-            Extension = ext,
-            MimeType = mimeType ?? GetMimeType(ext),
-            FileSize = new FileInfo(dest).Length,
-            Sha256 = sha,
-            DisplayName = displayName ?? originalName,
-            Description = description,
-            ReceivedDate = receivedDate,
-            Status = DocumentStatus.Active
-        };
-        _context.Documents.Add(doc);
-        await _context.SaveChangesAsync();
-        _audit.Record("Created", "Document", doc.Id, doc.DisplayId);
-        await _context.SaveChangesAsync();
-        return doc;
+            var sha = await ComputeSha256Async(dest);
+            var doc = new Document
+            {
+                DisplayId = _idGenerator.NextDisplayId<Document>("DOC"),
+                OriginalFileName = originalName,
+                StoredFileName = managedName,
+                RelativePath = relative,
+                Extension = ext,
+                MimeType = mimeType ?? GetMimeType(ext),
+                FileSize = new FileInfo(dest).Length,
+                Sha256 = sha,
+                DisplayName = displayName ?? originalName,
+                Description = description,
+                ReceivedDate = receivedDate,
+                Status = DocumentStatus.Active
+            };
+            _context.Documents.Add(doc);
+            await _context.SaveChangesAsync();
+            _audit.Record("Created", "Document", doc.Id, doc.DisplayId);
+            await _context.SaveChangesAsync();
+            return doc;
+        }
+        catch
+        {
+            TryDeleteFile(dest);
+            throw;
+        }
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+        catch
+        {
+            // Best-effort cleanup.
+        }
     }
 
     public async Task<Document> UpdateMetadataAsync(Guid documentId, string displayName, string? description, DateTime? receivedDate, string? confidentiality, string? notes)
@@ -89,6 +118,8 @@ public class DocumentService
                 .Select(d => new DocumentLinkTarget(d.Id, d.DisplayId ?? d.Id.ToString(), d.CourseDefinition != null ? d.CourseDefinition.CourseCode + " - " + d.CourseDefinition.CourseTitle : string.Empty)).ToListAsync(),
             "CertificateOrder" => await _context.CertificateOrders.OrderByDescending(o => o.OrderedDate)
                 .Select(o => new DocumentLinkTarget(o.Id, o.DisplayId ?? o.Id.ToString(), o.Provider ?? string.Empty)).ToListAsync(),
+            "CertificateDelivery" => await _context.CertificateDeliveries.OrderByDescending(d => d.DeliveredDate)
+                .Select(d => new DocumentLinkTarget(d.Id, d.DisplayId ?? d.Id.ToString(), d.DeliveredTo ?? string.Empty)).ToListAsync(),
             _ => throw new ArgumentException("Unsupported link type", nameof(entityType))
         };
     }

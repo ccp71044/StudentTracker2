@@ -13,7 +13,7 @@ public partial class DocumentLinkEditViewModel : ViewModelBase, ICloseable
     private readonly Document _document;
 
     public event Action<bool?>? RequestClose;
-    public IReadOnlyList<string> EntityTypes { get; } = ["Student", "Allocation", "CourseDelivery", "CertificateOrder"];
+    public IReadOnlyList<string> EntityTypes { get; } = ["Student", "Allocation", "CourseDelivery", "CertificateOrder", "CertificateDelivery"];
 
     [ObservableProperty] private string _selectedEntityType = "Student";
     [ObservableProperty] private ObservableCollection<DocumentLinkTarget> _targets = new();

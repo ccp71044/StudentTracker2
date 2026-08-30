@@ -12,18 +12,19 @@
         </Grid.RowDefinitions>
         <TextBlock Text="Certificate Orders" AutomationProperties.AutomationId="CertificatesHeader" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="1">
-            <Button Content="New Order" Style="{StaticResource ActionButtonStyle}" Command="{Binding NewOrderCommand}" />
-            <Button Content="Record Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding RecordDeliveryCommand}" />
-            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
+            <Button Content="New Order" Style="{StaticResource ActionButtonStyle}" Command="{Binding NewOrderCommand}" AutomationProperties.AutomationId="CertificatesNewOrderButton" ToolTip="Create a new certificate order" />
+            <Button Content="Record Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding RecordDeliveryCommand}" AutomationProperties.AutomationId="CertificatesRecordDeliveryButton" ToolTip="Record a delivery for the selected order" />
+            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="RefreshCertificatesButton" />
         </StackPanel>
         <DataGrid ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True"
                   MouseDoubleClick="DataGrid_MouseDoubleClick">
             <DataGrid.ContextMenu>
                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                    <MenuItem Header="Show details" Command="{Binding ShowOrderDetailCommand}" />
-                    <MenuItem Header="Record delivery" Command="{Binding RecordDeliveryCommand}" />
+                    <MenuItem Header="Show details" Command="{Binding ShowOrderDetailCommand}" AutomationProperties.AutomationId="CertificatesContextMenu_ShowDetails" />
+                    <MenuItem Header="View issued certificate" Command="{Binding ViewOrderEvidenceCommand}" AutomationProperties.AutomationId="CertificatesContextMenu_ViewIssuedCertificate" />
+                    <MenuItem Header="Record delivery" Command="{Binding RecordDeliveryCommand}" AutomationProperties.AutomationId="CertificatesContextMenu_RecordDelivery" />
                     <Separator />
-                    <MenuItem Header="Refresh" Command="{Binding RefreshCommand}" />
+                    <MenuItem Header="Refresh" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="CertificatesContextMenu_Refresh" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
@@ -37,8 +38,16 @@
                 <DataGridTextColumn Header="Course" Binding="{Binding Allocation.CourseDelivery.CourseDefinition.CourseTitle}" Width="*" />
             </DataGrid.Columns>
         </DataGrid>
-        <TextBlock Grid.Row="3" Margin="10,4" FontWeight="Bold" Text="Delivery history" />
-        <DataGrid Grid.Row="4" Margin="10" ItemsSource="{Binding DeliveryHistory}" AutoGenerateColumns="False" IsReadOnly="True">
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="10,4">
+            <TextBlock FontWeight="Bold" Text="Delivery history" VerticalAlignment="Center" />
+            <Button Content="View Evidence" Margin="12,0,0,0" Command="{Binding ViewSelectedEvidenceCommand}" />
+        </StackPanel>
+        <DataGrid Grid.Row="4" Margin="10" ItemsSource="{Binding DeliveryHistory}" SelectedItem="{Binding SelectedDelivery}" AutoGenerateColumns="False" IsReadOnly="True">
+            <DataGrid.ContextMenu>
+                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                    <MenuItem Header="View evidence" Command="{Binding ViewSelectedEvidenceCommand}" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Delivery ID" Binding="{Binding DisplayId}" Width="100" />
                 <DataGridTextColumn Header="Delivered" Binding="{Binding DeliveredDate, StringFormat=dd/MM/yyyy}" Width="110" />

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -8,6 +9,9 @@ using StudentTracker.Core.Models;
 using StudentTracker.Services;
 
 namespace StudentTracker.Wpf.ViewModels;
+
+public sealed record ReportItem(string Key, string Name, string Category);
+public sealed record ReportCategory(string Name, IEnumerable<ReportItem> Items);
 
 public partial class ReportsViewModel : ViewModelBase
 {
@@ -98,11 +102,50 @@ public partial class ReportsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _includeArchived;
 
+    [ObservableProperty]
+    private ObservableCollection<ReportItem> _reports = new();
+
+    [ObservableProperty]
+    private ReportItem? _selectedReport;
+
     public ReportsViewModel(ReportService reportService, InvoicerReferenceExportService referenceExportService)
     {
         _reportService = reportService;
         _referenceExportService = referenceExportService;
+        InitializeReports();
         LoadAsync().ConfigureAwait(false);
+    }
+
+    private void InitializeReports()
+    {
+        Reports = new ObservableCollection<ReportItem>(new[]
+        {
+            new ReportItem("CompletedStudents", "Completed Students", "Students"),
+            new ReportItem("AwaitingOrder", "Awaiting Certificate Order", "Students"),
+            new ReportItem("WithdrawnStudents", "Withdrawn Students", "Students"),
+            new ReportItem("NonCompletions", "Non-Completions", "Students"),
+            new ReportItem("AwaitingDelivery", "Awaiting Delivery", "Certificates"),
+            new ReportItem("CertificatesDelivered", "Certificates Delivered", "Certificates"),
+            new ReportItem("UpcomingDeliveries", "Upcoming Deliveries", "Deliveries"),
+            new ReportItem("CancelledDeliveries", "Cancelled Deliveries", "Deliveries"),
+            new ReportItem("CompletedDeliveries", "Completed Deliveries", "Deliveries"),
+            new ReportItem("CapacityReport", "Capacity", "Deliveries"),
+            new ReportItem("ActiveAllocations", "Active Allocations", "Allocations"),
+            new ReportItem("TransferredAllocations", "Transferred Allocations", "Allocations"),
+            new ReportItem("CancelledAllocations", "Cancelled Allocations", "Allocations"),
+            new ReportItem("PlaceholderAllocations", "Placeholder Allocations", "Allocations"),
+            new ReportItem("Attendance", "Attendance", "Allocations"),
+            new ReportItem("CourseUtilization", "Course Utilization", "Allocations"),
+            new ReportItem("BudgetSummary", "Budget Summary", "Financial"),
+            new ReportItem("BudgetHistory", "Budget History", "Financial"),
+            new ReportItem("CreditSummary", "Credit Summary", "Financial"),
+            new ReportItem("CreditHistory", "Credit History", "Financial"),
+            new ReportItem("AuditActivity", "Audit Activity", "Administration"),
+            new ReportItem("ImportReviewQueue", "Import Review Queue", "Administration"),
+            new ReportItem("CertificateOrders", "Certificate Orders", "Administration"),
+        });
+
+        SelectedReport = Reports.First();
     }
 
     private async Task LoadAsync()

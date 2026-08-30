@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using StudentTracker.Core.Enums;
 using StudentTracker.Core.Models;
 using StudentTracker.Services;
@@ -44,6 +45,25 @@ public partial class CertificateDeliveryEditViewModel : ViewModelBase, ICloseabl
 
     [ObservableProperty]
     private Document? _selectedEvidenceDocument;
+
+    [ObservableProperty]
+    private string? _evidenceFilePath;
+
+    [RelayCommand]
+    private void SelectEvidenceFile()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Select issued certificate",
+            Filter = "Certificate files (*.pdf;*.png;*.jpg;*.jpeg)|*.pdf;*.png;*.jpg;*.jpeg",
+            Multiselect = false
+        };
+        if (dialog.ShowDialog() == true)
+        {
+            EvidenceFilePath = dialog.FileName;
+            SelectedEvidenceDocument = null;
+        }
+    }
 
     public CertificateDeliveryEditViewModel(CertificateService certificateService, DocumentService documentService)
         : this(certificateService, documentService, null)
@@ -95,13 +115,24 @@ public partial class CertificateDeliveryEditViewModel : ViewModelBase, ICloseabl
 
         try
         {
+            var evidenceDocument = SelectedEvidenceDocument;
+            if (!string.IsNullOrWhiteSpace(EvidenceFilePath))
+            {
+                evidenceDocument = await _documentService.AddDocumentAsync(
+                    EvidenceFilePath,
+                    "Certificates",
+                    $"Issued certificate - {SelectedOrder.DisplayId}",
+                    "Issued certificate evidence",
+                    receivedDate: DeliveredDate);
+            }
+
             await _certificateService.RecordDeliveryAsync(
                 SelectedOrder.Id,
                 DeliveredDate,
                 DeliveryMethod,
                 DeliveredTo,
                 Notes,
-                SelectedEvidenceDocument?.Id,
+                evidenceDocument?.Id,
                 RecipientDetails);
 
             RequestClose?.Invoke(true);

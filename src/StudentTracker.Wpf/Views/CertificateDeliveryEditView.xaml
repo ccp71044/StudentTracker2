@@ -53,10 +53,17 @@
                 <ComboBox ItemsSource="{Binding AvailableDocuments}" SelectedItem="{Binding SelectedEvidenceDocument}" 
                          Grid.Row="5" Grid.Column="1" Margin="8,4" DisplayMemberPath="DisplayName" />
 
+                <TextBlock Text="Certificate file:" VerticalAlignment="Center" Margin="0,4" Grid.Row="6" Grid.Column="0" />
+                <Grid Grid.Row="6" Grid.Column="1" Margin="8,4">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBox Text="{Binding EvidenceFilePath}" IsReadOnly="True" VerticalContentAlignment="Center" />
+                    <Button Grid.Column="1" Content="Browse..." Margin="8,0,0,0" Command="{Binding SelectEvidenceFileCommand}" />
+                </Grid>
+
                 <!-- Notes -->
-                <TextBlock Text="Notes:" VerticalAlignment="Top" Margin="0,4" Grid.Row="6" Grid.Column="0" />
+                <TextBlock Text="Notes:" VerticalAlignment="Top" Margin="0,4" Grid.Row="7" Grid.Column="0" />
                 <TextBox Text="{Binding Notes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" 
-                        Grid.Row="6" Grid.Column="1" Margin="8,4" />
+                        Grid.Row="7" Grid.Column="1" Margin="8,4" />
             </Grid>
         </ScrollViewer>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2" Margin="0,10,0,0">

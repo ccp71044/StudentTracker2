@@ -10,12 +10,14 @@ public class CreditService
     private readonly StudentTrackerDbContext _context;
     private readonly DisplayIdGenerator _idGenerator;
     private readonly AuditService _audit;
+    private readonly IDocumentService _documentService;
 
-    public CreditService(StudentTrackerDbContext context, DisplayIdGenerator idGenerator, AuditService audit)
+    public CreditService(StudentTrackerDbContext context, DisplayIdGenerator idGenerator, AuditService audit, IDocumentService documentService)
     {
         _context = context;
         _idGenerator = idGenerator;
         _audit = audit;
+        _documentService = documentService;
     }
 
     public async Task<List<CertificateCreditPool>> GetPoolsAsync(bool includeInactive = false) => await _context.CertificateCreditPools.Where(p => includeInactive || p.IsActive).OrderBy(p => p.Name).ToListAsync();
@@ -85,6 +87,112 @@ public class CreditService
         _audit.Record("TopUp", "CertificateCreditTransaction", tx.Id, tx.DisplayId);
         await _context.SaveChangesAsync();
         return tx;
+    }
+
+    public async Task<CertificateCreditTransaction> TopUpWithReceiptAsync(
+        Guid poolId,
+        decimal amount,
+        decimal? quantity = null,
+        DateTime? transactionDate = null,
+        string? reference = null,
+        string? reason = null,
+        string? notes = null,
+        string? receiptFilePath = null)
+    {
+        if (amount <= 0) throw new ArgumentException("Amount must be greater than zero.", nameof(amount));
+        if (quantity.HasValue && quantity.Value <= 0) throw new ArgumentException("Quantity must be greater than zero.", nameof(quantity));
+
+        var pool = await _context.CertificateCreditPools.FindAsync(poolId) ?? throw new ArgumentException("Pool not found");
+
+        using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        Document? document = null;
+        string? copiedFilePath = null;
+
+        try
+        {
+            var tx = new CertificateCreditTransaction
+            {
+                DisplayId = _idGenerator.NextDisplayId<CertificateCreditTransaction>("CTX"),
+                PoolId = poolId,
+                TransactionType = CreditTransactionType.TopUp,
+                Amount = amount,
+                Quantity = quantity,
+                SourceType = CreditSourceType.ProviderHistory,
+                ExternalPurchaseReference = reference,
+                Reason = reason ?? "Provider receipt top-up",
+                Notes = notes,
+                TransactionDateTime = transactionDate?.ToUniversalTime() ?? DateTime.UtcNow
+            };
+            _context.CertificateCreditTransactions.Add(tx);
+            await _context.SaveChangesAsync();
+
+            if (!string.IsNullOrWhiteSpace(receiptFilePath))
+            {
+                document = await _documentService.AddDocumentAsync(
+                    receiptFilePath,
+                    "CreditReceipts",
+                    displayName: Path.GetFileName(receiptFilePath),
+                    description: $"Receipt for credit top-up {tx.DisplayId} on pool {pool.DisplayId}",
+                    receivedDate: transactionDate);
+                copiedFilePath = _documentService.GetFullPath(document);
+
+                await _documentService.LinkDocumentAsync(document.Id, nameof(CertificateCreditTransaction), tx.Id, "Receipt");
+                await _documentService.LinkDocumentAsync(document.Id, nameof(CertificateCreditPool), poolId, "PoolReceipt");
+            }
+
+            await _context.SaveChangesAsync();
+            _audit.Record(
+                "TopUpWithReceipt",
+                nameof(CertificateCreditTransaction),
+                tx.Id,
+                tx.DisplayId,
+                null,
+                new { PoolId = pool.Id, PoolDisplayId = pool.DisplayId, Amount = amount, Quantity = quantity, DocumentId = document?.Id, DocumentDisplayId = document?.DisplayId });
+            await _context.SaveChangesAsync();
+
+            await dbTransaction.CommitAsync();
+            return tx;
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            CleanupCopiedReceipt(copiedFilePath);
+            throw;
+        }
+    }
+
+    private static void CleanupCopiedReceipt(string? copiedFilePath)
+    {
+        if (string.IsNullOrWhiteSpace(copiedFilePath) || !File.Exists(copiedFilePath))
+            return;
+        try
+        {
+            File.Delete(copiedFilePath);
+        }
+        catch
+        {
+            // Best-effort cleanup; the transaction has already been rolled back.
+        }
+    }
+
+    public async Task<List<(CertificateCreditTransaction Transaction, Document? Receipt)>> GetTransactionsWithReceiptsAsync(Guid poolId)
+    {
+        var transactions = await _context.CertificateCreditTransactions
+            .AsNoTracking()
+            .Where(t => t.PoolId == poolId)
+            .OrderByDescending(t => t.TransactionDateTime)
+            .ToListAsync();
+
+        var transactionIds = transactions.Select(t => t.Id).ToList();
+        var poolReceiptLinks = await _context.DocumentLinks
+            .AsNoTracking()
+            .Include(l => l.Document)
+            .Where(l => l.EntityType == nameof(CertificateCreditTransaction) && transactionIds.Contains(l.EntityId) && l.LinkPurpose == "Receipt")
+            .ToListAsync();
+
+        var receiptsByTransaction = poolReceiptLinks.ToDictionary(l => l.EntityId, l => l.Document);
+
+        return transactions.Select(t => (t, receiptsByTransaction.TryGetValue(t.Id, out var doc) ? doc : null)).ToList();
     }
 
     public async Task<CertificateCreditTransaction> AllocateAsync(Guid poolId, Guid allocationId, decimal amount, decimal? quantity = null, string? reason = null)
@@ -244,4 +352,6 @@ public class CreditService
             .OrderByDescending(t => t.TransactionDateTime)
             .Include(t => t.Allocation).ThenInclude(a => a!.Student)
             .ToListAsync();
+
+    public string GetDocumentFullPath(Document document) => _documentService.GetFullPath(document);
 }

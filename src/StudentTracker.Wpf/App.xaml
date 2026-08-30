@@ -11,6 +11,9 @@
             </ResourceDictionary.MergedDictionaries>
             <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
             <converters:InvertedBooleanConverter x:Key="InvertedBooleanConverter" />
+            <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+            <converters:ReportKeyToVisibilityConverter x:Key="ReportKeyToVisibilityConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -122,6 +122,7 @@ public partial class App : Application
         services.AddScoped<CertificateService>();
         services.AddScoped<SignOffService>();
         services.AddScoped<DocumentService>();
+        services.AddScoped<IDocumentService>(provider => provider.GetRequiredService<DocumentService>());
         services.AddScoped<PdfService>();
         services.AddScoped<ReportService>();
         services.AddScoped<InvoicerService>();

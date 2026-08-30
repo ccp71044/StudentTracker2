@@ -150,7 +150,7 @@ public class InlineEditingViewModelTests
         using var vmContext = CreateContext(dbName);
         var vmService = CreateCourseService(vmContext);
         var dialog = new FakeDialogService();
-        var vm = new DeliveriesViewModel(vmService, null!, null!, null!, null!, dialog);
+        var vm = new DeliveriesViewModel(vmService, null!, null!, null!, null!, null!, null!, null!, dialog);
         await WaitForAnyItemAsync(() => vm.Deliveries);
 
         var delivery = vm.Deliveries.First();

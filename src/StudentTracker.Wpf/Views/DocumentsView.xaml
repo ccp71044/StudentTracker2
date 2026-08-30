@@ -3,16 +3,14 @@
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
         <TextBlock Text="Documents" AutomationProperties.AutomationId="DocumentsHeader" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0"/>
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="1">
-            <Button Content="Add Document" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddDocumentCommand}"/>
-            <Button Content="View" Style="{StaticResource ActionButtonStyle}" Command="{Binding ViewDocumentCommand}"/>
-            <Button Content="Edit Metadata" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditDocumentCommand}"/>
-            <Button Content="Link" Style="{StaticResource ActionButtonStyle}" Command="{Binding LinkDocumentCommand}"/>
-            <Button Content="Archive" Style="{StaticResource ActionButtonStyle}" Command="{Binding DeleteDocumentCommand}"/>
-            <Button Content="Restore" Style="{StaticResource ActionButtonStyle}" Command="{Binding RestoreDocumentCommand}"/>
-            <Button Content="Check Missing Files" Style="{StaticResource ActionButtonStyle}" Command="{Binding CheckMissingFilesCommand}"/>
-            <CheckBox Content="Show archived" IsChecked="{Binding ShowArchived}" VerticalAlignment="Center" Margin="10,0"/>
-            <ToggleButton Content="Edit Table" IsChecked="{Binding IsTableEditingEnabled}" VerticalAlignment="Center" Margin="10,0"/>
-            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}"/>
+            <Button Content="Add Document" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddDocumentCommand}" AutomationProperties.AutomationId="AddDocumentButton" ToolTip="Upload a new document"/>
+            <Button Content="View" Style="{StaticResource ActionButtonStyle}" Command="{Binding ViewDocumentCommand}" AutomationProperties.AutomationId="ViewDocumentButton" ToolTip="Open the selected document"/>
+            <Button Content="Edit Metadata" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditDocumentCommand}" AutomationProperties.AutomationId="EditDocumentButton" ToolTip="Edit the selected document's metadata"/>
+            <Button Content="Link" Style="{StaticResource ActionButtonStyle}" Command="{Binding LinkDocumentCommand}" AutomationProperties.AutomationId="LinkDocumentButton" ToolTip="Link the selected document to a record"/>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,0"/>
+            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="RefreshDocumentsButton"/>
+            <CheckBox Content="Show archived" IsChecked="{Binding ShowArchived}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="DocumentsShowArchivedCheckBox"/>
+            <ToggleButton Content="Edit Table" IsChecked="{Binding IsTableEditingEnabled}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="DocumentsEditTableToggleButton"/>
         </StackPanel>
         <DataGrid ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" MouseDoubleClick="DataGrid_MouseDoubleClick" BeginningEdit="DataGrid_BeginningEdit" RowEditEnding="DataGrid_RowEditEnding">
             <DataGrid.Style>
@@ -25,14 +23,14 @@
             </DataGrid.Style>
             <DataGrid.ContextMenu>
                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                    <MenuItem Header="View" Command="{Binding ViewDocumentCommand}"/>
-                    <MenuItem Header="Edit metadata" Command="{Binding EditDocumentCommand}"/>
-                    <MenuItem Header="Link to record" Command="{Binding LinkDocumentCommand}"/>
+                    <MenuItem Header="View" Command="{Binding ViewDocumentCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_View"/>
+                    <MenuItem Header="Edit metadata" Command="{Binding EditDocumentCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_EditMetadata"/>
+                    <MenuItem Header="Link to record" Command="{Binding LinkDocumentCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_Link"/>
                     <Separator/>
-                    <MenuItem Header="Archive" Command="{Binding DeleteDocumentCommand}"/>
-                    <MenuItem Header="Restore" Command="{Binding RestoreDocumentCommand}"/>
-                    <MenuItem Header="Check missing files" Command="{Binding CheckMissingFilesCommand}"/>
-                    <MenuItem Header="Refresh" Command="{Binding RefreshCommand}"/>
+                    <MenuItem Header="Archive" Command="{Binding DeleteDocumentCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_Archive"/>
+                    <MenuItem Header="Restore" Command="{Binding RestoreDocumentCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_Restore"/>
+                    <MenuItem Header="Check missing files" Command="{Binding CheckMissingFilesCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_CheckMissingFiles"/>
+                    <MenuItem Header="Refresh" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_Refresh"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
