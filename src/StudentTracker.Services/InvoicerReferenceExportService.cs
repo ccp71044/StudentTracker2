@@ -104,7 +104,7 @@ public class InvoicerReferenceExportService
         }
     }
 
-    private async Task<InvoicerCostPositionSnapshot> BuildSnapshotAsync(string? notes)
+    public async Task<InvoicerCostPositionSnapshot> BuildSnapshotAsync(string? notes)
     {
         var pools = await _context.BudgetPools
             .Where(p => p.IsActive)

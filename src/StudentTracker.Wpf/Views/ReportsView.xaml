@@ -52,6 +52,7 @@
                             <MenuItem Header="Budget _History" Command="{Binding ExportBudgetHistoryCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportBudgetHistoryCsv" />
                             <MenuItem Header="Credit S_ummary" Command="{Binding ExportCreditSummaryCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportCreditSummaryCsv" />
                             <MenuItem Header="Credit _History" Command="{Binding ExportCreditHistoryCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportCreditHistoryCsv" />
+                            <MenuItem Header="_Prepaid Position" Command="{Binding ExportPrepaidPositionCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportPrepaidPositionCsv" />
                         </MenuItem>
                         <MenuItem Header="_Administration" AutomationProperties.AutomationId="ReportsExportMenu_AdministrationCategory">
                             <MenuItem Header="_Audit Activity" Command="{Binding ExportAuditActivityCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportAuditActivityCsv" />
@@ -467,6 +468,34 @@
                                 </Style.Triggers>
                             </Style>
                         </DataGrid.Style>
+                    </DataGrid>
+
+                    <!-- Prepaid Position -->
+                    <DataGrid ItemsSource="{Binding PrepaidPosition}" AutoGenerateColumns="False" IsReadOnly="True" AutomationProperties.AutomationId="PrepaidPositionReportGrid">
+                        <DataGrid.Style>
+                            <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedReport.Key}" Value="PrepaidPosition">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Style>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Pool" Binding="{Binding PoolName}" Width="140" />
+                            <DataGridTextColumn Header="Course" Binding="{Binding CourseCode}" Width="80" />
+                            <DataGridTextColumn Header="Title" Binding="{Binding CourseTitle}" Width="180" />
+                            <DataGridTextColumn Header="Funds" Binding="{Binding FundsAdded, StringFormat=C}" Width="90" />
+                            <DataGridTextColumn Header="Committed" Binding="{Binding Committed, StringFormat=C}" Width="90" />
+                            <DataGridTextColumn Header="Spent" Binding="{Binding Spent, StringFormat=C}" Width="90" />
+                            <DataGridTextColumn Header="Available" Binding="{Binding Available, StringFormat=C}" Width="90" />
+                            <DataGridTextColumn Header="Reserved" Binding="{Binding ReservedPlaces}" Width="70" />
+                            <DataGridTextColumn Header="Pending" Binding="{Binding AssignedPending}" Width="70" />
+                            <DataGridTextColumn Header="Awaiting Spend" Binding="{Binding CompletedAwaitingSpend}" Width="100" />
+                            <DataGridTextColumn Header="Remaining" Binding="{Binding CompletionsRemaining}" Width="80" />
+                            <DataGridTextColumn Header="Allen Cost" Binding="{Binding AllenCost, StringFormat=C}" Width="90" />
+                        </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
             </Border>

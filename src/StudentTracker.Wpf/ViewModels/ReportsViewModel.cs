@@ -88,6 +88,9 @@ public partial class ReportsViewModel : ViewModelBase
     private ObservableCollection<CertificateOrderReportItem> _certificateOrders = new();
 
     [ObservableProperty]
+    private ObservableCollection<PrepaidPositionReportItem> _prepaidPosition = new();
+
+    [ObservableProperty]
     private bool _includeCostsInWithdrawn = true;
 
     [ObservableProperty]
@@ -140,6 +143,7 @@ public partial class ReportsViewModel : ViewModelBase
             new ReportItem("BudgetHistory", "Budget History", "Financial"),
             new ReportItem("CreditSummary", "Credit Summary", "Financial"),
             new ReportItem("CreditHistory", "Credit History", "Financial"),
+            new ReportItem("PrepaidPosition", "Prepaid Position", "Financial"),
             new ReportItem("AuditActivity", "Audit Activity", "Administration"),
             new ReportItem("ImportReviewQueue", "Import Review Queue", "Administration"),
             new ReportItem("CertificateOrders", "Certificate Orders", "Administration"),
@@ -179,6 +183,55 @@ public partial class ReportsViewModel : ViewModelBase
         AuditActivity = new ObservableCollection<AuditLogReportItem>(await _reportService.GetAuditActivityReportAsync(FromDate, ToDate));
         ImportReviewQueue = new ObservableCollection<ImportReviewQueueReportItem>(await _reportService.GetImportReviewQueueReportAsync());
         CertificateOrders = new ObservableCollection<CertificateOrderReportItem>(await _reportService.GetCertificateOrderReportAsync(ReplacementsOnly ? true : null));
+
+        await LoadPrepaidPositionAsync();
+    }
+
+    private async Task LoadPrepaidPositionAsync()
+    {
+        var snapshot = await _referenceExportService.BuildSnapshotAsync("Prepaid position report");
+        var rows = snapshot.Pools
+            .SelectMany(p => p.Courses.Any()
+                ? p.Courses.Select(c => new PrepaidPositionReportItem
+                {
+                    PoolDisplayId = p.PoolDisplayId ?? p.PoolName,
+                    PoolName = p.PoolName,
+                    FinancialPeriod = p.FinancialPeriod,
+                    CourseCode = c.CourseCode,
+                    CourseTitle = c.CourseTitle,
+                    Provider = c.Provider,
+                    FundsAdded = p.FundsAdded,
+                    Committed = c.Committed,
+                    Spent = c.Spent,
+                    Available = c.Available,
+                    ReservedPlaces = c.AnonymousReservedPlaces,
+                    AssignedPending = c.AssignedPending,
+                    CompletedAwaitingSpend = c.CompletedAwaitingManualSpend,
+                    CompletionsRemaining = c.CompletionsRemaining,
+                    TotalAllocations = c.TotalAllocations,
+                    AllenCost = c.ProviderCost
+                })
+                : new[]
+                {
+                    new PrepaidPositionReportItem
+                    {
+                        PoolDisplayId = p.PoolDisplayId ?? p.PoolName,
+                        PoolName = p.PoolName,
+                        FinancialPeriod = p.FinancialPeriod,
+                        FundsAdded = p.FundsAdded,
+                        Committed = p.Committed,
+                        Spent = p.Spent,
+                        Available = p.Available,
+                        ReservedPlaces = p.AnonymousReservedPlaces,
+                        AssignedPending = p.AssignedPending,
+                        CompletedAwaitingSpend = p.CompletedAwaitingManualSpend,
+                        CompletionsRemaining = p.CompletionsRemaining,
+                        TotalAllocations = 0,
+                        AllenCost = null
+                    }
+                })
+            .ToList();
+        PrepaidPosition = new ObservableCollection<PrepaidPositionReportItem>(rows);
     }
 
     [RelayCommand]
@@ -299,6 +352,12 @@ public partial class ReportsViewModel : ViewModelBase
     private async Task ExportCreditHistoryCsv()
     {
         await ExportAsync("credit-history.csv", CreditHistory.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportPrepaidPositionCsv()
+    {
+        await ExportAsync("prepaid-position.csv", PrepaidPosition.ToList());
     }
 
     [RelayCommand]

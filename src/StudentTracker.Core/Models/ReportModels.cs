@@ -127,3 +127,23 @@ public class ImportReviewQueueReportItem
     public string Status { get; set; } = string.Empty;
     public DateTime? ReviewedAt { get; set; }
 }
+
+public class PrepaidPositionReportItem
+{
+    public string PoolDisplayId { get; set; } = string.Empty;
+    public string PoolName { get; set; } = string.Empty;
+    public string? FinancialPeriod { get; set; }
+    public string CourseCode { get; set; } = string.Empty;
+    public string CourseTitle { get; set; } = string.Empty;
+    public string? Provider { get; set; }
+    public decimal FundsAdded { get; set; }
+    public decimal Committed { get; set; }
+    public decimal Spent { get; set; }
+    public decimal Available { get; set; }
+    public int ReservedPlaces { get; set; }
+    public int AssignedPending { get; set; }
+    public int CompletedAwaitingSpend { get; set; }
+    public int CompletionsRemaining { get; set; }
+    public int TotalAllocations { get; set; }
+    public decimal? AllenCost { get; set; }
+}
