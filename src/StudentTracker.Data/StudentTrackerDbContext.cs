@@ -17,6 +17,8 @@ public class StudentTrackerDbContext : DbContext
     public DbSet<CertificateCreditTransaction> CertificateCreditTransactions => Set<CertificateCreditTransaction>();
     public DbSet<BudgetPool> BudgetPools => Set<BudgetPool>();
     public DbSet<BudgetTransaction> BudgetTransactions => Set<BudgetTransaction>();
+    public DbSet<ClientPrepaidPool> ClientPrepaidPools => Set<ClientPrepaidPool>();
+    public DbSet<ClientPrepaidEntitlementTransaction> ClientPrepaidEntitlementTransactions => Set<ClientPrepaidEntitlementTransaction>();
     public DbSet<FundingSource> FundingSources => Set<FundingSource>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<CertificateOrder> CertificateOrders => Set<CertificateOrder>();
@@ -52,6 +54,19 @@ public class StudentTrackerDbContext : DbContext
         modelBuilder.Entity<CertificateCreditPool>().Property(p => p.UnitType).HasConversion<string>();
         modelBuilder.Entity<CertificateCreditTransaction>().Property(t => t.SourceType).HasConversion<string>();
         modelBuilder.Entity<CoursePrice>().Property(p => p.SourceType).HasConversion<string>();
+        modelBuilder.Entity<ClientPrepaidEntitlementTransaction>().Property(t => t.TransactionType).HasConversion<string>();
+
+        modelBuilder.Entity<ClientPrepaidEntitlementTransaction>()
+            .HasOne(t => t.LinkedTransaction)
+            .WithMany()
+            .HasForeignKey(t => t.LinkedTransactionId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<ClientPrepaidPool>()
+            .HasOne(p => p.RestrictedToCourseDefinition)
+            .WithMany()
+            .HasForeignKey(p => p.RestrictedToCourseDefinitionId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<Allocation>().HasIndex(a => new { a.StudentId, a.CourseDeliveryId });
         modelBuilder.Entity<DocumentLink>().HasIndex(l => new { l.EntityType, l.EntityId });

@@ -126,6 +126,7 @@ public partial class App : Application
         services.AddScoped<BudgetService>();
         services.AddScoped<PricingService>();
         services.AddScoped<BudgetSummaryService>();
+        services.AddScoped<ClientPrepaidEntitlementService>();
         services.AddScoped<CompletionPricingImporter>();
         services.AddScoped<ProviderCreditHistoryImporter>();
         services.AddScoped<CertificateService>();
