@@ -437,4 +437,40 @@ public class ClientPrepaidEntitlementTests
         Assert.Equal(0m, final.ReservedPlaceholders);
         Assert.Equal(0m, final.ReservedToNamedStudents);
     }
+
+    [Fact]
+    public async Task WF008_TransferUnassignedBetweenPools_ThenReserveAndAssign()
+    {
+        var (context, gen, _, service) = CreateService();
+
+        var course = new CourseDefinition { CourseCode = "HLTAID011", CourseTitle = "First Aid" };
+        context.CourseDefinitions.Add(course);
+        var delivery = new CourseDelivery { CourseDefinitionId = course.Id, DisplayId = "DEL-0001" };
+        context.CourseDeliveries.Add(delivery);
+        var source = await service.CreatePoolAsync(new ClientPrepaidPool { Name = "Source" });
+        var target = await service.CreatePoolAsync(new ClientPrepaidPool { Name = "Target" });
+        await service.AddPrepaidPlacesAsync(source.Id, 3m);
+
+        // Transfer two unassigned places to the target pool
+        await service.TransferPlaceAsync(source.Id, target.Id, 2m);
+        var sourceAfter = await service.GetPoolPositionAsync(source.Id);
+        var targetAfter = await service.GetPoolPositionAsync(target.Id);
+        Assert.Equal(1m, sourceAfter.UnassignedCarryForward);
+        Assert.Equal(2m, targetAfter.UnassignedCarryForward);
+
+        // Reserve and assign in target pool
+        var s1 = new Student { FirstName = "A", LastName = "A", Email = "a@example.com" };
+        context.Students.Add(s1);
+        var a1 = new Allocation { DisplayId = gen.NextDisplayId<Allocation>("ALL"), CourseDeliveryId = delivery.Id, StudentId = s1.Id };
+        context.Allocations.Add(a1);
+        context.SaveChanges();
+
+        await service.ReservePlaceAsync(target.Id, a1.Id, 1m);
+        await service.AssignPlaceAsync(target.Id, a1.Id, 1m);
+        await service.ConsumePlaceAsync(target.Id, a1.Id, 1m);
+
+        var final = await service.GetPoolPositionAsync(target.Id);
+        Assert.Equal(1m, final.PlacesConsumed);
+        Assert.Equal(1m, final.UnassignedCarryForward);
+    }
 }

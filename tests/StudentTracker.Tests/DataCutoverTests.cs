@@ -10,6 +10,20 @@ namespace StudentTracker.Tests;
 public sealed class DataCutoverTests
 {
     [Fact]
+    public void WF010_Backup_CreatesValidArchive()
+    {
+        using var fixture = new CutoverFixture();
+        var location = new DataLocationService(fixture.Settings);
+        var backup = new BackupService(location, fixture.Context, new AuditService(fixture.Context));
+        var path = backup.CreateBackup("wf010");
+
+        Assert.True(File.Exists(path));
+        using var archive = System.IO.Compression.ZipFile.OpenRead(path);
+        var entries = archive.Entries.Select(e => e.FullName).ToList();
+        Assert.Contains("Database/student-tracker.db", entries);
+    }
+
+    [Fact]
     public async Task InvalidWorkbook_IsRejectedBeforeDatabaseChanges()
     {
         using var fixture = new CutoverFixture();

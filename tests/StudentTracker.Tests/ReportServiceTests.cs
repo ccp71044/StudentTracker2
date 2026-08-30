@@ -206,6 +206,38 @@ public class ReportServiceTests
     }
 
     [Fact]
+    public async Task WF009_ImportReviewQueue_ResolvePending()
+    {
+        using var context = TestDbContextFactory.Create();
+        context.AppSettings.Add(new());
+        context.SaveChanges();
+        var item = new ImportReviewQueue
+        {
+            SourceFileName = "import.xlsx",
+            SourceSheet = "Students",
+            SourceRow = 1,
+            EntityType = "Student",
+            ProposedAction = "Create",
+            Issue = "Possible duplicate",
+            Status = "Pending"
+        };
+        context.ImportReviewQueues.Add(item);
+        context.SaveChanges();
+
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
+        var pending = await service.GetImportReviewQueueReportAsync("Pending");
+        Assert.Single(pending);
+
+        item.Status = "Approved";
+        item.ReviewedAt = DateTime.UtcNow;
+        await context.SaveChangesAsync();
+
+        var approved = await service.GetImportReviewQueueReportAsync("Approved");
+        Assert.Single(approved);
+        Assert.Empty(await service.GetImportReviewQueueReportAsync("Pending"));
+    }
+
+    [Fact]
     public async Task ExportCsvAsync_WritesBytesForReportItems()
     {
         using var context = TestDbContextFactory.Create();
