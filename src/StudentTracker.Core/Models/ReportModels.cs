@@ -170,3 +170,52 @@ public class TbcDeliveryReportItem
     public string? TrainerName { get; set; }
     public string DeliveryStatus { get; set; } = string.Empty;
 }
+
+public class FundingSourceReportItem
+{
+    public string SourceName { get; set; } = string.Empty;
+    public decimal TotalIn { get; set; }
+    public decimal TotalOut { get; set; }
+    public decimal Net { get; set; }
+}
+
+public class MissingDocumentReportItem
+{
+    public string? AllocationDisplayId { get; set; }
+    public string? StudentName { get; set; }
+    public string CourseCode { get; set; } = string.Empty;
+    public string? DeliveryDisplayId { get; set; }
+    public string MissingDocumentType { get; set; } = string.Empty;
+}
+
+public class CreditReallocationReportItem
+{
+    public string PoolName { get; set; } = string.Empty;
+    public string TransactionType { get; set; } = string.Empty;
+    public DateTime TransactionDateTime { get; set; }
+    public decimal Amount { get; set; }
+    public decimal? Quantity { get; set; }
+    public string? Reason { get; set; }
+    public string? AllocationDisplayId { get; set; }
+}
+
+public class CertificateCreditPoolSummaryReportItem
+{
+    public string PoolDisplayId { get; set; } = string.Empty;
+    public string PoolName { get; set; } = string.Empty;
+    public decimal TopUp { get; set; }
+    public decimal Allocated { get; set; }
+    public decimal Consumed { get; set; }
+    public decimal Available { get; set; }
+    public int AllocationCount { get; set; }
+}
+
+public class CreditConsumedWithoutCompletionReportItem
+{
+    public string? AllocationDisplayId { get; set; }
+    public string? StudentName { get; set; }
+    public string CourseCode { get; set; } = string.Empty;
+    public decimal AmountConsumed { get; set; }
+    public string OutcomeStatus { get; set; } = string.Empty;
+    public DateTime? ConsumedAt { get; set; }
+}

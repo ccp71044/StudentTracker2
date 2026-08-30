@@ -567,6 +567,163 @@ public class ReportService
     }
     #endregion
 
+    #region Additional reports
+    public async Task<List<FundingSourceReportItem>> GetFundingSourcesAsync(DateTime? from = null, DateTime? to = null)
+    {
+        var q = _context.BudgetTransactions
+            .Where(t => t.FundingSourceId != null)
+            .Include(t => t.FundingSource)
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (from.HasValue) q = q.Where(t => t.TransactionDate >= from);
+        if (to.HasValue) q = q.Where(t => t.TransactionDate < to.Value.Date.AddDays(1));
+
+        var rows = await q.ToListAsync();
+        return rows
+            .GroupBy(t => t.FundingSource?.Name ?? "Unknown")
+            .Select(g => new FundingSourceReportItem
+            {
+                SourceName = g.Key,
+                TotalIn = g.Where(t => t.Amount > 0).Sum(t => t.Amount),
+                TotalOut = g.Where(t => t.Amount < 0).Sum(t => -t.Amount),
+                Net = g.Sum(t => t.Amount)
+            })
+            .ToList();
+    }
+
+    public async Task<List<MissingDocumentReportItem>> GetMissingDocumentsAsync()
+    {
+        var completed = await _context.Allocations
+            .Where(a => a.OutcomeStatus == OutcomeStatus.Completed)
+            .Include(a => a.Student)
+            .Include(a => a.CourseDelivery).ThenInclude(d => d!.CourseDefinition)
+            .AsNoTracking()
+            .ToListAsync();
+
+        var linkedIds = (await _context.DocumentLinks
+            .Where(l => l.EntityType == nameof(Allocation))
+            .Select(l => l.EntityId)
+            .ToListAsync())
+            .ToHashSet();
+
+        var result = new List<MissingDocumentReportItem>();
+        foreach (var a in completed.Where(a => !linkedIds.Contains(a.Id)))
+        {
+            result.Add(new MissingDocumentReportItem
+            {
+                AllocationDisplayId = a.DisplayId,
+                StudentName = a.Student?.FullName,
+                CourseCode = a.CourseDelivery?.CourseDefinition?.CourseCode ?? "",
+                DeliveryDisplayId = a.CourseDelivery?.DisplayId,
+                MissingDocumentType = "Completion Evidence"
+            });
+        }
+
+        var orderedWithoutDelivery = await _context.CertificateOrders
+            .Where(o => o.Status == CertificateOrderStatus.Ordered)
+            .Include(o => o.Allocation).ThenInclude(a => a!.Student)
+            .Include(o => o.Allocation).ThenInclude(a => a!.CourseDelivery).ThenInclude(d => d!.CourseDefinition)
+            .AsNoTracking()
+            .ToListAsync();
+
+        foreach (var o in orderedWithoutDelivery.Where(o => o.Allocation != null))
+        {
+            var a = o.Allocation!;
+            result.Add(new MissingDocumentReportItem
+            {
+                AllocationDisplayId = a.DisplayId,
+                StudentName = a.Student?.FullName,
+                CourseCode = a.CourseDelivery?.CourseDefinition?.CourseCode ?? "",
+                DeliveryDisplayId = a.CourseDelivery?.DisplayId,
+                MissingDocumentType = "Certificate Delivery Evidence"
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<List<CreditReallocationReportItem>> GetCreditReallocationHistoryAsync(DateTime? from = null, DateTime? to = null)
+    {
+        var q = _context.CertificateCreditTransactions
+            .Where(t => t.TransactionType == CreditTransactionType.ReallocateOut || t.TransactionType == CreditTransactionType.ReallocateIn)
+            .Include(t => t.Pool)
+            .AsNoTracking()
+            .AsQueryable();
+        if (from.HasValue) q = q.Where(t => t.TransactionDateTime >= from);
+        if (to.HasValue) q = q.Where(t => t.TransactionDateTime < to.Value.Date.AddDays(1));
+
+        var list = await q.ToListAsync();
+        return list.Select(t => new CreditReallocationReportItem
+        {
+            PoolName = t.Pool?.Name ?? "Unknown",
+            TransactionType = t.TransactionType.ToString(),
+            TransactionDateTime = t.TransactionDateTime,
+            Amount = t.Amount,
+            Quantity = t.Quantity,
+            Reason = t.Reason,
+            AllocationDisplayId = t.Allocation?.DisplayId
+        }).ToList();
+    }
+
+    public async Task<List<CertificateCreditPoolSummaryReportItem>> GetCertificateCreditPoolSummaryAsync()
+    {
+        var pools = await _context.CertificateCreditPools
+            .AsNoTracking()
+            .ToListAsync();
+
+        var tx = await _context.CertificateCreditTransactions
+            .AsNoTracking()
+            .ToListAsync();
+
+        var allocated = await _context.Allocations
+            .Where(a => a.CreditStatus == CreditStatus.Allocated)
+            .AsNoTracking()
+            .ToListAsync();
+
+        return pools.Select(p =>
+        {
+            var poolTx = tx.Where(t => t.PoolId == p.Id).ToList();
+            var topUp = poolTx.Where(t => t.TransactionType == CreditTransactionType.TopUp).Sum(t => Math.Abs(t.Amount));
+            var consumed = poolTx.Where(t => t.TransactionType == CreditTransactionType.OrderConsume || t.TransactionType == CreditTransactionType.ManualConsume).Sum(t => Math.Abs(t.Amount));
+            var allocatedOut = poolTx.Where(t => t.TransactionType == CreditTransactionType.Allocate).Sum(t => Math.Abs(t.Amount));
+            return new CertificateCreditPoolSummaryReportItem
+            {
+                PoolDisplayId = p.DisplayId ?? string.Empty,
+                PoolName = p.Name ?? string.Empty,
+                TopUp = topUp,
+                Allocated = allocatedOut,
+                Consumed = consumed,
+                Available = topUp - allocatedOut - consumed,
+                AllocationCount = allocated.Count(a => a.CreditPoolId == p.Id)
+            };
+        }).ToList();
+    }
+
+    public async Task<List<CreditConsumedWithoutCompletionReportItem>> GetCreditsConsumedWithoutCompletionAsync()
+    {
+        var q = _context.CertificateCreditTransactions
+            .Where(t => (t.TransactionType == CreditTransactionType.OrderConsume || t.TransactionType == CreditTransactionType.ManualConsume) && t.Allocation != null)
+            .Include(t => t.Allocation).ThenInclude(a => a!.Student)
+            .Include(t => t.Allocation).ThenInclude(a => a!.CourseDelivery).ThenInclude(d => d!.CourseDefinition)
+            .AsNoTracking();
+
+        var list = await q.ToListAsync();
+        return list
+            .Where(t => t.Allocation!.OutcomeStatus != OutcomeStatus.Completed)
+            .Select(t => new CreditConsumedWithoutCompletionReportItem
+            {
+                AllocationDisplayId = t.Allocation!.DisplayId,
+                StudentName = t.Allocation.Student?.FullName,
+                CourseCode = t.Allocation.CourseDelivery?.CourseDefinition?.CourseCode ?? "",
+                AmountConsumed = Math.Abs(t.Amount),
+                OutcomeStatus = t.Allocation.OutcomeStatus.ToString(),
+                ConsumedAt = t.TransactionDateTime
+            })
+            .ToList();
+    }
+    #endregion
+
     #region CSV export
     public async Task<byte[]> ExportCsvAsync<T>(IEnumerable<T> records) where T : class
     {

@@ -289,6 +289,81 @@ public class ReportServiceTests
         Assert.Equal("TBC", result[0].DeliveryStatus);
     }
 
+    [Fact]
+    public async Task GetFundingSourcesAsync_GroupsBySource()
+    {
+        using var context = TestDbContextFactory.Create();
+        var pool = new BudgetPool { Name = "B1" };
+        context.BudgetPools.Add(pool);
+        var source = new FundingSource { Name = "Grant A" };
+        context.FundingSources.Add(source);
+        context.BudgetTransactions.Add(new BudgetTransaction { PoolId = pool.Id, FundingSourceId = source.Id, TransactionType = BudgetTransactionType.FundsAdded, Amount = 500 });
+        context.BudgetTransactions.Add(new BudgetTransaction { PoolId = pool.Id, FundingSourceId = source.Id, TransactionType = BudgetTransactionType.ExpenseRecognised, Amount = -100 });
+        context.SaveChanges();
+
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
+        var result = await service.GetFundingSourcesAsync();
+
+        Assert.Single(result);
+        Assert.Equal(500m, result[0].TotalIn);
+        Assert.Equal(100m, result[0].TotalOut);
+        Assert.Equal(400m, result[0].Net);
+    }
+
+    [Fact]
+    public async Task GetMissingDocumentsAsync_ReturnsCompletedAllocationsWithoutDocumentLinks()
+    {
+        using var context = TestDbContextFactory.Create();
+        SeedStudentAndCourse(context, out var student, out var delivery);
+        context.Allocations.Add(new Allocation { StudentId = student.Id, CourseDeliveryId = delivery.Id, OutcomeStatus = OutcomeStatus.Completed });
+        context.SaveChanges();
+
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
+        var result = await service.GetMissingDocumentsAsync();
+
+        Assert.Single(result);
+        Assert.Equal("Completion Evidence", result[0].MissingDocumentType);
+    }
+
+    [Fact]
+    public async Task GetCertificateCreditPoolSummaryAsync_SummarizesEachPool()
+    {
+        using var context = TestDbContextFactory.Create();
+        var pool = new CertificateCreditPool { Name = "C1" };
+        context.CertificateCreditPools.Add(pool);
+        context.CertificateCreditTransactions.Add(new CertificateCreditTransaction { PoolId = pool.Id, TransactionType = CreditTransactionType.TopUp, Amount = 100, Quantity = 1 });
+        context.CertificateCreditTransactions.Add(new CertificateCreditTransaction { PoolId = pool.Id, TransactionType = CreditTransactionType.Allocate, Amount = -30, Quantity = 1 });
+        context.CertificateCreditTransactions.Add(new CertificateCreditTransaction { PoolId = pool.Id, TransactionType = CreditTransactionType.OrderConsume, Amount = -20, Quantity = 1 });
+        context.SaveChanges();
+
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
+        var result = await service.GetCertificateCreditPoolSummaryAsync();
+
+        Assert.Single(result);
+        Assert.Equal(100m, result[0].TopUp);
+        Assert.Equal(30m, result[0].Allocated);
+        Assert.Equal(20m, result[0].Consumed);
+        Assert.Equal(50m, result[0].Available);
+    }
+
+    [Fact]
+    public async Task GetCreditsConsumedWithoutCompletionAsync_ReturnsConsumedForNonCompleted()
+    {
+        using var context = TestDbContextFactory.Create();
+        SeedStudentAndCourse(context, out var student, out var delivery);
+        var alloc = new Allocation { StudentId = student.Id, CourseDeliveryId = delivery.Id, OutcomeStatus = OutcomeStatus.Withdrawn };
+        context.Allocations.Add(alloc);
+        context.CertificateCreditTransactions.Add(new CertificateCreditTransaction { PoolId = Guid.NewGuid(), AllocationId = alloc.Id, TransactionType = CreditTransactionType.OrderConsume, Amount = -25, Quantity = 1, TransactionDateTime = DateTime.UtcNow });
+        context.SaveChanges();
+
+        var service = new ReportService(context, new BudgetSummaryService(context, new PricingService(context)), new PricingService(context));
+        var result = await service.GetCreditsConsumedWithoutCompletionAsync();
+
+        Assert.Single(result);
+        Assert.Equal(25m, result[0].AmountConsumed);
+        Assert.Equal("Withdrawn", result[0].OutcomeStatus);
+    }
+
     private static void SeedStudentAndCourse(StudentTrackerDbContext context, out Student student, out CourseDelivery delivery)
     {
         student = new Student { FirstName = "A", LastName = "B" };
