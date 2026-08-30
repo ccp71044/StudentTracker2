@@ -50,6 +50,7 @@ public class MenuTests : IClassFixture<AppUiTestFixture>, IDisposable
     [InlineData("FileMenu", "FileMenu_RestoreBackup")]
     [InlineData("FileMenu", "FileMenu_Exit")]
     [InlineData("ActionsMenu", "ActionsMenu_RefreshCurrentView")]
+    [InlineData("DataMenu", "DataMenu_DataBrowser")]
     [InlineData("DataMenu", "DataMenu_BackupNow")]
     [InlineData("DataMenu", "DataMenu_RestoreBackup")]
     [InlineData("DataMenu", "DataMenu_CompactDatabase")]
