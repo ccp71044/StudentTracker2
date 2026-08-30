@@ -84,12 +84,15 @@
 
 ## 2. Remaining gaps and outstanding tasks
 
-### Phase 5 remaining items
-1. Add remaining workflow tests: **WF-008** through **WF-010**.
-2. Add remaining mandatory reports: Funding Sources, Missing Documents, Credit Reallocation History, Certificate Credit Pool Summary, Credit Consumed Without Completion, Budget Pending Commitments / Actual vs Forecast.
-3. Wire any new `ReportService` queries to the `ReportsView` and `ReportsViewModel`.
-4. Update `TEST_RESULTS.md` after each new test batch.
-5. Re-publish `release/StudentTracker-win-x64` and `release/StudentTracker-win-x64-1.0.0.zip` when Phase 5 is complete.
+### Phase 5 remaining items (now complete)
+1. ✅ Add remaining workflow tests: **WF-001** through **WF-010**.
+2. ✅ Add remaining mandatory reports: Funding Sources, Missing Documents, Credit Reallocation History, Certificate Credit Pool Summary, Credit Consumed Without Completion.
+3. ✅ Wire new `ReportService` queries to the `ReportsView` and `ReportsViewModel`.
+4. ✅ Update `TEST_RESULTS.md` after each new test batch.
+5. ✅ Re-publish `release/StudentTracker-win-x64` and `release/StudentTracker-win-x64-1.0.0.zip`.
+
+### Known exclusions
+- Budget Pending Commitments / Actual vs Forecast are covered by the existing `BudgetSummary` report and `BudgetService` forecasts rather than a separate named report.
 
 ## 2. Remaining gaps
 
