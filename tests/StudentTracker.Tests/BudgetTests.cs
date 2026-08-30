@@ -43,6 +43,34 @@ public class BudgetTests
     }
 
     [Fact]
+    public async Task WF007_TopUpCommitmentAndRelease_RestoresForecast()
+    {
+        using var context = CreateContext();
+        var gen = new DisplayIdGenerator(context);
+        var audit = new AuditService(context);
+        var service = new BudgetService(context, gen, audit);
+
+        var pool = await service.CreatePoolAsync(new BudgetPool { Name = "Budget" });
+        await service.AddFundsAsync(pool.Id, 1000m);
+
+        var student = new Student { FirstName = "S", LastName = "A" };
+        context.Students.Add(student);
+        var course = new CourseDefinition { CourseCode = "C1", CourseTitle = "Course" };
+        context.CourseDefinitions.Add(course);
+        var delivery = new CourseDelivery { CourseDefinitionId = course.Id };
+        context.CourseDeliveries.Add(delivery);
+        var alloc = new Allocation { CourseDeliveryId = delivery.Id, StudentId = student.Id };
+        context.Allocations.Add(alloc);
+        context.SaveChanges();
+
+        await service.CreateCommitmentAsync(pool.Id, alloc.Id, 200m);
+        Assert.Equal(800m, await service.GetForecastAvailableAsync(pool.Id));
+
+        await service.ReleaseCommitmentAsync(pool.Id, alloc.Id, "Released before completion");
+        Assert.Equal(1000m, await service.GetForecastAvailableAsync(pool.Id));
+    }
+
+    [Fact]
     public async Task CreatePlaceholderAllocations_AtomicallyReservesBudget()
     {
         using var context = CreateContext();
