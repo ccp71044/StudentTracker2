@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Serilog.Events;
 using StudentTracker.Data;
 using StudentTracker.Services;
 using StudentTracker.Wpf.ViewModels;
@@ -49,6 +50,14 @@ public partial class App : Application
             .MinimumLevel.Information()
             .WriteTo.File(
                 Path.Combine(location.LogsPath, "student-tracker-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 30,
+                shared: true,
+                flushToDiskInterval: TimeSpan.FromSeconds(2),
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .WriteTo.File(
+                Path.Combine(location.LogsPath, "error-.log"),
+                restrictedToMinimumLevel: LogEventLevel.Error,
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 30,
                 shared: true,
