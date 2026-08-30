@@ -97,6 +97,21 @@ public partial class ReportsViewModel : ViewModelBase
     private ObservableCollection<TbcDeliveryReportItem> _tbcDeliveries = new();
 
     [ObservableProperty]
+    private ObservableCollection<FundingSourceReportItem> _fundingSources = new();
+
+    [ObservableProperty]
+    private ObservableCollection<MissingDocumentReportItem> _missingDocuments = new();
+
+    [ObservableProperty]
+    private ObservableCollection<CreditReallocationReportItem> _creditReallocations = new();
+
+    [ObservableProperty]
+    private ObservableCollection<CertificateCreditPoolSummaryReportItem> _certificateCreditPoolSummaries = new();
+
+    [ObservableProperty]
+    private ObservableCollection<CreditConsumedWithoutCompletionReportItem> _creditsConsumedWithoutCompletion = new();
+
+    [ObservableProperty]
     private bool _includeCostsInWithdrawn = true;
 
     [ObservableProperty]
@@ -152,6 +167,11 @@ public partial class ReportsViewModel : ViewModelBase
             new ReportItem("CreditHistory", "Credit History", "Financial"),
             new ReportItem("PrepaidPosition", "Prepaid Position", "Financial"),
             new ReportItem("BillableCertificates", "Billable Certificates for Invoicer", "Financial"),
+            new ReportItem("FundingSources", "Funding Sources", "Financial"),
+            new ReportItem("CertificateCreditPoolSummary", "Certificate Credit Pool Summary", "Financial"),
+            new ReportItem("CreditReallocations", "Credit Reallocation History", "Financial"),
+            new ReportItem("CreditsConsumedWithoutCompletion", "Credits Consumed Without Completion", "Financial"),
+            new ReportItem("MissingDocuments", "Missing Documents", "Administration"),
             new ReportItem("AuditActivity", "Audit Activity", "Administration"),
             new ReportItem("ImportReviewQueue", "Import Review Queue", "Administration"),
             new ReportItem("CertificateOrders", "Certificate Orders", "Administration"),
@@ -189,6 +209,11 @@ public partial class ReportsViewModel : ViewModelBase
         CreditSummary = new ObservableCollection<CreditTransactionSummaryItem>(await _reportService.GetCreditTransactionSummaryAsync());
         CreditHistory = new ObservableCollection<CreditTransactionHistoryItem>(await _reportService.GetCreditTransactionHistoryAsync(FromDate, ToDate));
         BillableCertificates = new ObservableCollection<BillableCertificateReportItem>(await _reportService.GetBillableCertificatesForInvoicerAsync(IncludeArchived));
+        FundingSources = new ObservableCollection<FundingSourceReportItem>(await _reportService.GetFundingSourcesAsync(FromDate, ToDate));
+        CertificateCreditPoolSummaries = new ObservableCollection<CertificateCreditPoolSummaryReportItem>(await _reportService.GetCertificateCreditPoolSummaryAsync());
+        CreditReallocations = new ObservableCollection<CreditReallocationReportItem>(await _reportService.GetCreditReallocationHistoryAsync(FromDate, ToDate));
+        CreditsConsumedWithoutCompletion = new ObservableCollection<CreditConsumedWithoutCompletionReportItem>(await _reportService.GetCreditsConsumedWithoutCompletionAsync());
+        MissingDocuments = new ObservableCollection<MissingDocumentReportItem>(await _reportService.GetMissingDocumentsAsync());
 
         AuditActivity = new ObservableCollection<AuditLogReportItem>(await _reportService.GetAuditActivityReportAsync(FromDate, ToDate));
         ImportReviewQueue = new ObservableCollection<ImportReviewQueueReportItem>(await _reportService.GetImportReviewQueueReportAsync());
@@ -339,6 +364,36 @@ public partial class ReportsViewModel : ViewModelBase
     private async Task ExportTbcDeliveriesCsv()
     {
         await ExportAsync("tbc-deliveries.csv", TbcDeliveries.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportFundingSourcesCsv()
+    {
+        await ExportAsync("funding-sources.csv", FundingSources.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCertificateCreditPoolSummaryCsv()
+    {
+        await ExportAsync("certificate-credit-pool-summary.csv", CertificateCreditPoolSummaries.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCreditReallocationsCsv()
+    {
+        await ExportAsync("credit-reallocations.csv", CreditReallocations.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCreditsConsumedWithoutCompletionCsv()
+    {
+        await ExportAsync("credits-consumed-without-completion.csv", CreditsConsumedWithoutCompletion.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportMissingDocumentsCsv()
+    {
+        await ExportAsync("missing-documents.csv", MissingDocuments.ToList());
     }
 
     [RelayCommand]

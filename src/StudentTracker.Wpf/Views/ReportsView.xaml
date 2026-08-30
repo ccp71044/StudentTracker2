@@ -55,6 +55,10 @@
                             <MenuItem Header="Credit _History" Command="{Binding ExportCreditHistoryCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportCreditHistoryCsv" />
                             <MenuItem Header="_Prepaid Position" Command="{Binding ExportPrepaidPositionCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportPrepaidPositionCsv" />
                             <MenuItem Header="Billable _Certificates" Command="{Binding ExportBillableCertificatesCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportBillableCertificatesCsv" />
+                            <MenuItem Header="_Funding Sources" Command="{Binding ExportFundingSourcesCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportFundingSourcesCsv" />
+                            <MenuItem Header="Certificate _Credit Pool Summary" Command="{Binding ExportCertificateCreditPoolSummaryCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportCertificateCreditPoolSummaryCsv" />
+                            <MenuItem Header="Credit _Reallocations" Command="{Binding ExportCreditReallocationsCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportCreditReallocationsCsv" />
+                            <MenuItem Header="Credits _Consumed Without Completion" Command="{Binding ExportCreditsConsumedWithoutCompletionCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportCreditsConsumedWithoutCompletionCsv" />
                         </MenuItem>
                         <MenuItem Header="_Administration" AutomationProperties.AutomationId="ReportsExportMenu_AdministrationCategory">
                             <MenuItem Header="_Audit Activity" Command="{Binding ExportAuditActivityCsvCommand}" AutomationProperties.AutomationId="ReportsExportMenu_ExportAuditActivityCsv" />
@@ -551,6 +555,76 @@
                             <DataGridTextColumn Header="Trainer" Binding="{Binding TrainerName}" Width="120" />
                             <DataGridTextColumn Header="Status" Binding="{Binding DeliveryStatus}" Width="100" />
                         </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Funding Sources -->
+                    <DataGrid ItemsSource="{Binding FundingSources}" AutoGenerateColumns="True" IsReadOnly="True" AutomationProperties.AutomationId="FundingSourcesReportGrid">
+                        <DataGrid.Style>
+                            <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedReport.Key}" Value="FundingSources">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Style>
+                    </DataGrid>
+
+                    <!-- Missing Documents -->
+                    <DataGrid ItemsSource="{Binding MissingDocuments}" AutoGenerateColumns="True" IsReadOnly="True" AutomationProperties.AutomationId="MissingDocumentsReportGrid">
+                        <DataGrid.Style>
+                            <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedReport.Key}" Value="MissingDocuments">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Style>
+                    </DataGrid>
+
+                    <!-- Credit Reallocation History -->
+                    <DataGrid ItemsSource="{Binding CreditReallocations}" AutoGenerateColumns="True" IsReadOnly="True" AutomationProperties.AutomationId="CreditReallocationsReportGrid">
+                        <DataGrid.Style>
+                            <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedReport.Key}" Value="CreditReallocations">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Style>
+                    </DataGrid>
+
+                    <!-- Certificate Credit Pool Summary -->
+                    <DataGrid ItemsSource="{Binding CertificateCreditPoolSummaries}" AutoGenerateColumns="True" IsReadOnly="True" AutomationProperties.AutomationId="CertificateCreditPoolSummaryReportGrid">
+                        <DataGrid.Style>
+                            <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedReport.Key}" Value="CertificateCreditPoolSummary">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Style>
+                    </DataGrid>
+
+                    <!-- Credits Consumed Without Completion -->
+                    <DataGrid ItemsSource="{Binding CreditsConsumedWithoutCompletion}" AutoGenerateColumns="True" IsReadOnly="True" AutomationProperties.AutomationId="CreditsConsumedWithoutCompletionReportGrid">
+                        <DataGrid.Style>
+                            <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedReport.Key}" Value="CreditsConsumedWithoutCompletion">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Style>
                     </DataGrid>
                 </Grid>
             </Border>
