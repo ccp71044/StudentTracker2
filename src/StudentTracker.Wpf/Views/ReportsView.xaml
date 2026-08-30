@@ -499,6 +499,12 @@
                             <DataGridTextColumn Header="To Bill" Binding="{Binding BillableUnexported}" Width="70" />
                             <DataGridTextColumn Header="Allen Cost" Binding="{Binding AllenCost, StringFormat=C}" Width="90" />
                         </DataGrid.Columns>
+                        <DataGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="_Export CSV" Command="{Binding ExportPrepaidPositionCsvCommand}" AutomationProperties.AutomationId="PrepaidPositionContextMenu_ExportCsv" />
+                                <MenuItem Header="_Refresh" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="PrepaidPositionContextMenu_Refresh" />
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
                     </DataGrid>
                 </Grid>
             </Border>

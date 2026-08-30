@@ -38,7 +38,16 @@
                           CanUserReorderColumns="True"
                           CanUserResizeColumns="True"
                           GridLinesVisibility="Horizontal"
-                          AutomationProperties.AutomationId="DataBrowserGrid" />
+                          AutomationProperties.AutomationId="DataBrowserGrid">
+                    <DataGrid.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="_Add Row" Command="{Binding AddRowCommand}" AutomationProperties.AutomationId="DataBrowserContextMenu_AddRow" />
+                            <MenuItem Header="_Delete Row" Command="{Binding DeleteRowCommand}" AutomationProperties.AutomationId="DataBrowserContextMenu_DeleteRow" />
+                            <MenuItem Header="_Save" Command="{Binding SaveChangesCommand}" AutomationProperties.AutomationId="DataBrowserContextMenu_Save" />
+                            <MenuItem Header="_Refresh" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="DataBrowserContextMenu_Refresh" />
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
+                </DataGrid>
             </Border>
         </Grid>
 
