@@ -10,35 +10,36 @@
             <TextBlock Text="Student Tracker Dashboard" AutomationProperties.AutomationId="DashboardHeader" Style="{StaticResource ViewHeaderStyle}" />
             <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,20" />
 
-            <UniformGrid Columns="3" Margin="0,0,0,20">
+            <UniformGrid Columns="5" Margin="0,0,0,20">
                 <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="0,4,0,0" CornerRadius="4" Padding="15" Margin="5">
                     <StackPanel>
-                        <TextBlock Text="Students" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
-                        <TextBlock Text="{Binding StudentCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryDarkBrush}" />
-                    </StackPanel>
-                </Border>
-                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="0,4,0,0" CornerRadius="4" Padding="15" Margin="5">
-                    <StackPanel>
-                        <TextBlock Text="Active Courses" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
-                        <TextBlock Text="{Binding CourseCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryDarkBrush}" />
-                    </StackPanel>
-                </Border>
-                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="0,4,0,0" CornerRadius="4" Padding="15" Margin="5">
-                    <StackPanel>
-                        <TextBlock Text="Deliveries" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
-                        <TextBlock Text="{Binding DeliveryCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryDarkBrush}" />
+                        <TextBlock Text="{Binding FocusedClientName}" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
+                        <TextBlock Text="Total" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" />
+                        <TextBlock Text="{Binding FocusedTotal, StringFormat={}{0:N0}}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryDarkBrush}" />
                     </StackPanel>
                 </Border>
                 <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="0,4,0,0" CornerRadius="4" Padding="15" Margin="5">
                     <StackPanel>
-                        <TextBlock Text="Allocations" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
-                        <TextBlock Text="{Binding AllocationCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                        <TextBlock Text="Used" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
+                        <TextBlock Text="{Binding FocusedUsed, StringFormat={}{0:N0}}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource PrimaryDarkBrush}" BorderThickness="0,4,0,0" CornerRadius="4" Padding="15" Margin="5">
+                    <StackPanel>
+                        <TextBlock Text="Available" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
+                        <TextBlock Text="{Binding FocusedAvailable, StringFormat={}{0:N0}}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryDarkBrush}" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="0,4,0,0" CornerRadius="4" Padding="15" Margin="5">
+                    <StackPanel>
+                        <TextBlock Text="Reserved" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
+                        <TextBlock Text="{Binding FocusedReserved, StringFormat={}{0:N0}}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryDarkBrush}" />
                     </StackPanel>
                 </Border>
                 <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="0,4,0,0" CornerRadius="4" Padding="15" Margin="5">
                     <StackPanel>
-                        <TextBlock Text="Certificate Orders" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
-                        <TextBlock Text="{Binding PendingCertificateCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                        <TextBlock Text="All Students" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" />
+                        <TextBlock Text="{Binding StudentCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
                     </StackPanel>
                 </Border>
             </UniformGrid>
