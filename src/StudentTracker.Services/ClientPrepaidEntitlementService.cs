@@ -120,6 +120,11 @@ public class ClientPrepaidEntitlementService
             null,
             allocationId);
 
+        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+        allocation.ClientPrepaidPoolId = poolId;
+        allocation.ClientPrepaidEntitlementTransactionId = tx.Id;
+        allocation.UpdatedAt = DateTime.UtcNow;
+
         _audit.Record("PlaceReserved", nameof(ClientPrepaidEntitlementTransaction), tx.Id, tx.DisplayId, null, new { PoolId = pool.Id, AllocationId = allocationId, Quantity = quantity });
         await _context.SaveChangesAsync();
         return tx;
@@ -147,6 +152,11 @@ public class ClientPrepaidEntitlementService
             null,
             null,
             allocationId);
+
+        var allocation = await _context.Allocations.FindAsync(allocationId) ?? throw new ArgumentException("Allocation not found");
+        allocation.ClientPrepaidPoolId = poolId;
+        allocation.ClientPrepaidEntitlementTransactionId = tx.Id;
+        allocation.UpdatedAt = DateTime.UtcNow;
 
         _audit.Record("PlaceAssigned", nameof(ClientPrepaidEntitlementTransaction), tx.Id, tx.DisplayId, null, new { PoolId = pool.Id, AllocationId = allocationId, Quantity = quantity });
         await _context.SaveChangesAsync();
@@ -257,6 +267,12 @@ public class ClientPrepaidEntitlementService
             .Where(t => t.PoolId == poolId)
             .ToListAsync();
 
+        var poolAllocations = await _context.Allocations
+            .Where(a => a.ClientPrepaidPoolId == poolId)
+            .ToListAsync();
+
+        var allocationById = poolAllocations.ToDictionary(a => a.Id);
+
         // Total unconsumed loaded places = net of types that affect the pool total.
         var totalTypes = new[]
         {
@@ -284,8 +300,10 @@ public class ClientPrepaidEntitlementService
             .GroupBy(t => t.AllocationId!.Value)
             .ToList();
 
-        decimal reserved = 0;
-        decimal assigned = 0;
+        decimal reservedToNamed = 0;
+        decimal reservedPlaceholders = 0;
+        decimal allensCostCommitted = 0;
+        decimal allensCostIncurred = 0;
         foreach (var group in allocationGroups)
         {
             var totalReserved = group.Where(t => t.TransactionType == ClientPrepaidEntitlementTransactionType.PlaceReserved).Sum(t => t.Quantity);
@@ -300,11 +318,38 @@ public class ClientPrepaidEntitlementService
             var netAssigned = Math.Max(0, totalAssigned - releaseFromAssigned
                 + group.Where(t => t.TransactionType == ClientPrepaidEntitlementTransactionType.PlaceConsumed).Sum(t => t.Quantity));
 
-            reserved += netReserved;
-            assigned += netAssigned;
+            var activePlaces = netReserved + netAssigned;
+
+            if (allocationById.TryGetValue(group.Key, out var alloc))
+            {
+                if (alloc.StudentId.HasValue)
+                    reservedToNamed += activePlaces;
+                else
+                    reservedPlaceholders += activePlaces;
+
+                if (activePlaces > 0 && alloc.ActualAllensCost == null)
+                    allensCostCommitted += alloc.AllensCostAtAllocation ?? 0;
+
+                if (alloc.ActualAllensCost.HasValue)
+                    allensCostIncurred += alloc.ActualAllensCost.Value;
+            }
+            else
+            {
+                reservedToNamed += activePlaces;
+            }
         }
 
-        var unassigned = Math.Max(0, loaded - reserved - assigned);
+        // Catch allocations that are linked to the pool but have no transaction yet
+        foreach (var alloc in poolAllocations.Where(a => a.ActualAllensCost.HasValue))
+        {
+            if (!allocationGroups.Any(g => g.Key == alloc.Id))
+            {
+                allensCostIncurred += alloc.ActualAllensCost!.Value;
+            }
+        }
+
+        var totalUnconsumed = Math.Max(0, loaded);
+        var unassigned = Math.Max(0, totalUnconsumed - reservedToNamed - reservedPlaceholders);
 
         return new ClientPrepaidPoolPosition
         {
@@ -312,10 +357,13 @@ public class ClientPrepaidEntitlementService
             PoolName = pool.Name,
             PrepaidPlacesLoaded = Math.Max(0, loaded + consumed),
             PlacesConsumed = consumed,
-            TotalUnconsumed = Math.Max(0, loaded),
-            ReservedToNamedStudents = reserved,
-            ReservedPlaceholders = 0, // placeholders are tracked via reserved/assigned with no StudentId on the Allocation; service does not inspect Allocation here
+            TotalUnconsumed = totalUnconsumed,
+            ReservedToNamedStudents = reservedToNamed,
+            ReservedPlaceholders = reservedPlaceholders,
             UnassignedCarryForward = unassigned,
+            AllensCostCommitted = allensCostCommitted,
+            AllensCostIncurred = allensCostIncurred,
+            AllensCostForecast = allensCostCommitted + allensCostIncurred,
             RestrictedToCourseDefinitionId = pool.RestrictedToCourseDefinitionId,
             RestrictedToCourseCategory = pool.RestrictedToCourseCategory
         };
@@ -438,6 +486,9 @@ public class ClientPrepaidPoolPosition
     public decimal ReservedToNamedStudents { get; init; }
     public decimal ReservedPlaceholders { get; init; }
     public decimal UnassignedCarryForward { get; init; }
+    public decimal AllensCostCommitted { get; init; }
+    public decimal AllensCostIncurred { get; init; }
+    public decimal AllensCostForecast { get; init; }
     public Guid? RestrictedToCourseDefinitionId { get; init; }
     public string? RestrictedToCourseCategory { get; init; }
 }

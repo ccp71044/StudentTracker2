@@ -159,6 +159,7 @@ public partial class App : Application
         services.AddScoped<DocumentsViewModel>();
         services.AddScoped<ReportsViewModel>();
         services.AddScoped<CompletionsViewModel>();
+        services.AddScoped<PoolPositionViewModel>();
         services.AddScoped<ImportExportViewModel>();
         services.AddScoped<SettingsViewModel>();
         services.AddScoped<DataBrowserViewModel>();

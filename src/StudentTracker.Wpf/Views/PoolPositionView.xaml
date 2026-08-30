@@ -1,0 +1,129 @@
+<UserControl x:Class="StudentTracker.Wpf.Views.PoolPositionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="900"
+             AutomationProperties.AutomationId="PoolPositionView">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Client Prepaid Pool Position" FontSize="20" FontWeight="Bold" Margin="0,0,0,12" AutomationProperties.AutomationId="PoolPositionHeader" />
+
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                <TextBlock Text="Client Prepaid Pool" FontWeight="SemiBold" Margin="0,0,0,4" />
+                <ComboBox ItemsSource="{Binding Pools}" SelectedItem="{Binding SelectedPool, Mode=TwoWay}" DisplayMemberPath="Name" AutomationProperties.AutomationId="PoolPositionPoolCombo" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Margin="6,0">
+                <TextBlock Text="Requested Places" FontWeight="SemiBold" Margin="0,0,0,4" />
+                <TextBox Text="{Binding RequestedPlaces, Mode=TwoWay}" AutomationProperties.AutomationId="PoolPositionRequestedInput" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Margin="6,0,0,0">
+                <TextBlock Text="New Places To Add" FontWeight="SemiBold" Margin="0,0,0,4" />
+                <TextBox Text="{Binding NewPlacesToAdd, Mode=TwoWay}" AutomationProperties.AutomationId="PoolPositionNewPlacesInput" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Margin="3,0">
+                <TextBlock Text="Loaded" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Position.PrepaidPlacesLoaded, StringFormat='N0'}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="3,0">
+                <TextBlock Text="Consumed" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Position.PlacesConsumed, StringFormat='N0'}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Margin="3,0">
+                <TextBlock Text="Unconsumed" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Position.TotalUnconsumed, StringFormat='N0'}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="3" Margin="3,0">
+                <TextBlock Text="Reserved (named)" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Position.ReservedToNamedStudents, StringFormat='N0'}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="4" Margin="3,0">
+                <TextBlock Text="Placeholders" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Position.ReservedPlaceholders, StringFormat='N0'}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="5" Margin="3,0">
+                <TextBlock Text="Unassigned" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Position.UnassignedCarryForward, StringFormat='N0'}" HorizontalAlignment="Center" FontWeight="Bold" AutomationProperties.AutomationId="PoolPositionUnassignedValue" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="3" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Margin="3,0">
+                <TextBlock Text="Allens Cost Committed" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Position.AllensCostCommitted, StringFormat=C}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="3,0">
+                <TextBlock Text="Allens Cost Incurred" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Position.AllensCostIncurred, StringFormat=C}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Margin="3,0">
+                <TextBlock Text="Forecast Allens Cost" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Position.AllensCostForecast, StringFormat=C}" HorizontalAlignment="Center" FontWeight="Bold" />
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="4" Background="White" BorderBrush="LightGray" BorderThickness="1" Padding="20">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Funding Calculator" FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,8" />
+
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Margin="3,0">
+                        <TextBlock Text="Covered by Carry-Forward" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding Funding.CoveredByCarryForward, StringFormat='N0'}" HorizontalAlignment="Center" FontWeight="Bold" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="3,0">
+                        <TextBlock Text="Additional Funding Required" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding Funding.AdditionalFundingRequired, StringFormat='N0'}" HorizontalAlignment="Center" FontWeight="Bold" Foreground="Red" AutomationProperties.AutomationId="PoolPositionAdditionalFundingValue" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Margin="3,0">
+                        <TextBlock Text="Forecast Carry-Forward" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding Funding.ForecastCarryForward, StringFormat='N0'}" HorizontalAlignment="Center" FontWeight="Bold" Foreground="Green" />
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,12,0,0" Foreground="DimGray" AutomationProperties.AutomationId="PoolPositionStatusText" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

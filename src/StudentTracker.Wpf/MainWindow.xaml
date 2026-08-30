@@ -60,6 +60,9 @@
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
             <v:SettingsView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PoolPositionViewModel}">
+            <v:PoolPositionView />
+        </DataTemplate>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -144,6 +147,7 @@
                 <MenuItem Header="Credits &amp; _Budgets" Command="{Binding ShowCreditsBudgetsCommand}" AutomationProperties.AutomationId="ViewMenu_CreditsBudgets" />
                 <MenuItem Header="_Documents" Command="{Binding ShowDocumentsCommand}" AutomationProperties.AutomationId="ViewMenu_Documents" />
                 <MenuItem Header="C_ompletions" Command="{Binding ShowCompletionsCommand}" AutomationProperties.AutomationId="ViewMenu_Completions" />
+                <MenuItem Header="Pool _Position" Command="{Binding ShowPoolPositionCommand}" AutomationProperties.AutomationId="ViewMenu_PoolPosition" />
                 <MenuItem Header="_Reports" Command="{Binding ShowReportsCommand}" AutomationProperties.AutomationId="ViewMenu_Reports" />
                 <Separator />
                 <MenuItem Header="Import / _Export" Command="{Binding ShowImportExportCommand}" AutomationProperties.AutomationId="ViewMenu_ImportExport" />

@@ -33,6 +33,7 @@ public partial class MainViewModel : ViewModelBase
     public DocumentsViewModel DocumentsViewModel { get; }
     public ReportsViewModel ReportsViewModel { get; }
     public CompletionsViewModel CompletionsViewModel { get; }
+    public PoolPositionViewModel PoolPositionViewModel { get; }
     public ImportExportViewModel ImportExportViewModel { get; }
     public SettingsViewModel SettingsViewModel { get; }
 
@@ -49,6 +50,7 @@ public partial class MainViewModel : ViewModelBase
         DocumentsViewModel documents,
         ReportsViewModel reports,
         CompletionsViewModel completions,
+        PoolPositionViewModel poolPosition,
         ImportExportViewModel importExport,
         SettingsViewModel settings,
         DataBrowserViewModel dataBrowser)
@@ -66,6 +68,7 @@ public partial class MainViewModel : ViewModelBase
         DocumentsViewModel = documents;
         ReportsViewModel = reports;
         CompletionsViewModel = completions;
+        PoolPositionViewModel = poolPosition;
         ImportExportViewModel = importExport;
         SettingsViewModel = settings;
         _currentViewModel = dashboard;
@@ -100,6 +103,9 @@ public partial class MainViewModel : ViewModelBase
 
     [RelayCommand]
     private void ShowCompletions() => CurrentViewModel = CompletionsViewModel;
+
+    [RelayCommand]
+    private void ShowPoolPosition() => CurrentViewModel = PoolPositionViewModel;
 
     [RelayCommand]
     private void ShowImportExport() => CurrentViewModel = ImportExportViewModel;
