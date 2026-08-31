@@ -1,0 +1,45 @@
+<UserControl x:Class="StudentTracker.Wpf.Views.ImportReviewQueueView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             AutomationProperties.AutomationId="ImportReviewQueueView">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Import Review Queue" Style="{StaticResource ViewHeaderStyle}" AutomationProperties.AutomationId="ImportReviewQueueHeader" />
+
+        <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,10">
+            <TextBlock Text="Status: " VerticalAlignment="Center" Margin="0,0,10,0" />
+            <ComboBox ItemsSource="{Binding StatusFilterOptions}" SelectedItem="{Binding StatusFilter}" Width="120" Margin="0,0,20,0" AutomationProperties.AutomationId="ImportReviewQueueStatusFilter" />
+            <Button Content="Refresh" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="ImportReviewQueueRefreshButton" />
+        </StackPanel>
+
+        <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Grid.Row="2" AutomationProperties.AutomationId="ImportReviewQueueGrid">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding DisplayId}" Width="120" />
+                <DataGridTextColumn Header="File" Binding="{Binding SourceFileName}" Width="150" />
+                <DataGridTextColumn Header="Sheet" Binding="{Binding SourceSheet}" Width="100" />
+                <DataGridTextColumn Header="Row" Binding="{Binding SourceRow}" Width="60" />
+                <DataGridTextColumn Header="Type" Binding="{Binding EntityType}" Width="120" />
+                <DataGridTextColumn Header="Action" Binding="{Binding ProposedAction}" Width="120" />
+                <DataGridTextColumn Header="Issue" Binding="{Binding Issue}" Width="*" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="3" Margin="0,10">
+            <TextBlock Text="Resolution" FontWeight="SemiBold" Margin="0,0,0,5" />
+            <TextBox Text="{Binding Resolution, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" AutomationProperties.AutomationId="ImportReviewQueueResolutionBox" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="4" HorizontalAlignment="Left">
+            <Button Content="Resolve" Command="{Binding ResolveCommand}" Padding="10,5" Margin="0,0,10,0" AutomationProperties.AutomationId="ImportReviewQueueResolveButton" />
+            <Button Content="Copy Details" Command="{Binding CopyDetailsCommand}" Padding="10,5" AutomationProperties.AutomationId="ImportReviewQueueCopyButton" />
+        </StackPanel>
+    </Grid>
+</UserControl>

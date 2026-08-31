@@ -72,6 +72,9 @@
         <DataTemplate DataType="{x:Type vm:CourseDeliveryOverviewViewModel}">
             <v:CourseDeliveryOverviewView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ImportReviewQueueViewModel}">
+            <v:ImportReviewQueueView />
+        </DataTemplate>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -151,6 +154,7 @@
                 <MenuItem Header="_Students" Command="{Binding ShowStudentsCommand}" AutomationProperties.AutomationId="ViewMenu_Students" />
                 <MenuItem Header="Student _Overview" Command="{Binding ShowStudentOverviewCommand}" AutomationProperties.AutomationId="ViewMenu_StudentOverview" />
                 <MenuItem Header="_Course Delivery Overview" Command="{Binding ShowCourseDeliveryOverviewCommand}" AutomationProperties.AutomationId="ViewMenu_CourseDeliveryOverview" />
+                <MenuItem Header="Import _Review Queue" Command="{Binding ShowImportReviewQueueCommand}" AutomationProperties.AutomationId="ViewMenu_ImportReviewQueue" />
                 <MenuItem Header="_Courses" Command="{Binding ShowCoursesCommand}" AutomationProperties.AutomationId="ViewMenu_Courses" />
                 <MenuItem Header="_Deliveries" Command="{Binding ShowDeliveriesCommand}" AutomationProperties.AutomationId="ViewMenu_Deliveries" />
                 <MenuItem Header="_Allocations" Command="{Binding ShowAllocationsCommand}" AutomationProperties.AutomationId="ViewMenu_Allocations" />

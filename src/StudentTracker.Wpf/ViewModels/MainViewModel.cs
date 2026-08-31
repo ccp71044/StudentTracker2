@@ -39,6 +39,7 @@ public partial class MainViewModel : ViewModelBase
     public SettingsViewModel SettingsViewModel { get; }
     public StudentOverviewViewModel StudentOverviewViewModel { get; }
     public CourseDeliveryOverviewViewModel CourseDeliveryOverviewViewModel { get; }
+    public ImportReviewQueueViewModel ImportReviewQueueViewModel { get; }
 
     public MainViewModel(
         DataLocationService dataLocation,
@@ -59,7 +60,8 @@ public partial class MainViewModel : ViewModelBase
         SettingsViewModel settings,
         DataBrowserViewModel dataBrowser,
         StudentOverviewViewModel studentOverview,
-        CourseDeliveryOverviewViewModel courseDeliveryOverview)
+        CourseDeliveryOverviewViewModel courseDeliveryOverview,
+        ImportReviewQueueViewModel importReviewQueue)
     {
         _dataLocation = dataLocation;
         _dialogService = dialogService;
@@ -80,6 +82,7 @@ public partial class MainViewModel : ViewModelBase
         SettingsViewModel = settings;
         StudentOverviewViewModel = studentOverview;
         CourseDeliveryOverviewViewModel = courseDeliveryOverview;
+        ImportReviewQueueViewModel = importReviewQueue;
         _currentViewModel = dashboard;
     }
 
@@ -130,6 +133,9 @@ public partial class MainViewModel : ViewModelBase
 
     [RelayCommand]
     private void ShowCourseDeliveryOverview() => CurrentViewModel = CourseDeliveryOverviewViewModel;
+
+    [RelayCommand]
+    private void ShowImportReviewQueue() => CurrentViewModel = ImportReviewQueueViewModel;
 
     [RelayCommand]
     private void ShowDataBrowser() => _dialogService.ShowDialog(_dataBrowser);

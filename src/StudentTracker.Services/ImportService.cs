@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using StudentTracker.Core.Models;
 using StudentTracker.Data;
 
@@ -90,6 +91,27 @@ public class ImportService
         _audit.Record("MigrationImportCompleted", "Import", Guid.NewGuid());
         _context.SaveChanges();
         return Task.FromResult(result);
+    }
+
+    public async Task<IReadOnlyList<ImportReviewQueue>> GetReviewQueueAsync(string? status = null)
+    {
+        var query = _context.ImportReviewQueues.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(status))
+            query = query.Where(q => q.Status == status);
+        return await query.OrderByDescending(q => q.CreatedAt).ToListAsync();
+    }
+
+    public async Task<ImportReviewQueue?> ResolveAsync(Guid id, string resolution)
+    {
+        var item = await _context.ImportReviewQueues.FindAsync(id);
+        if (item == null) return null;
+
+        item.Status = "Resolved";
+        item.Resolution = resolution;
+        item.ReviewedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("Resolved", "ImportReviewQueue", item.Id, item.DisplayId);
+        return item;
     }
 
     private static bool IsLegacyStudentRegisterFormat(string xlsxPath)

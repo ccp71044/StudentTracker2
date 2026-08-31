@@ -167,6 +167,7 @@ public partial class App : Application
         services.AddScoped<DataBrowserViewModel>();
         services.AddScoped<StudentOverviewViewModel>();
         services.AddScoped<CourseDeliveryOverviewViewModel>();
+        services.AddScoped<ImportReviewQueueViewModel>();
     }
 
     protected override void OnExit(ExitEventArgs e)
