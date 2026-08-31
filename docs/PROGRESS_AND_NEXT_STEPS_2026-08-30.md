@@ -150,7 +150,7 @@
 ## 5. Latest build / test status
 
 - WPF release build: 0 warnings
-- Unit tests: 132 / 132 passing
+- Unit tests: 134 / 134 passing
 - Latest release republished: `release\StudentTracker-win-x64\StudentTracker.exe` and `release\StudentTracker-win-x64-1.0.0.zip`
 - Latest FlaUI run: blocked by menu-automation timing in the test environment; previous run was 73 / 73
 

@@ -28,9 +28,12 @@ Initial build of the Student Tracker desktop application.
 - Student status, manager, emergency contact/phone and group/tag fields
 - Budget pool setup, editing, archiving and top-up funding
 - Allocation status columns with explanatory tooltips
-- Dashboard, Students, Courses, Deliveries, Allocations, Certificates, Credits/Budgets, Documents, Reports, Import/Export, Settings
+- Dashboard, Students, Courses, Deliveries, Allocations, Certificates, Credits/Budgets, Documents, Reports, Import/Export, Settings, Import Review Queue
 - Migration-package Excel importer with review queue
+- Persistent Import Review Queue UI with status filter and resolution notes
 - Legacy `Student Tracker.xlsx` single-sheet register importer
+- Student Overview showing completed and upcoming courses with funding and notes
+- Course Delivery Overview with enrolled-students, capacity and funding details
 - FlaUI-based WPF UI automation tests covering all navigation views
 - Unhandled errors are written to the log and reported to the user instead of closing the application silently
 - Fresh installations start with an empty register; demonstration data is opt-in via `StudentTracker.exe --sample-data`
