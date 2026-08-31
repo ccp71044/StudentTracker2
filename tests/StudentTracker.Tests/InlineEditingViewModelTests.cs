@@ -58,7 +58,7 @@ public class InlineEditingViewModelTests
         using var context = CreateContext(Guid.NewGuid().ToString());
         var service = CreateStudentService(context);
         var dialog = new FakeDialogService();
-        var vm = new StudentsViewModel(service, null!, null!, null!, null!, dialog);
+        var vm = new StudentsViewModel(service, null!, null!, null!, null!, dialog, context);
 
         Assert.False(vm.IsInlineEditingEnabled);
 
@@ -80,7 +80,7 @@ public class InlineEditingViewModelTests
         using var vmContext = CreateContext(dbName);
         var vmService = CreateStudentService(vmContext);
         var dialog = new FakeDialogService();
-        var vm = new StudentsViewModel(vmService, null!, null!, null!, null!, dialog);
+        var vm = new StudentsViewModel(vmService, null!, null!, null!, null!, dialog, vmContext);
         await WaitForAnyItemAsync(() => vm.Students);
 
         var student = vm.Students.First();
@@ -98,7 +98,7 @@ public class InlineEditingViewModelTests
         using var context = CreateContext(Guid.NewGuid().ToString());
         var service = CreateStudentService(context);
         var dialog = new FakeDialogService();
-        var vm = new StudentsViewModel(service, null!, null!, null!, null!, dialog);
+        var vm = new StudentsViewModel(service, null!, null!, null!, null!, dialog, context);
 
         await vm.StudentRowEditEndingCommand.ExecuteAsync(null);
 
@@ -150,7 +150,7 @@ public class InlineEditingViewModelTests
         using var vmContext = CreateContext(dbName);
         var vmService = CreateCourseService(vmContext);
         var dialog = new FakeDialogService();
-        var vm = new DeliveriesViewModel(vmService, null!, null!, null!, null!, null!, null!, null!, dialog);
+        var vm = new DeliveriesViewModel(vmService, null!, null!, null!, null!, null!, null!, null!, dialog, vmContext);
         await WaitForAnyItemAsync(() => vm.Deliveries);
 
         var delivery = vm.Deliveries.First();

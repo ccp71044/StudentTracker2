@@ -23,6 +23,7 @@
                     <DataGridTextColumn Header="Start" Binding="{Binding StartDate, StringFormat=dd/MM/yyyy}" Width="100" />
                     <DataGridTextColumn Header="Outcome" Binding="{Binding Outcome}" Width="100" />
                     <DataGridTextColumn Header="Funding" Binding="{Binding FundingSource}" Width="150" />
+                    <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="200" />
                 </DataGrid.Columns>
             </DataGrid>
 
@@ -34,6 +35,7 @@
                     <DataGridTextColumn Header="Delivery" Binding="{Binding DeliveryDisplayId}" Width="120" />
                     <DataGridTextColumn Header="Start" Binding="{Binding StartDate, StringFormat=dd/MM/yyyy}" Width="100" />
                     <DataGridTextColumn Header="Funding" Binding="{Binding FundingSource}" Width="150" />
+                    <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="200" />
                 </DataGrid.Columns>
             </DataGrid>
 

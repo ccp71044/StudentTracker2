@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using StudentTracker.Core.Enums;
 using StudentTracker.Core.Models;
+using StudentTracker.Data;
 using StudentTracker.Services;
 using StudentTracker.Wpf.Services;
 
@@ -16,6 +17,7 @@ public partial class AllocationsViewModel : ViewModelBase
     private readonly CreditService _creditService;
     private readonly BudgetService _budgetService;
     private readonly IDialogService _dialogService;
+    private readonly StudentTrackerDbContext _context;
 
     [ObservableProperty]
     private ObservableCollection<Allocation> _allocations = new();
@@ -23,7 +25,7 @@ public partial class AllocationsViewModel : ViewModelBase
     [ObservableProperty]
     private Allocation? _selectedAllocation;
 
-    public AllocationsViewModel(AllocationService allocationService, StudentService studentService, CourseService courseService, CreditService creditService, BudgetService budgetService, IDialogService dialogService)
+    public AllocationsViewModel(AllocationService allocationService, StudentService studentService, CourseService courseService, CreditService creditService, BudgetService budgetService, IDialogService dialogService, StudentTrackerDbContext context)
     {
         _allocationService = allocationService;
         _studentService = studentService;
@@ -31,6 +33,7 @@ public partial class AllocationsViewModel : ViewModelBase
         _creditService = creditService;
         _budgetService = budgetService;
         _dialogService = dialogService;
+        _context = context;
         LoadAsync().ConfigureAwait(false);
     }
 
@@ -49,7 +52,7 @@ public partial class AllocationsViewModel : ViewModelBase
     [RelayCommand]
     private async Task AddAllocation()
     {
-        var vm = new AllocationEditViewModel(new Allocation(), _allocationService, _studentService, _courseService, _creditService, _budgetService, isNew: true);
+        var vm = new AllocationEditViewModel(new Allocation(), _allocationService, _studentService, _courseService, _creditService, _budgetService, _context, isNew: true);
         await vm.LoadDataAsync();
         if (_dialogService.ShowDialog(vm) == true)
         {
@@ -72,7 +75,7 @@ public partial class AllocationsViewModel : ViewModelBase
     private async Task EditAllocation()
     {
         if (SelectedAllocation == null) return;
-        var vm = new AllocationEditViewModel(SelectedAllocation, _allocationService, _studentService, _courseService, _creditService, _budgetService, isNew: false);
+        var vm = new AllocationEditViewModel(SelectedAllocation, _allocationService, _studentService, _courseService, _creditService, _budgetService, _context, isNew: false);
         await vm.LoadDataAsync();
         if (_dialogService.ShowDialog(vm) == true)
         {

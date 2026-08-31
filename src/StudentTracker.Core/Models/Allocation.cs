@@ -38,4 +38,5 @@ public class Allocation : EntityBase, IDisplayId
     public bool IsBillable { get; set; }
     public DateTime? BillableDate { get; set; }
     public Guid? ExportedInBatchId { get; set; }
+    public string? Notes { get; set; }
 }

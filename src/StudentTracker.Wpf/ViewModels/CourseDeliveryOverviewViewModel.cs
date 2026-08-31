@@ -87,7 +87,8 @@ public partial class CourseDeliveryOverviewViewModel : ViewModelBase
                 StudentName = a.Student?.FullName ?? "—",
                 StudentEmail = a.Student?.Email,
                 Outcome = a.OutcomeStatus.ToString(),
-                FundingSource = a.ClientPrepaidPool?.Name ?? a.BudgetPool?.Name ?? a.CreditPool?.Name ?? "—"
+                FundingSource = a.ClientPrepaidPool?.Name ?? a.BudgetPool?.Name ?? a.CreditPool?.Name ?? "—",
+                Notes = a.Notes
             });
         }
     }
@@ -112,4 +113,5 @@ public class DeliveryStudentItem
     public string? StudentEmail { get; set; }
     public string Outcome { get; set; } = string.Empty;
     public string FundingSource { get; set; } = string.Empty;
+    public string? Notes { get; set; }
 }

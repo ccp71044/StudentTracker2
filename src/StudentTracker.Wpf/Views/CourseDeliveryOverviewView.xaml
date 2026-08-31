@@ -57,6 +57,7 @@
                     <DataGridTextColumn Header="Email" Binding="{Binding StudentEmail}" Width="200" />
                     <DataGridTextColumn Header="Outcome" Binding="{Binding Outcome}" Width="100" />
                     <DataGridTextColumn Header="Funding" Binding="{Binding FundingSource}" Width="150" />
+                    <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*" />
                 </DataGrid.Columns>
             </DataGrid>
 

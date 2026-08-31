@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using StudentTracker.Core.Models;
+using StudentTracker.Data;
 using StudentTracker.Services;
 using StudentTracker.Wpf.Services;
 
@@ -15,6 +16,7 @@ public partial class StudentsViewModel : ViewModelBase
     private readonly CreditService _creditService;
     private readonly BudgetService _budgetService;
     private readonly IDialogService _dialogService;
+    private readonly StudentTrackerDbContext _context;
 
     [ObservableProperty]
     private ObservableCollection<Student> _students = new();
@@ -31,7 +33,7 @@ public partial class StudentsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isInlineEditingEnabled;
 
-    public StudentsViewModel(StudentService studentService, AllocationService allocationService, CourseService courseService, CreditService creditService, BudgetService budgetService, IDialogService dialogService)
+    public StudentsViewModel(StudentService studentService, AllocationService allocationService, CourseService courseService, CreditService creditService, BudgetService budgetService, IDialogService dialogService, StudentTrackerDbContext context)
     {
         _studentService = studentService;
         _allocationService = allocationService;
@@ -39,6 +41,7 @@ public partial class StudentsViewModel : ViewModelBase
         _creditService = creditService;
         _budgetService = budgetService;
         _dialogService = dialogService;
+        _context = context;
         LoadAsync().ConfigureAwait(false);
     }
 
@@ -127,7 +130,7 @@ public partial class StudentsViewModel : ViewModelBase
     {
         if (SelectedStudent == null) return;
         var allocation = new Allocation { StudentId = SelectedStudent.Id, Student = SelectedStudent };
-        var vm = new AllocationEditViewModel(allocation, _allocationService, _studentService, _courseService, _creditService, _budgetService, isNew: true);
+        var vm = new AllocationEditViewModel(allocation, _allocationService, _studentService, _courseService, _creditService, _budgetService, _context, isNew: true);
         await vm.LoadDataAsync();
         vm.SelectedStudent = SelectedStudent;
         if (_dialogService.ShowDialog(vm) == true)

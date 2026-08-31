@@ -32,6 +32,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <!-- Student Selection -->
@@ -84,7 +85,12 @@
                 <TextBox Text="{Binding OutcomeNotes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" 
                         Grid.Row="10" Grid.Column="1" Margin="8,4" />
 
-                <TextBlock Grid.Row="11" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,16"
+                <!-- Notes -->
+                <TextBlock Text="Notes:" VerticalAlignment="Top" Margin="0,4" Grid.Row="11" Grid.Column="0" />
+                <TextBox Text="{Binding Notes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" 
+                        Grid.Row="11" Grid.Column="1" Margin="8,4" />
+
+                <TextBlock Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,16"
                            Text="Budget and credit status must be changed using the allocation action commands."
                            TextWrapping="Wrap" Foreground="Gray" />
             </Grid>

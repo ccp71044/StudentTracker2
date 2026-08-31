@@ -91,7 +91,8 @@ public partial class StudentOverviewViewModel : ViewModelBase
                 DeliveryDisplayId = a.CourseDelivery?.DisplayId,
                 StartDate = a.CourseDelivery?.StartDate,
                 Outcome = a.OutcomeStatus.ToString(),
-                FundingSource = a.ClientPrepaidPool?.Name ?? a.BudgetPool?.Name ?? a.CreditPool?.Name ?? "—"
+                FundingSource = a.ClientPrepaidPool?.Name ?? a.BudgetPool?.Name ?? a.CreditPool?.Name ?? "—",
+                Notes = a.Notes
             };
 
             if (a.OutcomeStatus == Core.Enums.OutcomeStatus.Completed)
@@ -125,4 +126,5 @@ public class StudentCourseItem
     public DateTime? StartDate { get; set; }
     public string Outcome { get; set; } = string.Empty;
     public string FundingSource { get; set; } = string.Empty;
+    public string? Notes { get; set; }
 }

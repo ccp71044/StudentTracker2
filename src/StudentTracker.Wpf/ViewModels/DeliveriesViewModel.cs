@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using StudentTracker.Core.Models;
+using StudentTracker.Data;
 using StudentTracker.Services;
 using StudentTracker.Wpf.Services;
 
@@ -18,6 +19,7 @@ public partial class DeliveriesViewModel : ViewModelBase
     private readonly PdfService _pdfService;
     private readonly DocumentService _documentService;
     private readonly IDialogService _dialogService;
+    private readonly StudentTrackerDbContext _context;
 
     [ObservableProperty]
     private ObservableCollection<CourseDelivery> _deliveries = new();
@@ -28,7 +30,7 @@ public partial class DeliveriesViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isInlineEditingEnabled;
 
-    public DeliveriesViewModel(CourseService courseService, AllocationService allocationService, StudentService studentService, CreditService creditService, BudgetService budgetService, SignOffService signOffService, PdfService pdfService, DocumentService documentService, IDialogService dialogService)
+    public DeliveriesViewModel(CourseService courseService, AllocationService allocationService, StudentService studentService, CreditService creditService, BudgetService budgetService, SignOffService signOffService, PdfService pdfService, DocumentService documentService, IDialogService dialogService, StudentTrackerDbContext context)
     {
         _courseService = courseService;
         _allocationService = allocationService;
@@ -39,6 +41,7 @@ public partial class DeliveriesViewModel : ViewModelBase
         _pdfService = pdfService;
         _documentService = documentService;
         _dialogService = dialogService;
+        _context = context;
         LoadAsync().ConfigureAwait(false);
     }
 
@@ -91,7 +94,7 @@ public partial class DeliveriesViewModel : ViewModelBase
     {
         if (SelectedDelivery == null) return;
         var allocation = new Allocation { CourseDeliveryId = SelectedDelivery.Id, CourseDelivery = SelectedDelivery };
-        var vm = new AllocationEditViewModel(allocation, _allocationService, _studentService, _courseService, _creditService, _budgetService, isNew: true);
+        var vm = new AllocationEditViewModel(allocation, _allocationService, _studentService, _courseService, _creditService, _budgetService, _context, isNew: true);
         await vm.LoadDataAsync();
         vm.SelectedDelivery = SelectedDelivery;
         if (_dialogService.ShowDialog(vm) == true)
