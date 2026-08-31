@@ -118,6 +118,7 @@ public partial class App : Application
             return bootstrap.CreateContext();
         });
         services.AddScoped<DisplayIdGenerator>();
+        services.AddScoped<DisplayIdReconciliationService>();
         services.AddScoped<AuditService>();
         services.AddScoped<StudentService>();
         services.AddScoped<CourseService>();

@@ -21,7 +21,7 @@ All automated tests pass as of build date.
 
 | Test Suite | Passed | Failed | Skipped |
 |------------|--------|--------|---------|
-| Unit / Integration | 134 | 0 | 0 |
+| Unit / Integration | 136 | 0 | 0 |
 | WPF UI (FlaUI) | 73 | 0 | 0 |
 
 Additional manual testing should be performed for WPF UI workflows, PDF rendering and backup/restore operations.
