@@ -147,6 +147,13 @@
 - Release zip: `release\StudentTracker-win-x64-1.0.0.zip`
 - Technical docs: `docs/TECHNICAL_REFERENCE.md`, `docs/USER_GUIDE.md`, `docs/FUNCTIONALITY_ANALYSIS.md`
 
+## 5. Latest build / test status
+
+- WPF release build: 0 warnings
+- Unit tests: 132 / 132 passing
+- Latest release republished: `release\StudentTracker-win-x64\StudentTracker.exe` and `release\StudentTracker-win-x64-1.0.0.zip`
+- Latest FlaUI run: blocked by menu-automation timing in the test environment; previous run was 73 / 73
+
 ---
 
 *Generated with [Devin](https://devin.ai)*
