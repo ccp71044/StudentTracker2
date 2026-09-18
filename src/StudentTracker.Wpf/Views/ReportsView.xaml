@@ -10,17 +10,17 @@
         </Grid.RowDefinitions>
         <TextBlock Text="Reports" AutomationProperties.AutomationId="ReportsHeader" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="1">
-            <Button Content="Export Completed CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCompletedCsvCommand}" Width="180" />
-            <Button Content="Export Withdrawn CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportWithdrawnCsvCommand}" Width="180" />
-            <Button Content="Export Non-Completions CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportNonCompletionsCsvCommand}" Width="180" />
-            <Button Content="Export Awaiting Delivery CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportAwaitingDeliveryCsvCommand}" Width="180" />
-            <Button Content="Export Delivered CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportDeliveredCsvCommand}" Width="180" />
-            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B00020" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
+            <Button AutomationProperties.AutomationId="ReportsExportCompletedCsvButton" Content="Export Completed CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportCompletedCsvCommand}" Width="180" />
+            <Button AutomationProperties.AutomationId="ReportsExportWithdrawnCsvButton" Content="Export Withdrawn CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportWithdrawnCsvCommand}" Width="180" />
+            <Button AutomationProperties.AutomationId="ReportsExportNonCompletionsCsvButton" Content="Export Non-Completions CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportNonCompletionsCsvCommand}" Width="180" />
+            <Button AutomationProperties.AutomationId="ReportsExportAwaitingDeliveryCsvButton" Content="Export Awaiting Delivery CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportAwaitingDeliveryCsvCommand}" Width="180" />
+            <Button AutomationProperties.AutomationId="ReportsExportDeliveredCsvButton" Content="Export Delivered CSV" Style="{StaticResource ActionButtonStyle}" Command="{Binding ExportDeliveredCsvCommand}" Width="180" />
+            <Button AutomationProperties.AutomationId="ReportsRefreshButton" Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
+            <TextBlock AutomationProperties.AutomationId="ReportsErrorMessage" Text="{Binding ErrorMessage}" Foreground="#B00020" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
         </StackPanel>
         <TabControl Grid.Row="2" Margin="10">
             <TabItem Header="Completed Students">
-                <DataGrid ItemsSource="{Binding CompletedStudents}" AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid AutomationProperties.AutomationId="ReportsCompletedStudentsGrid" ItemsSource="{Binding CompletedStudents}" AutoGenerateColumns="False" IsReadOnly="True">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Student" Binding="{Binding Student.FullName}" Width="200" />
                         <DataGridTextColumn Header="Course" Binding="{Binding CourseDelivery.CourseDefinition.CourseCode}" Width="120" />
@@ -30,7 +30,7 @@
                 </DataGrid>
             </TabItem>
             <TabItem Header="Awaiting Certificate Order">
-                <DataGrid ItemsSource="{Binding AwaitingOrder}" AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid AutomationProperties.AutomationId="ReportsAwaitingOrderGrid" ItemsSource="{Binding AwaitingOrder}" AutoGenerateColumns="False" IsReadOnly="True">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Student" Binding="{Binding Student.FullName}" Width="200" />
                         <DataGridTextColumn Header="Course" Binding="{Binding CourseDelivery.CourseDefinition.CourseCode}" Width="120" />
@@ -40,8 +40,8 @@
             </TabItem>
             <TabItem Header="Withdrawn Students">
                 <StackPanel Margin="10">
-                    <CheckBox Content="Include costs (cash commitment spent)" IsChecked="{Binding IncludeCostsInWithdrawn}" Margin="0,0,0,10" />
-                    <DataGrid ItemsSource="{Binding WithdrawnStudents}" AutoGenerateColumns="False" IsReadOnly="True" Height="400">
+                    <CheckBox AutomationProperties.AutomationId="ReportsIncludeCostsInWithdrawnInput" Content="Include costs (cash commitment spent)" IsChecked="{Binding IncludeCostsInWithdrawn}" Margin="0,0,0,10" />
+                    <DataGrid AutomationProperties.AutomationId="ReportsWithdrawnStudentsGrid" ItemsSource="{Binding WithdrawnStudents}" AutoGenerateColumns="False" IsReadOnly="True" Height="400">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Student" Binding="{Binding Student.FullName}" Width="200" />
                             <DataGridTextColumn Header="Course" Binding="{Binding CourseDelivery.CourseDefinition.CourseCode}" Width="120" />
@@ -53,7 +53,7 @@
                 </StackPanel>
             </TabItem>
             <TabItem Header="Non-Completions">
-                <DataGrid ItemsSource="{Binding NonCompletions}" AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid AutomationProperties.AutomationId="ReportsNonCompletionsGrid" ItemsSource="{Binding NonCompletions}" AutoGenerateColumns="False" IsReadOnly="True">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Student" Binding="{Binding Student.FullName}" Width="200" />
                         <DataGridTextColumn Header="Course" Binding="{Binding CourseDelivery.CourseDefinition.CourseCode}" Width="120" />
@@ -63,7 +63,7 @@
                 </DataGrid>
             </TabItem>
             <TabItem Header="Awaiting Delivery">
-                <DataGrid ItemsSource="{Binding AwaitingDelivery}" AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid AutomationProperties.AutomationId="ReportsAwaitingDeliveryGrid" ItemsSource="{Binding AwaitingDelivery}" AutoGenerateColumns="False" IsReadOnly="True">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Student" Binding="{Binding Student.FullName}" Width="200" />
                         <DataGridTextColumn Header="Course" Binding="{Binding CourseDelivery.CourseDefinition.CourseCode}" Width="120" />
@@ -73,7 +73,7 @@
                 </DataGrid>
             </TabItem>
             <TabItem Header="Certificates Delivered">
-                <DataGrid ItemsSource="{Binding CertificatesDelivered}" AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid AutomationProperties.AutomationId="ReportsCertificatesDeliveredGrid" ItemsSource="{Binding CertificatesDelivered}" AutoGenerateColumns="False" IsReadOnly="True">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Student" Binding="{Binding Student.FullName}" Width="200" />
                         <DataGridTextColumn Header="Course" Binding="{Binding CourseDelivery.CourseDefinition.CourseCode}" Width="120" />

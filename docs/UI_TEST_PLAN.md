@@ -14,40 +14,69 @@ window, so it is not usable here. The Windows equivalents are:
 Everything runs offline: no network calls, no external services, no signed-in accounts. The app is
 launched from a locally published build against a throwaway data directory.
 
-## Environment
+## Running it on Windows
 
-Run on Windows 10/11 with an interactive desktop session (UI Automation needs a real desktop; a
-locked or headless session fails).
+Run on Windows 10/11 in an interactive desktop session. UI Automation drives the real desktop, so a
+locked screen, a minimised RDP session or a service account will fail. Leave the machine alone while
+the suite runs — the tests send real keyboard and mouse input.
+
+One command does everything (publish, then run the suite against the published exe):
 
 ```powershell
-dotnet build StudentTracker.sln -c Release
-dotnet test tests/StudentTracker.UITests/StudentTracker.UITests.csproj -c Release
+pwsh -File scripts\run-ui-tests.ps1
 ```
 
-`AppUiTestFixture` already starts `StudentTracker.Wpf.exe --sample-data` with `LOCALAPPDATA`
-redirected to a temporary folder, so each run gets its own database, documents, logs and backups and
-deletes them afterwards. Nothing touches the operator's real `%LOCALAPPDATA%\StudentTracker`.
+Or a single suite, reusing the existing publish:
 
-## Prerequisite: automation IDs
+```powershell
+pwsh -File scripts\run-ui-tests.ps1 -SkipPublish -Filter "FullyQualifiedName~SmokeTests"
+```
 
-Only the navigation buttons and view headers carry `AutomationProperties.AutomationId` today. Every
-control a test touches needs a stable ID, because matching on button text breaks whenever a label is
-reworded and matching on tree position breaks whenever a panel is rearranged.
+The long way, if you would rather drive it yourself:
 
-Naming convention: `<Screen><Control><Kind>`, e.g. `StudentsAddButton`, `StudentEditFirstNameBox`,
-`StudentsErrorText`, `StudentsGrid`.
+```powershell
+dotnet publish src\StudentTracker.Wpf\StudentTracker.Wpf.csproj -c Release -r win-x64 `
+  --self-contained true -p:PublishSingleFile=true -o release\StudentTracker-win-x64
+$env:STUDENTTRACKER_EXE = "$PWD\release\StudentTracker-win-x64\StudentTracker.Wpf.exe"
+dotnet test tests\StudentTracker.UITests\StudentTracker.UITests.csproj -c Release --logger "trx"
+```
 
-IDs required before the suites below can be written:
+`STUDENTTRACKER_EXE` is optional: without it the fixture searches the Release publish, the Release
+and Debug build outputs, and `release\StudentTracker-win-x64` in that order.
 
-- every `Button` in `Views/*.xaml` and `MainWindow.xaml`;
-- every input in the edit dialogs (student, course, budget pool, add funds);
-- every `DataGrid` (`...Grid`) so row counts and selection can be asserted;
-- the `ErrorMessage` / `Status` text blocks on each screen;
-- the dialog window itself (`DialogWindow`), so a test can assert it opened and closed.
+### Isolation
+
+`AppUiTestFixture` launches `StudentTracker.Wpf.exe --sample-data --data-root <temp folder>` (and
+redirects `LOCALAPPDATA` as a belt-and-braces fallback), so every test class gets its own database,
+documents, logs, exports and backups and deletes them on teardown. The operator's real
+`%LOCALAPPDATA%\StudentTracker` is never opened. Test classes never run in parallel — only one copy
+of the app may own the foreground window.
+
+### When something fails
+
+Failures carry their own evidence: the assertion message includes the path to a screenshot taken at
+the moment of failure and the full application log from the run. `run-ui-tests.ps1` collects both,
+plus the `.trx`, into `release\ui-test-results`.
+
+## Automation IDs
+
+Every button, grid, input and error/status label carries an
+`AutomationProperties.AutomationId`, named `<Screen><Control><Kind>` — `StudentsAddStudentButton`,
+`StudentEditFirstNameInput`, `StudentsStudentsGrid`, `StudentsErrorMessage`. The dialog host window
+is `StudentTrackerDialog`.
+
+These are load-bearing: matching on button text breaks whenever a label is reworded and matching on
+tree position breaks whenever a panel is rearranged. `AutomationIdTests` in
+`tests/StudentTracker.Tests` fails the normal build if a new command button is added without an ID,
+if IDs collide within a view, or if a view loses the header the UI tests wait for — so the suite
+cannot silently rot.
 
 ## Suites
 
-### 1. Smoke (must pass before anything else runs)
+Implemented today: 1, 2 and the student half of 3, plus backup/import file-dialog cover. 4 and 5 are
+specified below but wait on screens that are not built yet.
+
+### 1. Smoke (must pass before anything else runs) — implemented (`SmokeTests`, `NavigationTests`)
 
 - App starts, main window titled "Student Tracker" appears within 30s.
 - Each of the 11 navigation buttons shows its section header — already covered by `NavigationTests`.
@@ -55,7 +84,7 @@ IDs required before the suites below can be written:
 - `student-tracker-*.log` in the test data directory contains the startup line and no `Error` or
   `Fatal` entries.
 
-### 2. Every button does something
+### 2. Every button does something — implemented (`ButtonTests`)
 
 One test per button. The pattern is: note the observable state, invoke the button, assert the state
 changed **or** a specific message appeared. A button that leaves the screen unchanged and writes no
@@ -82,7 +111,7 @@ File dialogs (`OpenFileDialog`/`SaveFileDialog`) are OS windows, not part of the
 Drive them through the fixture: find the dialog by class name `#32770`, type the path into the
 `Edit` control, invoke `Open`/`Save`. Fixture files live under `tests/fixtures/`.
 
-### 3. Validation and failure messages
+### 3. Validation and failure messages — partly implemented (`StudentWorkflowTests`, `BackupAndImportTests`)
 
 Each of these must show a specific message and must not close the dialog or crash:
 
@@ -96,7 +125,7 @@ Each of these must show a specific message and must not close the dialog or cras
 After each, assert the matching failure was written to `student-tracker-*.log`. Error logging is new
 in this release, so it is worth asserting rather than assuming.
 
-### 4. Workflow scenarios (WF-001 … WF-010 from the design plan)
+### 4. Workflow scenarios (WF-001 … WF-010 from the design plan) — not yet implemented
 
 Each runs end-to-end through the UI on a fresh sample-data instance and asserts both the on-screen
 result and the resulting ledger figures:
@@ -115,7 +144,7 @@ result and the resulting ledger figures:
 Balances are asserted on the Credits & Budgets screen: available credit, actual expenditure and
 forecast available must match the ledger arithmetic in the design plan, not just "a number changed".
 
-### 5. Data-heavy behaviour
+### 5. Data-heavy behaviour — not yet implemented
 
 The realistic run loads the provider's own exports through **Import/Export → Import Workbook**, in
 this order, and checks each screen afterwards:
@@ -179,8 +208,9 @@ making it stronger.
 
 ## Sequencing
 
-1. Add the automation IDs listed above (mechanical, one pass over the XAML).
-2. Extend the fixture with file-dialog handling, screenshot-on-failure and log assertions.
-3. Suite 2 (every button), then suite 3 (validation) — these catch the reported class of bug.
+1. ~~Add the automation IDs~~ — done, and guarded by `AutomationIdTests`.
+2. ~~Extend the fixture with an isolated data root, screenshot-on-failure and log capture~~ — done.
+3. ~~Suite 2 (every button) and the student half of suite 3~~ — done; these catch the reported class
+   of bug.
 4. Suite 4 (workflows), which needs the delivery-detail and outcome screens that are not built yet.
 5. Suite 5 and the CI job.

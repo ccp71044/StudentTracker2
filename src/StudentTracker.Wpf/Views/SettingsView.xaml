@@ -16,9 +16,9 @@
             <TextBlock Text="{Binding Version}" />
         </StackPanel>
         <StackPanel Orientation="Horizontal" Grid.Row="2">
-            <Button Content="Compact Database" Style="{StaticResource ActionButtonStyle}" Command="{Binding CompactDatabaseCommand}" HorizontalAlignment="Left" Width="150" />
+            <Button AutomationProperties.AutomationId="SettingsCompactDatabaseButton" Content="Compact Database" Style="{StaticResource ActionButtonStyle}" Command="{Binding CompactDatabaseCommand}" HorizontalAlignment="Left" Width="150" />
             <TextBlock Text="{Binding Status}" VerticalAlignment="Center" Margin="10,0,0,0" />
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B00020" VerticalAlignment="Center" Margin="10,0,0,0" />
+            <TextBlock AutomationProperties.AutomationId="SettingsErrorMessage" Text="{Binding ErrorMessage}" Foreground="#B00020" VerticalAlignment="Center" Margin="10,0,0,0" />
         </StackPanel>
     </Grid>
 </UserControl>

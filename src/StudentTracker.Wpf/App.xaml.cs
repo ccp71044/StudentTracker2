@@ -12,12 +12,16 @@ namespace StudentTracker.Wpf;
 public partial class App : Application
 {
     private const string SampleDataSwitch = "--sample-data";
+    private const string DataRootSwitch = "--data-root";
 
     private ServiceProvider? _serviceProvider;
+    private Core.Models.AppSettings _settings = new();
     private string _logsPath = string.Empty;
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        _settings = BuildSettings(e.Args);
+
         // Logging is configured before anything else runs: in release 1 it was set up after the
         // service provider had been built, so any failure during start-up was written to Serilog's
         // silent default logger and lost.
@@ -45,9 +49,30 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    /// Reads "--data-root &lt;path&gt;", which moves the database, documents, backups, exports and logs
+    /// somewhere other than %LOCALAPPDATA%. The UI tests use it so a run cannot touch real data.
+    /// </summary>
+    private static Core.Models.AppSettings BuildSettings(string[] args)
+    {
+        var settings = new Core.Models.AppSettings();
+
+        var index = Array.FindIndex(args, a => a.Equals(DataRootSwitch, StringComparison.OrdinalIgnoreCase));
+        var dataRoot = index >= 0 && index + 1 < args.Length
+            ? args[index + 1]
+            : args.FirstOrDefault(a => a.StartsWith(DataRootSwitch + "=", StringComparison.OrdinalIgnoreCase))?[(DataRootSwitch.Length + 1)..];
+
+        if (string.IsNullOrWhiteSpace(dataRoot)) return settings;
+
+        settings.DataRootPath = Path.GetFullPath(dataRoot);
+        settings.BackupLocation = Path.Combine(settings.DataRootPath, "Backups");
+        settings.InvoicerExchangeLocation = Path.Combine(settings.DataRootPath, "Integration", "InvoicerExport");
+        return settings;
+    }
+
     private void ConfigureLogging()
     {
-        var location = new DataLocationService(new Core.Models.AppSettings());
+        var location = new DataLocationService(_settings);
         location.EnsureDirectories();
         _logsPath = location.LogsPath;
 
@@ -65,7 +90,7 @@ public partial class App : Application
     private void Start(string[] args)
     {
         var services = new ServiceCollection();
-        ConfigureServices(services);
+        ConfigureServices(services, _settings);
         _serviceProvider = services.BuildServiceProvider();
 
         _serviceProvider.GetRequiredService<DataLocationService>().EnsureDirectories();
@@ -108,9 +133,8 @@ public partial class App : Application
             MessageBoxImage.Error);
     }
 
-    private static void ConfigureServices(IServiceCollection services)
+    private static void ConfigureServices(IServiceCollection services, Core.Models.AppSettings settings)
     {
-        var settings = new Core.Models.AppSettings();
         var dataLocation = new DataLocationService(settings);
 
         services.AddSingleton(settings);

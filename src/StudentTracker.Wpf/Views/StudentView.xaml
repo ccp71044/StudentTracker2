@@ -64,7 +64,7 @@
         </Grid>
 
         <TextBlock Text="Upcoming classes" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Grid.Row="2" Margin="0,10,0,4" />
-        <DataGrid ItemsSource="{Binding UpcomingClasses}" AutoGenerateColumns="False" IsReadOnly="True" Grid.Row="3" Margin="0,0,0,10" Height="150">
+        <DataGrid AutomationProperties.AutomationId="StudentUpcomingClassesGrid" ItemsSource="{Binding UpcomingClasses}" AutoGenerateColumns="False" IsReadOnly="True" Grid.Row="3" Margin="0,0,0,10" Height="150">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Allocation" Binding="{Binding AllocationId}" Width="100" />
                 <DataGridTextColumn Header="Course" Binding="{Binding CourseCode}" Width="150" />
@@ -75,7 +75,7 @@
         </DataGrid>
 
         <TextBlock Text="Past / historical classes" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Grid.Row="4" Margin="0,10,0,4" />
-        <DataGrid ItemsSource="{Binding PastClasses}" AutoGenerateColumns="False" IsReadOnly="True" Grid.Row="4" Margin="0,24,0,0">
+        <DataGrid AutomationProperties.AutomationId="StudentPastClassesGrid" ItemsSource="{Binding PastClasses}" AutoGenerateColumns="False" IsReadOnly="True" Grid.Row="4" Margin="0,24,0,0">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Allocation" Binding="{Binding AllocationId}" Width="100" />
                 <DataGridTextColumn Header="Course" Binding="{Binding CourseCode}" Width="150" />
@@ -87,8 +87,8 @@
         </DataGrid>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="5" Margin="0,10,0,0">
-            <Button Content="Edit Student" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditStudentCommand}" />
-            <Button Content="Close" Style="{StaticResource ActionButtonStyle}" Command="{Binding CloseCommand}" />
+            <Button AutomationProperties.AutomationId="StudentEditStudentButton" Content="Edit Student" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditStudentCommand}" />
+            <Button AutomationProperties.AutomationId="StudentCloseButton" Content="Close" Style="{StaticResource ActionButtonStyle}" Command="{Binding CloseCommand}" />
         </StackPanel>
     </Grid>
 </UserControl>

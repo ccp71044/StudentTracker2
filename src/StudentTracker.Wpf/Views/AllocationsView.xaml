@@ -10,14 +10,14 @@
         </Grid.RowDefinitions>
         <TextBlock Text="Allocations" AutomationProperties.AutomationId="AllocationsHeader" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="1">
-            <Button Content="Add Allocation" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddAllocationCommand}" />
-            <Button Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditAllocationCommand}" />
-            <Button Content="Mark Attendance" Style="{StaticResource ActionButtonStyle}" Command="{Binding MarkAttendanceCommand}" ToolTip="Mark attendance for selected allocation" />
-            <Button Content="Mark Outcome" Style="{StaticResource ActionButtonStyle}" Command="{Binding MarkOutcomeCommand}" ToolTip="Mark outcome for selected allocation" />
-            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B00020" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
+            <Button AutomationProperties.AutomationId="AllocationsAddAllocationButton" Content="Add Allocation" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddAllocationCommand}" />
+            <Button AutomationProperties.AutomationId="AllocationsEditAllocationButton" Content="Edit" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditAllocationCommand}" />
+            <Button AutomationProperties.AutomationId="AllocationsMarkAttendanceButton" Content="Mark Attendance" Style="{StaticResource ActionButtonStyle}" Command="{Binding MarkAttendanceCommand}" ToolTip="Mark attendance for selected allocation" />
+            <Button AutomationProperties.AutomationId="AllocationsMarkOutcomeButton" Content="Mark Outcome" Style="{StaticResource ActionButtonStyle}" Command="{Binding MarkOutcomeCommand}" ToolTip="Mark outcome for selected allocation" />
+            <Button AutomationProperties.AutomationId="AllocationsRefreshButton" Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
+            <TextBlock AutomationProperties.AutomationId="AllocationsErrorMessage" Text="{Binding ErrorMessage}" Foreground="#B00020" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
         </StackPanel>
-        <DataGrid ItemsSource="{Binding Allocations}" SelectedItem="{Binding SelectedAllocation}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True" 
+        <DataGrid AutomationProperties.AutomationId="AllocationsAllocationsGrid" ItemsSource="{Binding Allocations}" SelectedItem="{Binding SelectedAllocation}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True" 
                  MouseDoubleClick="DataGrid_MouseDoubleClick">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Allocation ID" Binding="{Binding DisplayId}" Width="100" />

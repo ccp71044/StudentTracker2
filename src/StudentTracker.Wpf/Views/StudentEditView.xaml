@@ -35,61 +35,61 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <TextBlock Text="First name:" VerticalAlignment="Center" Margin="0,4" Grid.Row="0" Grid.Column="0" />
-                <TextBox Text="{Binding FirstName}" Grid.Row="0" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditFirstNameInput" Text="{Binding FirstName}" Grid.Row="0" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Middle name:" VerticalAlignment="Center" Margin="0,4" Grid.Row="1" Grid.Column="0" />
-                <TextBox Text="{Binding MiddleName}" Grid.Row="1" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditMiddleNameInput" Text="{Binding MiddleName}" Grid.Row="1" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Last name:" VerticalAlignment="Center" Margin="0,4" Grid.Row="2" Grid.Column="0" />
-                <TextBox Text="{Binding LastName}" Grid.Row="2" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditLastNameInput" Text="{Binding LastName}" Grid.Row="2" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Preferred name:" VerticalAlignment="Center" Margin="0,4" Grid.Row="3" Grid.Column="0" />
-                <TextBox Text="{Binding PreferredName}" Grid.Row="3" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditPreferredNameInput" Text="{Binding PreferredName}" Grid.Row="3" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Date of birth:" VerticalAlignment="Center" Margin="0,4" Grid.Row="4" Grid.Column="0" />
-                <DatePicker SelectedDate="{Binding DateOfBirth}" Grid.Row="4" Grid.Column="1" Margin="8,4" />
+                <DatePicker AutomationProperties.AutomationId="StudentEditDateOfBirthInput" SelectedDate="{Binding DateOfBirth}" Grid.Row="4" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Email:" VerticalAlignment="Center" Margin="0,4" Grid.Row="5" Grid.Column="0" />
-                <TextBox Text="{Binding Email}" Grid.Row="5" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditEmailInput" Text="{Binding Email}" Grid.Row="5" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Phone:" VerticalAlignment="Center" Margin="0,4" Grid.Row="6" Grid.Column="0" />
-                <TextBox Text="{Binding Phone}" Grid.Row="6" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditPhoneInput" Text="{Binding Phone}" Grid.Row="6" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Employer:" VerticalAlignment="Center" Margin="0,4" Grid.Row="7" Grid.Column="0" />
-                <TextBox Text="{Binding Employer}" Grid.Row="7" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditEmployerInput" Text="{Binding Employer}" Grid.Row="7" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Work group:" VerticalAlignment="Center" Margin="0,4" Grid.Row="8" Grid.Column="0" />
-                <TextBox Text="{Binding WorkGroup}" Grid.Row="8" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditWorkGroupInput" Text="{Binding WorkGroup}" Grid.Row="8" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Employee number:" VerticalAlignment="Center" Margin="0,4" Grid.Row="9" Grid.Column="0" />
-                <TextBox Text="{Binding EmployeeNumber}" Grid.Row="9" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditEmployeeNumberInput" Text="{Binding EmployeeNumber}" Grid.Row="9" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="USI:" VerticalAlignment="Center" Margin="0,4" Grid.Row="10" Grid.Column="0" />
-                <TextBox Text="{Binding Usi}" Grid.Row="10" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditUsiInput" Text="{Binding Usi}" Grid.Row="10" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Status:" VerticalAlignment="Center" Margin="0,4" Grid.Row="11" Grid.Column="0" />
-                <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding Status}" Grid.Row="11" Grid.Column="1" Margin="8,4" VerticalContentAlignment="Center" />
+                <ComboBox AutomationProperties.AutomationId="StudentEditStatusInput" ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding Status}" Grid.Row="11" Grid.Column="1" Margin="8,4" VerticalContentAlignment="Center" />
 
                 <TextBlock Text="Manager:" VerticalAlignment="Center" Margin="0,4" Grid.Row="12" Grid.Column="0" />
-                <TextBox Text="{Binding Manager}" Grid.Row="12" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditManagerInput" Text="{Binding Manager}" Grid.Row="12" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Emergency contact:" VerticalAlignment="Center" Margin="0,4" Grid.Row="13" Grid.Column="0" />
-                <TextBox Text="{Binding EmergencyContact}" Grid.Row="13" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditEmergencyContactInput" Text="{Binding EmergencyContact}" Grid.Row="13" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Emergency phone:" VerticalAlignment="Center" Margin="0,4" Grid.Row="14" Grid.Column="0" />
-                <TextBox Text="{Binding EmergencyPhone}" Grid.Row="14" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditEmergencyPhoneInput" Text="{Binding EmergencyPhone}" Grid.Row="14" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Group / tag:" VerticalAlignment="Center" Margin="0,4" Grid.Row="15" Grid.Column="0" />
-                <TextBox Text="{Binding GroupTag}" Grid.Row="15" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditGroupTagInput" Text="{Binding GroupTag}" Grid.Row="15" Grid.Column="1" Margin="8,4" />
 
                 <TextBlock Text="Notes:" VerticalAlignment="Top" Margin="0,4" Grid.Row="16" Grid.Column="0" />
-                <TextBox Text="{Binding Notes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Grid.Row="16" Grid.Column="1" Margin="8,4" />
+                <TextBox AutomationProperties.AutomationId="StudentEditNotesInput" Text="{Binding Notes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Grid.Row="16" Grid.Column="1" Margin="8,4" />
             </Grid>
         </ScrollViewer>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2" Margin="0,10,0,0">
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B00020" TextWrapping="Wrap" MaxWidth="320" VerticalAlignment="Center" Margin="0,0,10,0" />
-            <Button Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveCommand}" />
-            <Button Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" />
+            <TextBlock AutomationProperties.AutomationId="StudentEditErrorMessage" Text="{Binding ErrorMessage}" Foreground="#B00020" TextWrapping="Wrap" MaxWidth="320" VerticalAlignment="Center" Margin="0,0,10,0" />
+            <Button AutomationProperties.AutomationId="StudentEditSaveButton" Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveCommand}" />
+            <Button AutomationProperties.AutomationId="StudentEditCancelButton" IsCancel="True" Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" />
         </StackPanel>
     </Grid>
 </UserControl>

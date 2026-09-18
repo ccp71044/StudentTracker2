@@ -22,24 +22,24 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Text="Name:" VerticalAlignment="Center" Margin="0,4" Grid.Row="0" Grid.Column="0" />
-            <TextBox Text="{Binding Name}" Grid.Row="0" Grid.Column="1" Margin="8,4" />
+            <TextBox AutomationProperties.AutomationId="BudgetPoolEditNameInput" Text="{Binding Name}" Grid.Row="0" Grid.Column="1" Margin="8,4" />
 
             <TextBlock Text="Description:" VerticalAlignment="Center" Margin="0,4" Grid.Row="1" Grid.Column="0" />
-            <TextBox Text="{Binding Description}" Grid.Row="1" Grid.Column="1" Margin="8,4" />
+            <TextBox AutomationProperties.AutomationId="BudgetPoolEditDescriptionInput" Text="{Binding Description}" Grid.Row="1" Grid.Column="1" Margin="8,4" />
 
             <TextBlock Text="Financial period:" VerticalAlignment="Center" Margin="0,4" Grid.Row="2" Grid.Column="0" />
-            <TextBox Text="{Binding FinancialPeriod}" Grid.Row="2" Grid.Column="1" Margin="8,4" />
+            <TextBox AutomationProperties.AutomationId="BudgetPoolEditFinancialPeriodInput" Text="{Binding FinancialPeriod}" Grid.Row="2" Grid.Column="1" Margin="8,4" />
 
             <TextBlock Text="Notes:" VerticalAlignment="Top" Margin="0,4" Grid.Row="3" Grid.Column="0" />
-            <TextBox Text="{Binding Notes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Grid.Row="3" Grid.Column="1" Margin="8,4" />
+            <TextBox AutomationProperties.AutomationId="BudgetPoolEditNotesInput" Text="{Binding Notes}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Grid.Row="3" Grid.Column="1" Margin="8,4" />
 
             <TextBlock Text="Active:" VerticalAlignment="Center" Margin="0,4" Grid.Row="4" Grid.Column="0" />
-            <CheckBox IsChecked="{Binding IsActive}" Grid.Row="4" Grid.Column="1" Margin="8,4" VerticalAlignment="Center" />
+            <CheckBox AutomationProperties.AutomationId="BudgetPoolEditIsActiveInput" IsChecked="{Binding IsActive}" Grid.Row="4" Grid.Column="1" Margin="8,4" VerticalAlignment="Center" />
         </Grid>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2" Margin="0,10,0,0">
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B00020" TextWrapping="Wrap" MaxWidth="320" VerticalAlignment="Center" Margin="0,0,10,0" />
-            <Button Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveCommand}" />
-            <Button Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" />
+            <TextBlock AutomationProperties.AutomationId="BudgetPoolEditErrorMessage" Text="{Binding ErrorMessage}" Foreground="#B00020" TextWrapping="Wrap" MaxWidth="320" VerticalAlignment="Center" Margin="0,0,10,0" />
+            <Button AutomationProperties.AutomationId="BudgetPoolEditSaveButton" Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveCommand}" />
+            <Button AutomationProperties.AutomationId="BudgetPoolEditCancelButton" IsCancel="True" Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" />
         </StackPanel>
     </Grid>
 </UserControl>
