@@ -37,14 +37,15 @@ public sealed class TestHarness : IDisposable
 
         var ids = new DisplayIdGenerator(Context);
         var audit = new AuditService(Context);
-        Credits = new CreditService(Context, ids, audit);
+        var dataLocation = new DataLocationService(settings);
+        Documents = new DocumentService(Context, dataLocation, ids, audit);
+        Credits = new CreditService(Context, ids, audit, Documents);
         Budgets = new BudgetService(Context, ids, audit);
         Allocations = new AllocationService(Context, ids, audit, Credits, Budgets);
         Certificates = new CertificateService(Context, ids, Credits, audit);
-        var dataLocation = new DataLocationService(settings);
-        Documents = new DocumentService(Context, dataLocation, ids, audit);
         Backups = new BackupService(dataLocation, Context, audit);
-        Reports = new ReportService(Context, Credits, Budgets, Documents);
+        var pricing = new PricingService(Context);
+        Reports = new ReportService(Context, new BudgetSummaryService(Context, pricing), pricing, Credits, Budgets, Documents);
     }
 
     public Task<CertificateCreditPool> CreditPoolAsync(string name = "Credits") =>

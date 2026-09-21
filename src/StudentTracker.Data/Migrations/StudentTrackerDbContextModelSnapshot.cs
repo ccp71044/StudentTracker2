@@ -23,6 +23,12 @@ namespace StudentTracker.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal?>("ActualAllensCost")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("AllensCostAtAllocation")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("AllocatedAt")
                         .HasColumnType("TEXT");
 
@@ -55,6 +61,12 @@ namespace StudentTracker.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("ClientPrepaidEntitlementTransactionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ClientPrepaidPoolId")
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid>("CourseDeliveryId")
                         .HasColumnType("TEXT");
 
@@ -78,6 +90,9 @@ namespace StudentTracker.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("LegacyReference")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("OutcomeDate")
@@ -105,6 +120,10 @@ namespace StudentTracker.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BudgetPoolId");
+
+                    b.HasIndex("ClientPrepaidEntitlementTransactionId");
+
+                    b.HasIndex("ClientPrepaidPoolId");
 
                     b.HasIndex("CourseDeliveryId");
 
@@ -248,6 +267,13 @@ namespace StudentTracker.Data.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ClientName")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -565,6 +591,110 @@ namespace StudentTracker.Data.Migrations
                     b.ToTable("CertificateOrders");
                 });
 
+            modelBuilder.Entity("StudentTracker.Core.Models.ClientPrepaidEntitlementTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("AllocationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("InvoiceId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("LinkedTransactionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("MonetaryReferenceValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PoolId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TransactionDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TransactionType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.HasIndex("LinkedTransactionId");
+
+                    b.HasIndex("PoolId");
+
+                    b.ToTable("ClientPrepaidEntitlementTransactions");
+                });
+
+            modelBuilder.Entity("StudentTracker.Core.Models.ClientPrepaidPool", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Client")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FinancialPeriod")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RestrictedToCourseCategory")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("RestrictedToCourseDefinitionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RestrictedToCourseDefinitionId");
+
+                    b.ToTable("ClientPrepaidPools");
+                });
+
             modelBuilder.Entity("StudentTracker.Core.Models.CourseDefinition", b =>
                 {
                     b.Property<Guid>("Id")
@@ -578,11 +708,17 @@ namespace StudentTracker.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("CourseDurationDays")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("CourseTitle")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("DefaultAllensCost")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal?>("DefaultCertificateCost")
@@ -1286,6 +1422,16 @@ namespace StudentTracker.Data.Migrations
                         .WithMany()
                         .HasForeignKey("BudgetPoolId");
 
+                    b.HasOne("StudentTracker.Core.Models.ClientPrepaidEntitlementTransaction", "ClientPrepaidEntitlementTransaction")
+                        .WithMany()
+                        .HasForeignKey("ClientPrepaidEntitlementTransactionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StudentTracker.Core.Models.ClientPrepaidPool", "ClientPrepaidPool")
+                        .WithMany()
+                        .HasForeignKey("ClientPrepaidPoolId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("StudentTracker.Core.Models.CourseDelivery", "CourseDelivery")
                         .WithMany()
                         .HasForeignKey("CourseDeliveryId")
@@ -1305,6 +1451,10 @@ namespace StudentTracker.Data.Migrations
                         .HasForeignKey("StudentId");
 
                     b.Navigation("BudgetPool");
+
+                    b.Navigation("ClientPrepaidEntitlementTransaction");
+
+                    b.Navigation("ClientPrepaidPool");
 
                     b.Navigation("CourseDelivery");
 
@@ -1405,6 +1555,40 @@ namespace StudentTracker.Data.Migrations
                     b.Navigation("Allocation");
 
                     b.Navigation("CreditTransaction");
+                });
+
+            modelBuilder.Entity("StudentTracker.Core.Models.ClientPrepaidEntitlementTransaction", b =>
+                {
+                    b.HasOne("StudentTracker.Core.Models.Invoice", "Invoice")
+                        .WithMany()
+                        .HasForeignKey("InvoiceId");
+
+                    b.HasOne("StudentTracker.Core.Models.ClientPrepaidEntitlementTransaction", "LinkedTransaction")
+                        .WithMany()
+                        .HasForeignKey("LinkedTransactionId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("StudentTracker.Core.Models.ClientPrepaidPool", "Pool")
+                        .WithMany()
+                        .HasForeignKey("PoolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+
+                    b.Navigation("LinkedTransaction");
+
+                    b.Navigation("Pool");
+                });
+
+            modelBuilder.Entity("StudentTracker.Core.Models.ClientPrepaidPool", b =>
+                {
+                    b.HasOne("StudentTracker.Core.Models.CourseDefinition", "RestrictedToCourseDefinition")
+                        .WithMany()
+                        .HasForeignKey("RestrictedToCourseDefinitionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("RestrictedToCourseDefinition");
                 });
 
             modelBuilder.Entity("StudentTracker.Core.Models.CourseDelivery", b =>

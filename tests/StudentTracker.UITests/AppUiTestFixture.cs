@@ -37,8 +37,8 @@ public class AppUiTestFixture : IDisposable
         var exePath = FindExePath();
         if (string.IsNullOrEmpty(exePath) || !File.Exists(exePath))
             throw new FileNotFoundException(
-                "Could not locate StudentTracker.Wpf.exe. Run scripts/run-ui-tests.ps1, or 'dotnet publish' first.",
-                "StudentTracker.Wpf.exe");
+                "Could not locate StudentTracker.exe. Run scripts/run-ui-tests.ps1, or 'dotnet publish' first.",
+                "StudentTracker.exe");
 
         // --data-root is honoured by the application itself; LOCALAPPDATA is set as well so any
         // framework component that ignores our settings still lands inside the throwaway folder.
@@ -181,11 +181,11 @@ public class AppUiTestFixture : IDisposable
         var root = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..");
         var candidates = new[]
         {
-            Path.Combine(root, "release", "StudentTracker-win-x64", "StudentTracker.Wpf.exe"),
-            Path.Combine(root, "src", "StudentTracker.Wpf", "bin", "Release", "net8.0-windows", "win-x64", "publish", "StudentTracker.Wpf.exe"),
-            Path.Combine(root, "src", "StudentTracker.Wpf", "bin", "Release", "net8.0-windows", "win-x64", "StudentTracker.Wpf.exe"),
-            Path.Combine(root, "src", "StudentTracker.Wpf", "bin", "Release", "net8.0-windows", "StudentTracker.Wpf.exe"),
-            Path.Combine(root, "src", "StudentTracker.Wpf", "bin", "Debug", "net8.0-windows", "StudentTracker.Wpf.exe"),
+            Path.Combine(root, "release", "StudentTracker-win-x64", "StudentTracker.exe"),
+            Path.Combine(root, "src", "StudentTracker.Wpf", "bin", "Release", "net8.0-windows", "win-x64", "publish", "StudentTracker.exe"),
+            Path.Combine(root, "src", "StudentTracker.Wpf", "bin", "Release", "net8.0-windows", "win-x64", "StudentTracker.exe"),
+            Path.Combine(root, "src", "StudentTracker.Wpf", "bin", "Release", "net8.0-windows", "StudentTracker.exe"),
+            Path.Combine(root, "src", "StudentTracker.Wpf", "bin", "Debug", "net8.0-windows", "StudentTracker.exe"),
         };
 
         foreach (var candidate in candidates)

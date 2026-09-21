@@ -75,12 +75,12 @@ public class DocumentTests : IDisposable
         File.Delete(managedPath);
         Assert.Equal(new[] { doc.Id }, (await _documents.CheckMissingFilesAsync()).Select(d => d.Id));
         Assert.Equal(DocumentStatus.Missing, doc.Status);
-        Assert.Single(await _harness.Reports.GetMissingDocumentsAsync());
+        Assert.Single(await _harness.Reports.GetMissingDocumentFilesAsync());
 
         File.WriteAllBytes(managedPath, backup);
         Assert.Empty(await _documents.CheckMissingFilesAsync());
         Assert.Equal(DocumentStatus.Active, doc.Status);
-        Assert.Empty(await _harness.Reports.GetMissingDocumentsAsync());
+        Assert.Empty(await _harness.Reports.GetMissingDocumentFilesAsync());
     }
 
     [Fact]

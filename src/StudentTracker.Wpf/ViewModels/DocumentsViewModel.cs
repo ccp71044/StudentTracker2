@@ -6,12 +6,15 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using StudentTracker.Core.Models;
 using StudentTracker.Services;
+using StudentTracker.Wpf.Services;
 
 namespace StudentTracker.Wpf.ViewModels;
 
 public partial class DocumentsViewModel : ViewModelBase
 {
     private readonly DocumentService _documentService;
+    private readonly IDialogService _dialogService;
+    private readonly Dictionary<Guid, (string? DisplayName, DateTime? ReceivedDate)> _inlineEditSnapshots = new();
 
     [ObservableProperty]
     private ObservableCollection<Document> _documents = new();
@@ -19,61 +22,157 @@ public partial class DocumentsViewModel : ViewModelBase
     [ObservableProperty]
     private Document? _selectedDocument;
 
-    public DocumentsViewModel(DocumentService documentService)
+    [ObservableProperty]
+    private bool _showArchived;
+
+    [ObservableProperty]
+    private bool _isTableEditingEnabled;
+
+    public DocumentsViewModel(DocumentService documentService, IDialogService dialogService)
     {
         _documentService = documentService;
+        _dialogService = dialogService;
     }
 
-    protected override async Task InitialiseAsync()
+    private async Task LoadAsync()
     {
-        Documents = new ObservableCollection<Document>(await _documentService.GetDocumentsForEntityAsync("All", Guid.Empty));
+        Documents = new ObservableCollection<Document>(await _documentService.GetDocumentsForEntityAsync("All", Guid.Empty, ShowArchived));
     }
 
     [RelayCommand]
-    private Task AddDocument() => GuardAsync("AddDocument", async () =>
+    private async Task AddDocument()
     {
         var dialog = new OpenFileDialog { Multiselect = false };
         if (dialog.ShowDialog() == true)
         {
             await _documentService.AddDocumentAsync(dialog.FileName, "General");
-            await InitialiseAsync();
+            await LoadAsync();
         }
-    });
+    }
 
     [RelayCommand(CanExecute = nameof(CanViewDocument))]
-    private void ViewDocument() => Guard("ViewDocument", () =>
+    private void ViewDocument()
     {
         if (SelectedDocument == null) return;
-
-        var filePath = _documentService.GetFullPath(SelectedDocument);
-        if (!File.Exists(filePath))
+        
+        try
         {
-            ErrorMessage = $"The file is missing from the document store: {filePath}";
-            return;
+            var filePath = _documentService.GetFullPath(SelectedDocument);
+            if (File.Exists(filePath))
+            {
+                Process.Start(new ProcessStartInfo(filePath) { UseShellExecute = true });
+            }
+            else
+            {
+                _dialogService.ShowError("The document file could not be found.");
+            }
         }
-
-        Process.Start(new ProcessStartInfo(filePath) { UseShellExecute = true });
-    });
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The document could not be opened.", ex);
+        }
+    }
 
     [RelayCommand(CanExecute = nameof(CanDeleteDocument))]
-    private Task DeleteDocument() => GuardAsync("DeleteDocument", async () =>
+    private async Task DeleteDocument()
+    {
+        if (SelectedDocument == null || !_dialogService.Confirm($"Archive document {SelectedDocument.DisplayName}? The managed file will be retained.")) return;
+        try
+        {
+            await _documentService.ArchiveDocumentAsync(SelectedDocument.Id);
+            await LoadAsync();
+            SelectedDocument = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The document could not be archived.", ex);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRestoreDocument))]
+    private async Task RestoreDocument()
+    {
+        if (SelectedDocument == null || !_dialogService.Confirm($"Restore document {SelectedDocument.DisplayName}?")) return;
+        try
+        {
+            await _documentService.RestoreDocumentAsync(SelectedDocument.Id);
+            await LoadAsync();
+            SelectedDocument = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The document could not be restored.", ex);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditDocument))]
+    private async Task EditDocument()
     {
         if (SelectedDocument == null) return;
+        if (_dialogService.ShowDialog(new DocumentMetadataEditViewModel(SelectedDocument, _documentService)) == true)
+            await LoadAsync();
+    }
 
-        await _documentService.DeleteDocumentAsync(SelectedDocument.Id);
-        await InitialiseAsync();
-        SelectedDocument = null;
-    });
+    [RelayCommand(CanExecute = nameof(CanEditDocument))]
+    private void LinkDocument()
+    {
+        if (SelectedDocument == null) return;
+        _dialogService.ShowDialog(new DocumentLinkEditViewModel(SelectedDocument, _documentService));
+    }
 
     [RelayCommand]
-    private Task Refresh() => GuardAsync("Refresh", InitialiseAsync);
+    private async Task CheckMissingFiles()
+    {
+        await _documentService.CheckMissingFilesAsync();
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task Refresh()
+    {
+        await LoadAsync();
+    }
+
+    public void BeginInlineEdit(Document document) => _inlineEditSnapshots.TryAdd(document.Id, (document.DisplayName, document.ReceivedDate));
+
+    public async Task CommitInlineEditAsync(Document document)
+    {
+        if (!IsTableEditingEnabled) return;
+        try
+        {
+            await _documentService.UpdateMetadataAsync(document.Id, document.DisplayName ?? string.Empty, document.Description, document.ReceivedDate, document.Confidentiality, document.Notes);
+        }
+        catch (Exception ex)
+        {
+            if (_inlineEditSnapshots.TryGetValue(document.Id, out var snapshot))
+            {
+                document.DisplayName = snapshot.DisplayName;
+                document.ReceivedDate = snapshot.ReceivedDate;
+            }
+            _dialogService.ShowError("The document metadata could not be updated.", ex);
+        }
+        finally
+        {
+            _inlineEditSnapshots.Remove(document.Id);
+            await LoadAsync();
+        }
+    }
 
     private bool CanViewDocument => SelectedDocument != null;
+    private bool CanEditDocument => SelectedDocument != null;
     private bool CanDeleteDocument => SelectedDocument != null;
+    private bool CanRestoreDocument => SelectedDocument?.Status == Core.Enums.DocumentStatus.Archived;
+
+    partial void OnShowArchivedChanged(bool value) => LoadAsync().ConfigureAwait(false);
 
     partial void OnSelectedDocumentChanged(Document? value)
     {
         ViewDocumentCommand.NotifyCanExecuteChanged();
+        EditDocumentCommand.NotifyCanExecuteChanged();
+        LinkDocumentCommand.NotifyCanExecuteChanged();
         DeleteDocumentCommand.NotifyCanExecuteChanged();
+        RestoreDocumentCommand.NotifyCanExecuteChanged();
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

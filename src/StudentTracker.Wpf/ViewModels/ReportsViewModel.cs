@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
@@ -8,15 +10,19 @@ using StudentTracker.Services;
 
 namespace StudentTracker.Wpf.ViewModels;
 
+public sealed record ReportItem(string Key, string Name, string Category);
+public sealed record ReportCategory(string Name, IEnumerable<ReportItem> Items);
+
 public partial class ReportsViewModel : ViewModelBase
 {
     private readonly ReportService _reportService;
+    private readonly InvoicerReferenceExportService _referenceExportService;
 
     [ObservableProperty]
     private ObservableCollection<Allocation> _completedStudents = new();
 
     [ObservableProperty]
-    private ObservableCollection<Allocation> _awaitingOrder = new();
+    private ObservableCollection<AwaitingOrderReportItem> _awaitingOrder = new();
 
     [ObservableProperty]
     private ObservableCollection<Allocation> _withdrawnStudents = new();
@@ -31,49 +37,412 @@ public partial class ReportsViewModel : ViewModelBase
     private ObservableCollection<Allocation> _certificatesDelivered = new();
 
     [ObservableProperty]
+    private ObservableCollection<DeliveryReportItem> _upcomingDeliveries = new();
+
+    [ObservableProperty]
+    private ObservableCollection<DeliveryReportItem> _cancelledDeliveries = new();
+
+    [ObservableProperty]
+    private ObservableCollection<DeliveryReportItem> _completedDeliveries = new();
+
+    [ObservableProperty]
+    private ObservableCollection<DeliveryReportItem> _capacityReport = new();
+
+    [ObservableProperty]
+    private ObservableCollection<AllocationReportItem> _activeAllocations = new();
+
+    [ObservableProperty]
+    private ObservableCollection<AllocationReportItem> _transferredAllocations = new();
+
+    [ObservableProperty]
+    private ObservableCollection<AllocationReportItem> _cancelledAllocations = new();
+
+    [ObservableProperty]
+    private ObservableCollection<AllocationReportItem> _placeholderAllocations = new();
+
+    [ObservableProperty]
+    private ObservableCollection<AllocationReportItem> _attendance = new();
+
+    [ObservableProperty]
+    private ObservableCollection<CourseUtilizationReportItem> _courseUtilization = new();
+
+    [ObservableProperty]
+    private ObservableCollection<BudgetTransactionSummaryItem> _budgetSummary = new();
+
+    [ObservableProperty]
+    private ObservableCollection<BudgetTransactionHistoryItem> _budgetHistory = new();
+
+    [ObservableProperty]
+    private ObservableCollection<CreditTransactionSummaryItem> _creditSummary = new();
+
+    [ObservableProperty]
+    private ObservableCollection<CreditTransactionHistoryItem> _creditHistory = new();
+
+    [ObservableProperty]
+    private ObservableCollection<AuditLogReportItem> _auditActivity = new();
+
+    [ObservableProperty]
+    private ObservableCollection<ImportReviewQueueReportItem> _importReviewQueue = new();
+
+    [ObservableProperty]
+    private ObservableCollection<CertificateOrderReportItem> _certificateOrders = new();
+
+    [ObservableProperty]
+    private ObservableCollection<PrepaidPositionReportItem> _prepaidPosition = new();
+
+    [ObservableProperty]
+    private ObservableCollection<BillableCertificateReportItem> _billableCertificates = new();
+
+    [ObservableProperty]
+    private ObservableCollection<TbcDeliveryReportItem> _tbcDeliveries = new();
+
+    [ObservableProperty]
+    private ObservableCollection<FundingSourceReportItem> _fundingSources = new();
+
+    [ObservableProperty]
+    private ObservableCollection<MissingDocumentReportItem> _missingDocuments = new();
+
+    [ObservableProperty]
+    private ObservableCollection<CreditReallocationReportItem> _creditReallocations = new();
+
+    [ObservableProperty]
+    private ObservableCollection<CertificateCreditPoolSummaryReportItem> _certificateCreditPoolSummaries = new();
+
+    [ObservableProperty]
+    private ObservableCollection<CreditConsumedWithoutCompletionReportItem> _creditsConsumedWithoutCompletion = new();
+
+    [ObservableProperty]
     private bool _includeCostsInWithdrawn = true;
 
-    public ReportsViewModel(ReportService reportService)
+    [ObservableProperty]
+    private bool _replacementsOnly;
+
+    [ObservableProperty]
+    private DateTime? _fromDate;
+
+    [ObservableProperty]
+    private DateTime? _toDate;
+
+    [ObservableProperty]
+    private bool _includeArchived;
+
+    [ObservableProperty]
+    private ObservableCollection<ReportItem> _reports = new();
+
+    [ObservableProperty]
+    private ReportItem? _selectedReport;
+
+    public ReportsViewModel(ReportService reportService, InvoicerReferenceExportService referenceExportService)
     {
         _reportService = reportService;
+        _referenceExportService = referenceExportService;
+        InitializeReports();
     }
 
-    protected override async Task InitialiseAsync()
+    private void InitializeReports()
     {
-        CompletedStudents = new ObservableCollection<Allocation>(await _reportService.GetCompletedStudentsAsync());
-        AwaitingOrder = new ObservableCollection<Allocation>(await _reportService.GetCertificatesAwaitingOrderAsync());
-        WithdrawnStudents = new ObservableCollection<Allocation>(await _reportService.GetWithdrawnStudentsAsync(IncludeCostsInWithdrawn));
-        NonCompletions = new ObservableCollection<Allocation>(await _reportService.GetNonCompletionsAsync());
-        AwaitingDelivery = new ObservableCollection<Allocation>(await _reportService.GetCertificatesAwaitingDeliveryAsync());
-        CertificatesDelivered = new ObservableCollection<Allocation>(await _reportService.GetCertificatesDeliveredAsync());
+        Reports = new ObservableCollection<ReportItem>(new[]
+        {
+            new ReportItem("CompletedStudents", "Completed Students", "Students"),
+            new ReportItem("AwaitingOrder", "Awaiting Certificate Order", "Students"),
+            new ReportItem("WithdrawnStudents", "Withdrawn Students", "Students"),
+            new ReportItem("NonCompletions", "Non-Completions", "Students"),
+            new ReportItem("AwaitingDelivery", "Awaiting Delivery", "Certificates"),
+            new ReportItem("CertificatesDelivered", "Certificates Delivered", "Certificates"),
+            new ReportItem("UpcomingDeliveries", "Upcoming Deliveries", "Deliveries"),
+            new ReportItem("CancelledDeliveries", "Cancelled Deliveries", "Deliveries"),
+            new ReportItem("CompletedDeliveries", "Completed Deliveries", "Deliveries"),
+            new ReportItem("TbcDeliveries", "TBC Deliveries", "Deliveries"),
+            new ReportItem("CapacityReport", "Capacity", "Deliveries"),
+            new ReportItem("ActiveAllocations", "Active Allocations", "Allocations"),
+            new ReportItem("TransferredAllocations", "Transferred Allocations", "Allocations"),
+            new ReportItem("CancelledAllocations", "Cancelled Allocations", "Allocations"),
+            new ReportItem("PlaceholderAllocations", "Placeholder Allocations", "Allocations"),
+            new ReportItem("Attendance", "Attendance", "Allocations"),
+            new ReportItem("CourseUtilization", "Course Utilization", "Allocations"),
+            new ReportItem("BudgetSummary", "Budget Summary", "Financial"),
+            new ReportItem("BudgetHistory", "Budget History", "Financial"),
+            new ReportItem("CreditSummary", "Credit Summary", "Financial"),
+            new ReportItem("CreditHistory", "Credit History", "Financial"),
+            new ReportItem("PrepaidPosition", "Prepaid Position", "Financial"),
+            new ReportItem("BillableCertificates", "Billable Certificates for Invoicer", "Financial"),
+            new ReportItem("FundingSources", "Funding Sources", "Financial"),
+            new ReportItem("CertificateCreditPoolSummary", "Certificate Credit Pool Summary", "Financial"),
+            new ReportItem("CreditReallocations", "Credit Reallocation History", "Financial"),
+            new ReportItem("CreditsConsumedWithoutCompletion", "Credits Consumed Without Completion", "Financial"),
+            new ReportItem("MissingDocuments", "Missing Documents", "Administration"),
+            new ReportItem("AuditActivity", "Audit Activity", "Administration"),
+            new ReportItem("ImportReviewQueue", "Import Review Queue", "Administration"),
+            new ReportItem("CertificateOrders", "Certificate Orders", "Administration"),
+        });
+
+        SelectedReport = Reports.First();
+    }
+
+    private async Task LoadAsync()
+    {
+        CompletedStudents = new ObservableCollection<Allocation>(await _reportService.GetCompletedStudentsAsync(FromDate, ToDate, IncludeArchived));
+        AwaitingOrder = new ObservableCollection<AwaitingOrderReportItem>(await _reportService.GetAwaitingOrderReportAsync(IncludeArchived));
+        WithdrawnStudents = new ObservableCollection<Allocation>(await _reportService.GetWithdrawnStudentsAsync(IncludeCostsInWithdrawn, FromDate, ToDate, IncludeArchived));
+        NonCompletions = new ObservableCollection<Allocation>(await _reportService.GetNonCompletionsAsync(FromDate, ToDate, IncludeArchived));
+        AwaitingDelivery = new ObservableCollection<Allocation>(await _reportService.GetCertificatesAwaitingDeliveryAsync(IncludeArchived));
+        CertificatesDelivered = new ObservableCollection<Allocation>(await _reportService.GetCertificatesDeliveredAsync(FromDate, ToDate, IncludeArchived));
+
+        UpcomingDeliveries = new ObservableCollection<DeliveryReportItem>(await _reportService.GetUpcomingCourseDeliveriesAsync(FromDate));
+        CancelledDeliveries = new ObservableCollection<DeliveryReportItem>(await _reportService.GetCancelledCourseDeliveriesAsync());
+        CompletedDeliveries = new ObservableCollection<DeliveryReportItem>(await _reportService.GetCompletedCourseDeliveriesAsync());
+        TbcDeliveries = new ObservableCollection<TbcDeliveryReportItem>(await _reportService.GetTbcCourseDeliveriesAsync());
+        CapacityReport = new ObservableCollection<DeliveryReportItem>(await _reportService.GetCapacityReportAsync());
+
+        ActiveAllocations = new ObservableCollection<AllocationReportItem>(await _reportService.GetActiveAllocationsAsync(IncludeArchived));
+        TransferredAllocations = new ObservableCollection<AllocationReportItem>(await _reportService.GetTransferredAllocationsAsync(IncludeArchived));
+        CancelledAllocations = new ObservableCollection<AllocationReportItem>(await _reportService.GetCancelledAllocationsAsync(IncludeArchived));
+        PlaceholderAllocations = new ObservableCollection<AllocationReportItem>(await _reportService.GetPlaceholderAllocationsAsync(IncludeArchived));
+        Attendance = new ObservableCollection<AllocationReportItem>(await _reportService.GetAttendanceReportAsync(IncludeArchived));
+
+        CourseUtilization = new ObservableCollection<CourseUtilizationReportItem>(await _reportService.GetCourseUtilizationReportAsync());
+
+        BudgetSummary = new ObservableCollection<BudgetTransactionSummaryItem>(await _reportService.GetBudgetTransactionSummaryAsync());
+        BudgetHistory = new ObservableCollection<BudgetTransactionHistoryItem>(await _reportService.GetBudgetTransactionHistoryAsync(FromDate, ToDate));
+
+        CreditSummary = new ObservableCollection<CreditTransactionSummaryItem>(await _reportService.GetCreditTransactionSummaryAsync());
+        CreditHistory = new ObservableCollection<CreditTransactionHistoryItem>(await _reportService.GetCreditTransactionHistoryAsync(FromDate, ToDate));
+        BillableCertificates = new ObservableCollection<BillableCertificateReportItem>(await _reportService.GetBillableCertificatesForInvoicerAsync(IncludeArchived));
+        FundingSources = new ObservableCollection<FundingSourceReportItem>(await _reportService.GetFundingSourcesAsync(FromDate, ToDate));
+        CertificateCreditPoolSummaries = new ObservableCollection<CertificateCreditPoolSummaryReportItem>(await _reportService.GetCertificateCreditPoolSummaryAsync());
+        CreditReallocations = new ObservableCollection<CreditReallocationReportItem>(await _reportService.GetCreditReallocationHistoryAsync(FromDate, ToDate));
+        CreditsConsumedWithoutCompletion = new ObservableCollection<CreditConsumedWithoutCompletionReportItem>(await _reportService.GetCreditsConsumedWithoutCompletionAsync());
+        MissingDocuments = new ObservableCollection<MissingDocumentReportItem>(await _reportService.GetMissingDocumentsAsync());
+
+        AuditActivity = new ObservableCollection<AuditLogReportItem>(await _reportService.GetAuditActivityReportAsync(FromDate, ToDate));
+        ImportReviewQueue = new ObservableCollection<ImportReviewQueueReportItem>(await _reportService.GetImportReviewQueueReportAsync());
+        CertificateOrders = new ObservableCollection<CertificateOrderReportItem>(await _reportService.GetCertificateOrderReportAsync(ReplacementsOnly ? true : null));
+
+        await LoadPrepaidPositionAsync();
+    }
+
+    private async Task LoadPrepaidPositionAsync()
+    {
+        var rows = await _reportService.GetPrepaidPositionByDeliveryAsync();
+        PrepaidPosition = new ObservableCollection<PrepaidPositionReportItem>(rows);
     }
 
     [RelayCommand]
-    private Task ExportCompletedCsv() => ExportCsv("ExportCompletedCsv", "completed-students.csv", CompletedStudents);
+    private async Task ExportCompletedCsv()
+    {
+        await ExportAsync("completed-students.csv", CompletedStudents.ToList());
+    }
 
     [RelayCommand]
-    private Task ExportWithdrawnCsv() => ExportCsv("ExportWithdrawnCsv", "withdrawn-students.csv", WithdrawnStudents);
+    private async Task ExportAwaitingOrderCsv()
+    {
+        await ExportAsync("awaiting-order.csv", AwaitingOrder.ToList());
+    }
 
     [RelayCommand]
-    private Task ExportNonCompletionsCsv() => ExportCsv("ExportNonCompletionsCsv", "non-completions.csv", NonCompletions);
+    private async Task ExportWithdrawnCsv()
+    {
+        await ExportAsync("withdrawn-students.csv", WithdrawnStudents.ToList());
+    }
 
     [RelayCommand]
-    private Task ExportAwaitingDeliveryCsv() => ExportCsv("ExportAwaitingDeliveryCsv", "awaiting-delivery.csv", AwaitingDelivery);
+    private async Task ExportNonCompletionsCsv()
+    {
+        await ExportAsync("non-completions.csv", NonCompletions.ToList());
+    }
 
     [RelayCommand]
-    private Task ExportDeliveredCsv() => ExportCsv("ExportDeliveredCsv", "certificates-delivered.csv", CertificatesDelivered);
+    private async Task ExportAwaitingDeliveryCsv()
+    {
+        await ExportAsync("awaiting-delivery.csv", AwaitingDelivery.ToList());
+    }
 
     [RelayCommand]
-    private Task Refresh() => GuardAsync("Refresh", InitialiseAsync);
+    private async Task ExportDeliveredCsv()
+    {
+        await ExportAsync("certificates-delivered.csv", CertificatesDelivered.ToList());
+    }
 
-    private Task ExportCsv(string operation, string fileName, IEnumerable<Allocation> rows) => GuardAsync(operation, async () =>
+    [RelayCommand]
+    private async Task ExportUpcomingDeliveriesCsv()
+    {
+        await ExportAsync("upcoming-deliveries.csv", UpcomingDeliveries.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCancelledDeliveriesCsv()
+    {
+        await ExportAsync("cancelled-deliveries.csv", CancelledDeliveries.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCompletedDeliveriesCsv()
+    {
+        await ExportAsync("completed-deliveries.csv", CompletedDeliveries.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCapacityCsv()
+    {
+        await ExportAsync("capacity-report.csv", CapacityReport.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportActiveAllocationsCsv()
+    {
+        await ExportAsync("active-allocations.csv", ActiveAllocations.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportTransferredAllocationsCsv()
+    {
+        await ExportAsync("transferred-allocations.csv", TransferredAllocations.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCancelledAllocationsCsv()
+    {
+        await ExportAsync("cancelled-allocations.csv", CancelledAllocations.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportPlaceholderAllocationsCsv()
+    {
+        await ExportAsync("placeholder-allocations.csv", PlaceholderAllocations.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportAttendanceCsv()
+    {
+        await ExportAsync("attendance.csv", Attendance.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCourseUtilizationCsv()
+    {
+        await ExportAsync("course-utilization.csv", CourseUtilization.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportBudgetSummaryCsv()
+    {
+        await ExportAsync("budget-summary.csv", BudgetSummary.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportBudgetHistoryCsv()
+    {
+        await ExportAsync("budget-history.csv", BudgetHistory.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCreditSummaryCsv()
+    {
+        await ExportAsync("credit-summary.csv", CreditSummary.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCreditHistoryCsv()
+    {
+        await ExportAsync("credit-history.csv", CreditHistory.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportPrepaidPositionCsv()
+    {
+        await ExportAsync("prepaid-position.csv", PrepaidPosition.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportBillableCertificatesCsv()
+    {
+        await ExportAsync("billable-certificates.csv", BillableCertificates.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportTbcDeliveriesCsv()
+    {
+        await ExportAsync("tbc-deliveries.csv", TbcDeliveries.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportFundingSourcesCsv()
+    {
+        await ExportAsync("funding-sources.csv", FundingSources.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCertificateCreditPoolSummaryCsv()
+    {
+        await ExportAsync("certificate-credit-pool-summary.csv", CertificateCreditPoolSummaries.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCreditReallocationsCsv()
+    {
+        await ExportAsync("credit-reallocations.csv", CreditReallocations.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCreditsConsumedWithoutCompletionCsv()
+    {
+        await ExportAsync("credits-consumed-without-completion.csv", CreditsConsumedWithoutCompletion.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportMissingDocumentsCsv()
+    {
+        await ExportAsync("missing-documents.csv", MissingDocuments.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportAuditActivityCsv()
+    {
+        await ExportAsync("audit-activity.csv", AuditActivity.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportImportReviewQueueCsv()
+    {
+        await ExportAsync("import-review-queue.csv", ImportReviewQueue.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportCertificateOrdersCsv()
+    {
+        await ExportAsync("certificate-orders.csv", CertificateOrders.ToList());
+    }
+
+    [RelayCommand]
+    private async Task ExportInvoiceManagerCostPosition()
+    {
+        var result = await _referenceExportService.ExportCostPositionSnapshotAsync("Manual export from Reports");
+        MessageBox.Show(
+            $"Invoice Manager cost position snapshot exported.\nPools: {result.PoolCount}\nCourses: {result.CourseCount}\nJSON: {Path.GetFileName(result.JsonPath)}\nCSV: {Path.GetFileName(result.CsvPath)}",
+            "Export Complete",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+    }
+
+    [RelayCommand]
+    private async Task Refresh()
+    {
+        await LoadAsync();
+    }
+
+    private async Task ExportAsync<T>(string fileName, List<T> records) where T : class
     {
         var dialog = new SaveFileDialog { Filter = "CSV files (*.csv)|*.csv", FileName = fileName };
-        if (dialog.ShowDialog() != true) return;
+        if (dialog.ShowDialog() == true)
+        {
+            var bytes = await _reportService.ExportCsvAsync(records);
+            await File.WriteAllBytesAsync(dialog.FileName, bytes);
+        }
+    }
 
-        var bytes = await _reportService.ExportCsvAsync(rows.ToList());
-        await File.WriteAllBytesAsync(dialog.FileName, bytes);
-    });
+    partial void OnIncludeCostsInWithdrawnChanged(bool value) => LoadAsync().ConfigureAwait(false);
+    partial void OnIncludeArchivedChanged(bool value) => LoadAsync().ConfigureAwait(false);
+    partial void OnReplacementsOnlyChanged(bool value) => LoadAsync().ConfigureAwait(false);
 
-    partial void OnIncludeCostsInWithdrawnChanged(bool value) => RefreshCommand.Execute(null);
+    protected override Task InitialiseAsync() => LoadAsync();
 }

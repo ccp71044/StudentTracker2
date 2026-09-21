@@ -8,5 +8,6 @@ public enum BudgetTransactionType
     ExpenseRecognised,
     Reimbursement,
     Adjustment,
+    ExpenseReversed,
     Reversal
 }

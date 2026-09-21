@@ -11,4 +11,4 @@ Output:
 - `release\StudentTracker-win-x64\` – application folder
 - `release\StudentTracker-win-x64.zip` – portable archive
 
-Distribute the zip and instruct users to extract it and run `StudentTracker.Wpf.exe`.
+Distribute the zip and instruct users to extract it and run `StudentTracker.exe`.

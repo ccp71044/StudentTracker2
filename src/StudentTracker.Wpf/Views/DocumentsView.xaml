@@ -1,30 +1,43 @@
-<UserControl x:Class="StudentTracker.Wpf.Views.DocumentsView"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             AutomationProperties.AutomationId="DocumentsView">
+<UserControl x:Class="StudentTracker.Wpf.Views.DocumentsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" AutomationProperties.AutomationId="DocumentsView">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <TextBlock Text="Documents" AutomationProperties.AutomationId="DocumentsHeader" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <TextBlock Text="Documents" AutomationProperties.AutomationId="DocumentsHeader" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0"/>
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="1">
-            <Button AutomationProperties.AutomationId="DocumentsAddDocumentButton" Content="Add Document" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddDocumentCommand}" />
-            <Button AutomationProperties.AutomationId="DocumentsViewDocumentButton" Content="View" Style="{StaticResource ActionButtonStyle}" Command="{Binding ViewDocumentCommand}" />
-            <Button AutomationProperties.AutomationId="DocumentsDeleteDocumentButton" Content="Delete" Style="{StaticResource ActionButtonStyle}" Command="{Binding DeleteDocumentCommand}" />
-            <Button AutomationProperties.AutomationId="DocumentsRefreshButton" Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" />
-            <TextBlock AutomationProperties.AutomationId="DocumentsErrorMessage" Text="{Binding ErrorMessage}" Foreground="#B00020" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
+            <Button Content="Add Document" Style="{StaticResource ActionButtonStyle}" Command="{Binding AddDocumentCommand}" AutomationProperties.AutomationId="AddDocumentButton" ToolTip="Upload a new document"/>
+            <Button Content="View" Style="{StaticResource ActionButtonStyle}" Command="{Binding ViewDocumentCommand}" AutomationProperties.AutomationId="ViewDocumentButton" ToolTip="Open the selected document"/>
+            <Button Content="Edit Metadata" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditDocumentCommand}" AutomationProperties.AutomationId="EditDocumentButton" ToolTip="Edit the selected document's metadata"/>
+            <Button Content="Link" Style="{StaticResource ActionButtonStyle}" Command="{Binding LinkDocumentCommand}" AutomationProperties.AutomationId="LinkDocumentButton" ToolTip="Link the selected document to a record"/>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,0"/>
+            <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="RefreshDocumentsButton"/>
+            <CheckBox Content="Show archived" IsChecked="{Binding ShowArchived}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="DocumentsShowArchivedCheckBox"/>
+            <ToggleButton Content="Edit Table" IsChecked="{Binding IsTableEditingEnabled}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="DocumentsEditTableToggleButton"/>
         </StackPanel>
-        <DataGrid AutomationProperties.AutomationId="DocumentsDocumentsGrid" ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True" 
-                 MouseDoubleClick="DataGrid_MouseDoubleClick">
+        <DataGrid ItemsSource="{Binding Documents}" SelectedItem="{Binding SelectedDocument}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" MouseDoubleClick="DataGrid_MouseDoubleClick" BeginningEdit="DataGrid_BeginningEdit" RowEditEnding="DataGrid_RowEditEnding">
+            <DataGrid.Style>
+                <Style TargetType="DataGrid">
+                    <Setter Property="IsReadOnly" Value="True"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsTableEditingEnabled}" Value="True"><Setter Property="IsReadOnly" Value="False"/></DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.Style>
+            <DataGrid.ContextMenu>
+                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                    <MenuItem Header="View" Command="{Binding ViewDocumentCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_View"/>
+                    <MenuItem Header="Edit metadata" Command="{Binding EditDocumentCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_EditMetadata"/>
+                    <MenuItem Header="Link to record" Command="{Binding LinkDocumentCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_Link"/>
+                    <Separator/>
+                    <MenuItem Header="Archive" Command="{Binding DeleteDocumentCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_Archive"/>
+                    <MenuItem Header="Restore" Command="{Binding RestoreDocumentCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_Restore"/>
+                    <MenuItem Header="Check missing files" Command="{Binding CheckMissingFilesCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_CheckMissingFiles"/>
+                    <MenuItem Header="Refresh" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="DocumentsContextMenu_Refresh"/>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="ID" Binding="{Binding DisplayId}" Width="100" />
-                <DataGridTextColumn Header="Name" Binding="{Binding DisplayName}" Width="250" />
-                <DataGridTextColumn Header="Original File" Binding="{Binding OriginalFileName}" Width="200" />
-                <DataGridTextColumn Header="Size" Binding="{Binding FileSize}" Width="100" />
-                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
-                <DataGridTextColumn Header="Received" Binding="{Binding ReceivedDate, StringFormat=dd/MM/yyyy}" Width="120" />
+                <DataGridTextColumn Header="ID" Binding="{Binding DisplayId}" Width="100" IsReadOnly="True"/><DataGridTextColumn Header="Name" Binding="{Binding DisplayName}" Width="250"/>
+                <DataGridTextColumn Header="Original File" Binding="{Binding OriginalFileName}" Width="200" IsReadOnly="True"/><DataGridTextColumn Header="Size" Binding="{Binding FileSize}" Width="100" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" IsReadOnly="True"/><DataGridTextColumn Header="Received" Binding="{Binding ReceivedDate, StringFormat=dd/MM/yyyy}" Width="120"/>
+                <DataGridTextColumn Header="Confidentiality" Binding="{Binding Confidentiality}" Width="120" IsReadOnly="True"/><DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*" IsReadOnly="True"/>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

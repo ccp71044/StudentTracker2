@@ -39,7 +39,7 @@ public class BudgetLedgerTests
         var allocation = await harness.Allocations.AllocateStudentAsync(delivery.Id, harness.AddStudent().Id, 200m, pool.Id);
         await harness.Budgets.CreateCommitmentAsync(pool.Id, allocation.Id, 200m);
 
-        await harness.Budgets.RecogniseExpenseAsync(pool.Id, allocation.Id, 200m);
+        await harness.Budgets.RecogniseExpenseAsync(pool.Id, allocation.Id);
 
         var balance = await harness.Budgets.GetBalanceAsync(pool.Id);
         Assert.Equal(200m, balance.ActualExpenditure);
@@ -58,7 +58,7 @@ public class BudgetLedgerTests
         var allocation = await harness.Allocations.AllocateStudentAsync(delivery.Id, harness.AddStudent().Id, 200m, pool.Id);
         await harness.Budgets.CreateCommitmentAsync(pool.Id, allocation.Id, 200m);
 
-        await harness.Budgets.ReleaseCommitmentAsync(pool.Id, allocation.Id, 200m, "Student withdrew");
+        await harness.Budgets.ReleaseCommitmentAsync(pool.Id, allocation.Id, "Student withdrew");
 
         var balance = await harness.Budgets.GetBalanceAsync(pool.Id);
         Assert.Equal(0m, balance.PendingCommitments);
@@ -73,7 +73,8 @@ public class BudgetLedgerTests
         await harness.Budgets.AddFundsAsync(pool.Id, 1000m);
         var delivery = harness.AddDelivery(200m);
         var allocation = await harness.Allocations.AllocateStudentAsync(delivery.Id, harness.AddStudent().Id, 200m, pool.Id);
-        var expense = await harness.Budgets.RecogniseExpenseAsync(pool.Id, allocation.Id, 200m);
+        await harness.Budgets.CreateCommitmentAsync(pool.Id, allocation.Id, 200m);
+        var expense = await harness.Budgets.RecogniseExpenseAsync(pool.Id, allocation.Id);
 
         await harness.Budgets.ReverseExpenseAsync(expense.Id, "Charged to the wrong pool");
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Serilog.Events;
 using StudentTracker.Data;
 using StudentTracker.Services;
 using StudentTracker.Wpf.ViewModels;
@@ -81,7 +82,18 @@ public partial class App : Application
             .WriteTo.File(
                 Path.Combine(location.LogsPath, "student-tracker-.log"),
                 rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 30)
+                retainedFileCountLimit: 30,
+                shared: true,
+                flushToDiskInterval: TimeSpan.FromSeconds(2),
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .WriteTo.File(
+                Path.Combine(location.LogsPath, "error-.log"),
+                restrictedToMinimumLevel: LogEventLevel.Error,
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 30,
+                shared: true,
+                flushToDiskInterval: TimeSpan.FromSeconds(2),
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
 
         Log.Information("Starting Student Tracker {Version}", AppVersion.Current);
@@ -147,6 +159,7 @@ public partial class App : Application
             return bootstrap.CreateContext();
         });
         services.AddScoped<DisplayIdGenerator>();
+        services.AddScoped<DisplayIdReconciliationService>();
         services.AddScoped<AuditService>();
         services.AddScoped<StudentService>();
         services.AddScoped<CourseService>();
@@ -155,15 +168,20 @@ public partial class App : Application
         services.AddScoped<BudgetService>();
         services.AddScoped<PricingService>();
         services.AddScoped<BudgetSummaryService>();
+        services.AddScoped<ClientPrepaidEntitlementService>();
+        services.AddScoped<InvoicerReferenceImportService>();
         services.AddScoped<CompletionPricingImporter>();
         services.AddScoped<ProviderCreditHistoryImporter>();
         services.AddScoped<CertificateService>();
         services.AddScoped<SignOffService>();
         services.AddScoped<DocumentService>();
+        services.AddScoped<IDocumentService>(provider => provider.GetRequiredService<DocumentService>());
         services.AddScoped<PdfService>();
         services.AddScoped<ReportService>();
         services.AddScoped<InvoicerService>();
+        services.AddScoped<InvoicerReferenceExportService>();
         services.AddScoped<BackupService>();
+        services.AddScoped<DataCutoverService>();
         services.AddScoped<ImportService>(provider => new ImportService(
             provider.GetRequiredService<StudentTrackerDbContext>(),
             provider.GetRequiredService<DisplayIdGenerator>(),
@@ -177,11 +195,21 @@ public partial class App : Application
         services.AddScoped<AllocationsViewModel>();
         services.AddScoped<AllocationEditViewModel>();
         services.AddScoped<CertificatesViewModel>();
+        services.AddScoped<CertificateOrderEditViewModel>();
+        services.AddScoped<CertificateDeliveryEditViewModel>();
         services.AddScoped<CreditsBudgetsViewModel>();
+        services.AddScoped<CreditPoolEditViewModel>();
         services.AddScoped<DocumentsViewModel>();
         services.AddScoped<ReportsViewModel>();
+        services.AddScoped<CompletionsViewModel>();
+        services.AddScoped<PoolPositionViewModel>();
+        services.AddScoped<InvoicerReferenceViewModel>();
         services.AddScoped<ImportExportViewModel>();
         services.AddScoped<SettingsViewModel>();
+        services.AddScoped<DataBrowserViewModel>();
+        services.AddScoped<StudentOverviewViewModel>();
+        services.AddScoped<CourseDeliveryOverviewViewModel>();
+        services.AddScoped<ImportReviewQueueViewModel>();
     }
 
     protected override void OnExit(ExitEventArgs e)

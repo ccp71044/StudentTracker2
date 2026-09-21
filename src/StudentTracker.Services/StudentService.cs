@@ -22,9 +22,9 @@ public class StudentService
         return await _context.Students.FindAsync(id);
     }
 
-    public async Task<List<Student>> SearchAsync(string? query)
+    public async Task<List<Student>> SearchAsync(string? query, bool includeArchived = false)
     {
-        var q = _context.Students.Where(s => !s.IsArchived).AsQueryable();
+        var q = _context.Students.Where(s => includeArchived || !s.IsArchived).AsQueryable();
         if (!string.IsNullOrWhiteSpace(query))
         {
             var lower = query.ToLower();
@@ -68,6 +68,20 @@ public class StudentService
     public async Task ArchiveAsync(Guid id, bool archived = true)
     {
         var student = await _context.Students.FindAsync(id) ?? throw new ArgumentException("Student not found");
+        if (archived)
+        {
+            var activeAllocations = await _context.Allocations.CountAsync(a => a.StudentId == id &&
+                a.AllocationStatus != Core.Enums.AllocationStatus.Cancelled &&
+                a.AllocationStatus != Core.Enums.AllocationStatus.Finalised &&
+                a.AllocationStatus != Core.Enums.AllocationStatus.Withdrawn &&
+                a.AllocationStatus != Core.Enums.AllocationStatus.Transferred);
+            if (activeAllocations > 0)
+            {
+                _audit.Record("ArchiveBlocked", "Student", student.Id, student.DisplayId, null, new { ActiveAllocations = activeAllocations });
+                await _context.SaveChangesAsync();
+                throw new InvalidOperationException($"Student has {activeAllocations} active allocation(s). Cancel or finalise them before archiving.");
+            }
+        }
         student.IsArchived = archived;
         student.IsActive = !archived;
         student.UpdatedAt = DateTime.UtcNow;

@@ -73,15 +73,93 @@ public class SignOffService
     public async Task<SignOff?> GetAsync(Guid id) => await _context.SignOffs
         .Include(s => s.Participants)
         .Include(s => s.CourseDelivery).ThenInclude(d => d!.CourseDefinition)
+        .Include(s => s.FileDocument)
         .FirstOrDefaultAsync(s => s.Id == id);
+
+    public async Task<List<SignOff>> GetForDeliveryAsync(Guid deliveryId) => await _context.SignOffs
+        .Where(s => s.CourseDeliveryId == deliveryId)
+        .Include(s => s.Participants)
+        .Include(s => s.FileDocument)
+        .OrderByDescending(s => s.Version)
+        .ToListAsync();
 
     public async Task LockAsync(Guid signOffId)
     {
         var signOff = await _context.SignOffs.FindAsync(signOffId) ?? throw new ArgumentException("Sign-off not found");
+        if (signOff.Status == SignOffStatus.Signed)
+            throw new InvalidOperationException("Sign-off is already locked.");
         signOff.Status = SignOffStatus.Signed;
         signOff.LockedDate = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         _audit.Record("Locked", "SignOff", signOff.Id, signOff.DisplayId);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateSignedDatesAsync(Guid signOffId, DateTime? trainerSignedDate, DateTime? authorisedSignedDate, DateTime? verifiedSignedDate)
+    {
+        var signOff = await _context.SignOffs.FindAsync(signOffId) ?? throw new ArgumentException("Sign-off not found");
+        if (signOff.Status == SignOffStatus.Signed)
+            throw new InvalidOperationException("Cannot update a locked sign-off.");
+        signOff.TrainerSignedDate = trainerSignedDate;
+        signOff.AuthorisedSignedDate = authorisedSignedDate;
+        signOff.VerifiedSignedDate = verifiedSignedDate;
+        signOff.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("UpdatedSignedDates", "SignOff", signOff.Id, signOff.DisplayId);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateDetailsAsync(Guid signOffId, string? trainerName, string? trainerDetails,
+        string? authorisedByName, string? authorisedByPosition,
+        string? verifiedByName, string? verifiedByPosition, string? notes)
+    {
+        var signOff = await _context.SignOffs.FindAsync(signOffId) ?? throw new ArgumentException("Sign-off not found");
+        if (signOff.Status == SignOffStatus.Signed)
+            throw new InvalidOperationException("Cannot update a locked sign-off.");
+        signOff.TrainerName = trainerName;
+        signOff.TrainerDetails = trainerDetails;
+        signOff.AuthorisedByName = authorisedByName;
+        signOff.AuthorisedByPosition = authorisedByPosition;
+        signOff.VerifiedByName = verifiedByName;
+        signOff.VerifiedByPosition = verifiedByPosition;
+        signOff.Notes = notes;
+        signOff.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("UpdatedDetails", "SignOff", signOff.Id, signOff.DisplayId);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task SetStatusReadyForSignatureAsync(Guid signOffId)
+    {
+        var signOff = await _context.SignOffs.FindAsync(signOffId) ?? throw new ArgumentException("Sign-off not found");
+        if (signOff.Status == SignOffStatus.Signed)
+            throw new InvalidOperationException("Cannot change status of a locked sign-off.");
+        signOff.Status = SignOffStatus.ReadyForSignature;
+        signOff.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("ReadyForSignature", "SignOff", signOff.Id, signOff.DisplayId);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task SupersedeAsync(Guid signOffId)
+    {
+        var signOff = await _context.SignOffs.FindAsync(signOffId) ?? throw new ArgumentException("Sign-off not found");
+        if (signOff.Status == SignOffStatus.Signed)
+            throw new InvalidOperationException("Cannot supersede a locked sign-off.");
+        signOff.Status = SignOffStatus.Superseded;
+        signOff.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("Superseded", "SignOff", signOff.Id, signOff.DisplayId);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task SetFileDocumentIdAsync(Guid signOffId, Guid documentId)
+    {
+        var signOff = await _context.SignOffs.FindAsync(signOffId) ?? throw new ArgumentException("Sign-off not found");
+        signOff.FileDocumentId = documentId;
+        signOff.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("LinkedDocument", "SignOff", signOff.Id, signOff.DisplayId, null, new { DocumentId = documentId });
         await _context.SaveChangesAsync();
     }
 

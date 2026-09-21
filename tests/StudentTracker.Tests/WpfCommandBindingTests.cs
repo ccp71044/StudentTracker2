@@ -13,7 +13,7 @@ public class WpfCommandBindingTests
         new(@"Command=""\{Binding (?<name>[A-Za-z0-9_]+)\}""", RegexOptions.Compiled);
 
     private static readonly Regex RelayCommandMethod =
-        new(@"\[RelayCommand[^\]]*\]\s*private\s+(?:async\s+)?[A-Za-z0-9_<>?\.]+\s+(?<name>\w+)\s*\(",
+        new(@"\[RelayCommand[^\]]*\]\s*(?:private|public|internal|protected)\s+(?:async\s+)?[A-Za-z0-9_<>?\.]+\s+(?<name>\w+)\s*\(",
             RegexOptions.Compiled);
 
     private static readonly Regex CommandProperty =
@@ -40,7 +40,11 @@ public class WpfCommandBindingTests
 
     private static HashSet<string> CommandNames(string source)
     {
-        var names = RelayCommandMethod.Matches(source).Select(m => m.Groups["name"].Value + "Command").ToList();
+        var names = RelayCommandMethod.Matches(source)
+            .Select(m => m.Groups["name"].Value)
+            .Select(name => name.EndsWith("Async", StringComparison.Ordinal) ? name[..^"Async".Length] : name)
+            .Select(name => name + "Command")
+            .ToList();
         names.AddRange(CommandProperty.Matches(source).Select(m => m.Groups["name"].Value));
         return names.ToHashSet(StringComparer.Ordinal);
     }
@@ -95,13 +99,39 @@ public class WpfCommandBindingTests
     }
 
     [Fact]
-    public void NoViewModelLoadsItsDataFromItsConstructor()
+    public void NoSectionViewModelLoadsItsDataFromItsConstructor()
     {
+        // MainViewModel builds every section up front, so a load started in a section's constructor
+        // races the others over the shared database context and, being fire-and-forget, fails in
+        // silence. Sections load through InitialiseAsync on first navigation instead.
+        var sections = File.ReadAllText(Path.Combine(WpfRoot, "ViewModels", "MainViewModel.cs"));
+
         foreach (var (name, source) in ViewModelSources())
         {
+            if (!sections.Contains($"{name} ")) continue;
+
+            var body = ConstructorBody(source, name[..^"ViewModel".Length] + "ViewModel");
             Assert.False(
-                source.Contains("().ConfigureAwait(false);"),
+                body.Contains("LoadAsync()") || body.Contains("RefreshAsync()"),
                 $"{name} starts a fire-and-forget load in its constructor; failures there are never seen.");
         }
+    }
+
+    private static string ConstructorBody(string source, string typeName)
+    {
+        var start = source.IndexOf($"public {typeName}(", StringComparison.Ordinal);
+        if (start < 0) return string.Empty;
+
+        var open = source.IndexOf('{', start);
+        if (open < 0) return string.Empty;
+
+        var depth = 0;
+        for (var i = open; i < source.Length; i++)
+        {
+            if (source[i] == '{') depth++;
+            else if (source[i] == '}' && --depth == 0) return source[open..i];
+        }
+
+        return string.Empty;
     }
 }

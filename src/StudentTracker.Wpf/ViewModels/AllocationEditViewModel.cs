@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using StudentTracker.Core.Enums;
 using StudentTracker.Core.Models;
+using StudentTracker.Data;
 using StudentTracker.Services;
 using StudentTracker.Wpf.Services;
 
@@ -15,6 +16,7 @@ public partial class AllocationEditViewModel : ViewModelBase, ICloseable
     private readonly CourseService _courseService;
     private readonly CreditService _creditService;
     private readonly BudgetService _budgetService;
+    private readonly StudentTrackerDbContext _context;
     private readonly Allocation _allocation;
     private readonly bool _isNew;
 
@@ -66,24 +68,13 @@ public partial class AllocationEditViewModel : ViewModelBase, ICloseable
     private string? _outcomeNotes;
 
     [ObservableProperty]
-    private CreditStatus _creditStatus = CreditStatus.None;
-
-    [ObservableProperty]
-    private CashCommitmentStatus _cashCommitmentStatus = CashCommitmentStatus.None;
-
-    [ObservableProperty]
-    private bool _reserveCredit;
-
-    [ObservableProperty]
-    private bool _createCashCommitment;
+    private string? _notes;
 
     public IReadOnlyList<AllocationStatus> AllocationStatusOptions { get; } = Enum.GetValues<AllocationStatus>();
     public IReadOnlyList<AttendanceStatus> AttendanceStatusOptions { get; } = Enum.GetValues<AttendanceStatus>();
     public IReadOnlyList<OutcomeStatus> OutcomeStatusOptions { get; } = Enum.GetValues<OutcomeStatus>();
-    public IReadOnlyList<CreditStatus> CreditStatusOptions { get; } = Enum.GetValues<CreditStatus>();
-    public IReadOnlyList<CashCommitmentStatus> CashCommitmentStatusOptions { get; } = Enum.GetValues<CashCommitmentStatus>();
 
-    public AllocationEditViewModel(Allocation allocation, AllocationService allocationService, StudentService studentService, CourseService courseService, CreditService creditService, BudgetService budgetService, bool isNew = false)
+    public AllocationEditViewModel(Allocation allocation, AllocationService allocationService, StudentService studentService, CourseService courseService, CreditService creditService, BudgetService budgetService, StudentTrackerDbContext context, bool isNew = false)
     {
         _allocation = allocation;
         _allocationService = allocationService;
@@ -91,6 +82,7 @@ public partial class AllocationEditViewModel : ViewModelBase, ICloseable
         _courseService = courseService;
         _creditService = creditService;
         _budgetService = budgetService;
+        _context = context;
         _isNew = isNew;
         Title = isNew ? "Add Allocation" : "Edit Allocation";
 
@@ -112,8 +104,7 @@ public partial class AllocationEditViewModel : ViewModelBase, ICloseable
             OutcomeStatus = _allocation.OutcomeStatus;
             OutcomeDate = _allocation.OutcomeDate;
             OutcomeNotes = _allocation.OutcomeNotes;
-            CreditStatus = _allocation.CreditStatus;
-            CashCommitmentStatus = _allocation.CashCommitmentStatus;
+            Notes = _allocation.Notes;
         }
     }
 
@@ -147,14 +138,14 @@ public partial class AllocationEditViewModel : ViewModelBase, ICloseable
 
         if (_isNew)
         {
-            await _allocationService.AllocateStudentAsync(
+            var result = await _allocationService.AllocateStudentAsync(
                 SelectedDelivery.Id,
                 SelectedStudent!.Id,
                 CertificateCost,
                 SelectedBudgetPool?.Id,
-                SelectedCreditPool?.Id,
-                ReserveCredit,
-                CreateCashCommitment);
+                SelectedCreditPool?.Id);
+            result.Notes = Notes;
+            await _context.SaveChangesAsync();
         }
         else
         {
@@ -177,9 +168,7 @@ public partial class AllocationEditViewModel : ViewModelBase, ICloseable
             _allocation.OutcomeStatus = OutcomeStatus;
             _allocation.OutcomeDate = OutcomeDate;
             _allocation.OutcomeNotes = OutcomeNotes;
-            _allocation.CreditStatus = CreditStatus;
-            _allocation.CashCommitmentStatus = CashCommitmentStatus;
-
+            _allocation.Notes = Notes;
             await _allocationService.MarkAttendanceAsync(_allocation.Id, AttendanceStatus, OutcomeNotes);
             await _allocationService.MarkOutcomeAsync(_allocation.Id, OutcomeStatus, null, OutcomeNotes, OutcomeDate);
         }

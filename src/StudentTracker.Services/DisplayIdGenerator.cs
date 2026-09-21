@@ -42,8 +42,12 @@ public class DisplayIdGenerator
         int max = 0;
         foreach (var id in existing)
         {
-            if (id.StartsWith(prefix) && int.TryParse(id[prefix.Length..], out var n))
-                max = Math.Max(max, n);
+            if (id.StartsWith(prefix))
+            {
+                var numberPart = id[prefix.Length..].TrimStart('-');
+                if (int.TryParse(numberPart, out var n) && n > 0)
+                    max = Math.Max(max, n);
+            }
         }
         return $"{prefix}-{max + 1:D4}";
     }

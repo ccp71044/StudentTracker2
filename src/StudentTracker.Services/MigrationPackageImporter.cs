@@ -25,16 +25,18 @@ public class MigrationPackageImporter
 
     public ImportResult ImportWorkbook(string xlsxPath)
     {
+        _reviewQueue.Clear();
         using var workbook = new XLWorkbook(xlsxPath);
         var sheets = workbook.Worksheets.Select(ws => ws.Name).ToList();
 
         ImportStudents(workbook.Worksheets.FirstOrDefault(ws => NameMatches(ws.Name, "Students", "Student", "Learners")));
         ImportCourseDefinitions(workbook.Worksheets.FirstOrDefault(ws => NameMatches(ws.Name, "Courses", "Course Definitions", "CourseDefinitions")));
         ImportCourseDeliveries(workbook.Worksheets.FirstOrDefault(ws => NameMatches(ws.Name, "Deliveries", "Course Deliveries", "CourseDeliveries")));
-        ImportAllocations(workbook.Worksheets.FirstOrDefault(ws => NameMatches(ws.Name, "Allocations", "Enrolments", "Bookings")));
-        ImportCreditPools(workbook.Worksheets.FirstOrDefault(ws => NameMatches(ws.Name, "Credit Pools", "CreditPools", "Certificate Credits")));
+        ImportCreditPools(workbook.Worksheets.FirstOrDefault(ws => NameMatches(ws.Name, "Credit Pools", "CreditPools", "Certificate Credits", "CertificateCreditPools")));
         ImportBudgetPools(workbook.Worksheets.FirstOrDefault(ws => NameMatches(ws.Name, "Budget Pools", "BudgetPools", "Budget")));
+        ImportAllocations(workbook.Worksheets.FirstOrDefault(ws => NameMatches(ws.Name, "Allocations", "Enrolments", "Bookings")));
 
+        var rowsProcessed = _context.ChangeTracker.Entries().Count(e => e.State == Microsoft.EntityFrameworkCore.EntityState.Added);
         _context.SaveChanges();
         _audit.Record("MigrationImported", "Import", Guid.Empty, null, null, new { Sheets = sheets });
         _context.SaveChanges();
@@ -42,7 +44,7 @@ public class MigrationPackageImporter
         return new ImportResult
         {
             Success = true,
-            RowsProcessed = _context.ChangeTracker.Entries().Count(e => e.State == Microsoft.EntityFrameworkCore.EntityState.Added),
+            RowsProcessed = rowsProcessed,
             Message = $"Imported workbook. Sheets found: {string.Join(", ", sheets)}. Review queue items: {_reviewQueue.Count}.",
             Errors = _reviewQueue.Select(r => r.Issue ?? string.Empty).ToList()
         };
@@ -65,7 +67,7 @@ public class MigrationPackageImporter
             {
                 var student = new Student
                 {
-                    DisplayId = _idGenerator.NextStudentId(),
+                    DisplayId = GetString(row, "DisplayId") ?? _idGenerator.NextStudentId(),
                     FirstName = GetString(row, "FirstName") ?? "Unknown",
                     LastName = GetString(row, "LastName") ?? "Unknown",
                     MiddleName = GetString(row, "MiddleName"),
@@ -77,7 +79,10 @@ public class MigrationPackageImporter
                     EmployeeNumber = GetString(row, "EmployeeNumber"),
                     USI = GetString(row, "USI"),
                     Notes = GetString(row, "Notes"),
-                    IsArchived = false
+                    Manager = GetString(row, "Manager"),
+                    GroupTag = GetString(row, "GroupTag"),
+                    IsActive = GetBoolean(row, "IsActive") ?? true,
+                    IsArchived = GetBoolean(row, "IsArchived") ?? false
                 };
                 _context.Students.Add(student);
             }
@@ -100,11 +105,14 @@ public class MigrationPackageImporter
                 {
                     CourseCode = GetString(row, "CourseCode") ?? "MIGRATED",
                     CourseTitle = GetString(row, "CourseTitle") ?? "Migrated Course",
+                    MatchKey = GetString(row, "MatchKey") ?? GetString(row, "CourseCode"),
                     Category = GetString(row, "Category"),
                     Provider = GetString(row, "Provider"),
                     DefaultCertificateCost = GetDecimal(row, "DefaultCertificateCost"),
+                    CourseDurationDays = GetDecimal(row, "CourseDurationDays") is decimal duration ? (int)duration : null,
                     DefaultCreditQuantity = GetDecimal(row, "DefaultCreditQuantity") ?? 1m,
                     Description = GetString(row, "Description"),
+                    IsActive = GetBoolean(row, "IsActive") ?? true,
                     Notes = GetString(row, "Notes")
                 };
                 _context.CourseDefinitions.Add(course);
@@ -128,7 +136,7 @@ public class MigrationPackageImporter
                 var course = _context.CourseDefinitions.Local.FirstOrDefault(c => c.CourseCode == courseCode);
                 var delivery = new CourseDelivery
                 {
-                    DisplayId = _idGenerator.NextDisplayId<CourseDelivery>("DEL"),
+                    DisplayId = GetString(row, "DisplayId") ?? _idGenerator.NextDisplayId<CourseDelivery>("DEL"),
                     CourseDefinitionId = course?.Id ?? Guid.Empty,
                     StartDate = GetDate(row, "StartDate"),
                     EndDate = GetDate(row, "EndDate"),
@@ -136,7 +144,9 @@ public class MigrationPackageImporter
                     TrainerName = GetString(row, "TrainerName"),
                     TrainerBusinessDetails = GetString(row, "TrainerBusinessDetails"),
                     Capacity = GetDecimal(row, "Capacity") is decimal cap ? (int)cap : (int?)null,
-                    DateStatus = ParseDateStatus(GetString(row, "DateStatus"))
+                    DateStatus = ParseDateStatus(GetString(row, "DateStatus")),
+                    DeliveryStatus = GetString(row, "DeliveryStatus") ?? "Scheduled",
+                    Notes = GetString(row, "Notes")
                 };
                 if (delivery.CourseDefinitionId == Guid.Empty)
                     QueueReview("CourseDelivery", row.RowNumber(), $"Course code {courseCode} not found; delivery queued for manual review.");
@@ -158,18 +168,40 @@ public class MigrationPackageImporter
         {
             try
             {
+                var studentDisplayId = GetString(row, "StudentDisplayId");
+                var deliveryDisplayId = GetString(row, "DeliveryDisplayId");
                 var studentName = GetString(row, "StudentName");
                 var courseCode = GetString(row, "CourseCode");
-                var student = _context.Students.Local.FirstOrDefault(s => (s.FirstName + " " + s.LastName).Equals(studentName, StringComparison.OrdinalIgnoreCase));
-                var course = _context.CourseDefinitions.Local.FirstOrDefault(c => c.CourseCode == courseCode);
+                var student = studentDisplayId != null
+                    ? _context.Students.Local.FirstOrDefault(s => string.Equals(s.DisplayId, studentDisplayId, StringComparison.OrdinalIgnoreCase))
+                    : _context.Students.Local.FirstOrDefault(s => string.Equals(s.FullName, studentName, StringComparison.OrdinalIgnoreCase));
+                var delivery = deliveryDisplayId != null
+                    ? _context.CourseDeliveries.Local.FirstOrDefault(d => string.Equals(d.DisplayId, deliveryDisplayId, StringComparison.OrdinalIgnoreCase))
+                    : FindDeliveryByCourseCode(courseCode);
+                var budgetPoolName = GetString(row, "BudgetPoolName");
+                var creditPoolName = GetString(row, "CreditPoolName");
+
+                if (studentDisplayId != null && student == null)
+                {
+                    QueueReview("Allocation", row.RowNumber(), $"Student {studentDisplayId} not found; allocation queued.");
+                    continue;
+                }
+
+                if (delivery == null)
+                {
+                    QueueReview("Allocation", row.RowNumber(), $"Course delivery {deliveryDisplayId ?? courseCode ?? "(unspecified)"} not found; allocation queued.");
+                    continue;
+                }
 
                 var alloc = new Allocation
                 {
-                    DisplayId = _idGenerator.NextDisplayId<Allocation>("ALL"),
+                    DisplayId = GetString(row, "DisplayId") ?? _idGenerator.NextDisplayId<Allocation>("ALL"),
                     StudentId = student?.Id,
-                    CourseDeliveryId = _context.CourseDeliveries.Local.FirstOrDefault()?.Id ?? Guid.Empty,
-                    PlaceholderName = student == null ? (GetString(row, "PlaceholderName") ?? GetString(row, "StudentName") ?? "Placeholder") : null,
+                    CourseDeliveryId = delivery.Id,
+                    PlaceholderName = student == null ? (GetString(row, "PlaceholderName") ?? studentName ?? "Placeholder") : null,
                     CertificateCost = GetDecimal(row, "CertificateCost"),
+                    BudgetPoolId = FindBudgetPool(budgetPoolName)?.Id,
+                    CreditPoolId = FindCreditPool(creditPoolName)?.Id,
                     AllocationStatus = ParseAllocationStatus(GetString(row, "AllocationStatus")),
                     OutcomeStatus = ParseOutcomeStatus(GetString(row, "OutcomeStatus")),
                     OutcomeDate = GetDate(row, "OutcomeDate"),
@@ -179,19 +211,14 @@ public class MigrationPackageImporter
                     CashCommitmentStatus = ParseCashCommitmentStatus(GetString(row, "CashCommitmentStatus")),
                     CertificateOrderStatus = ParseCertificateOrderStatus(GetString(row, "CertificateOrderStatus")),
                     CertificateDeliveryStatus = ParseCertificateDeliveryStatus(GetString(row, "CertificateDeliveryStatus")),
-                    IsBillable = GetString(row, "IsBillable")?.ToLowerInvariant() == "yes" || GetString(row, "IsBillable")?.ToLowerInvariant() == "true"
+                    IsBillable = GetBoolean(row, "IsBillable") ?? false
                 };
 
-                if (alloc.CourseDeliveryId == Guid.Empty && course != null)
-                {
-                    var delivery = _context.CourseDeliveries.Local.FirstOrDefault(d => d.CourseDefinitionId == course.Id);
-                    if (delivery != null) alloc.CourseDeliveryId = delivery.Id;
-                }
-
-                if (alloc.CourseDeliveryId == Guid.Empty)
-                    QueueReview("Allocation", row.RowNumber(), $"No course delivery found for {courseCode}; allocation queued.");
-                else
-                    _context.Allocations.Add(alloc);
+                if (budgetPoolName != null && alloc.BudgetPoolId == null)
+                    QueueReview("Allocation", row.RowNumber(), $"Budget pool {budgetPoolName} not found; allocation imported without a budget pool.");
+                if (creditPoolName != null && alloc.CreditPoolId == null)
+                    QueueReview("Allocation", row.RowNumber(), $"Credit pool {creditPoolName} not found; allocation imported without a credit pool.");
+                _context.Allocations.Add(alloc);
             }
             catch (Exception ex)
             {
@@ -213,6 +240,8 @@ public class MigrationPackageImporter
                     Name = GetString(row, "Name") ?? "Migrated Pool",
                     Provider = GetString(row, "Provider"),
                     UnitType = ParseCreditUnitType(GetString(row, "UnitType")),
+                    ExpiryDate = GetDate(row, "ExpiryDate"),
+                    IsActive = GetBoolean(row, "IsActive") ?? true,
                     Notes = GetString(row, "Notes")
                 };
                 _context.CertificateCreditPools.Add(pool);
@@ -252,6 +281,7 @@ public class MigrationPackageImporter
                 {
                     Name = GetString(row, "Name") ?? "Migrated Budget",
                     FinancialPeriod = GetString(row, "FinancialPeriod"),
+                    IsActive = GetBoolean(row, "IsActive") ?? true,
                     Notes = GetString(row, "Notes")
                 };
                 _context.BudgetPools.Add(pool);
@@ -275,6 +305,30 @@ public class MigrationPackageImporter
                 QueueReview("BudgetPool", row.RowNumber(), ex.Message);
             }
         }
+    }
+
+    private CourseDelivery? FindDeliveryByCourseCode(string? courseCode)
+    {
+        if (courseCode == null) return null;
+        var course = _context.CourseDefinitions.Local.FirstOrDefault(c => string.Equals(c.CourseCode, courseCode, StringComparison.OrdinalIgnoreCase))
+            ?? _context.CourseDefinitions.FirstOrDefault(c => c.CourseCode == courseCode);
+        if (course == null) return null;
+        return _context.CourseDeliveries.Local.FirstOrDefault(d => d.CourseDefinitionId == course.Id)
+            ?? _context.CourseDeliveries.FirstOrDefault(d => d.CourseDefinitionId == course.Id);
+    }
+
+    private BudgetPool? FindBudgetPool(string? name)
+    {
+        if (name == null) return null;
+        return _context.BudgetPools.Local.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
+            ?? _context.BudgetPools.FirstOrDefault(p => p.Name == name);
+    }
+
+    private CertificateCreditPool? FindCreditPool(string? name)
+    {
+        if (name == null) return null;
+        return _context.CertificateCreditPools.Local.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
+            ?? _context.CertificateCreditPools.FirstOrDefault(p => p.Name == name);
     }
 
     private void QueueReview(string entityType, int sourceRow, string issue)
@@ -311,7 +365,24 @@ public class MigrationPackageImporter
         var cell = row.Cell(col);
         if (cell.IsEmpty()) return null;
         if (cell.TryGetValue<DateTime>(out var dt)) return dt;
-        return null;
+        var value = cell.GetValue<string>().Trim();
+        return DateTime.TryParseExact(value, ["dd/MM/yyyy", "d/M/yyyy"], CultureInfo.InvariantCulture, DateTimeStyles.None, out dt)
+            ? dt
+            : null;
+    }
+
+    private bool? GetBoolean(IXLRow row, string columnName)
+    {
+        if (_headerMap == null || !_headerMap.TryGetValue(NormalizeHeader(columnName), out var col)) return null;
+        var cell = row.Cell(col);
+        if (cell.IsEmpty()) return null;
+        if (cell.TryGetValue<bool>(out var value)) return value;
+        return cell.GetValue<string>().Trim().ToLowerInvariant() switch
+        {
+            "true" or "yes" or "1" => true,
+            "false" or "no" or "0" => false,
+            _ => null
+        };
     }
 
     private decimal? GetDecimal(IXLRow row, string columnName)
@@ -335,7 +406,7 @@ public class MigrationPackageImporter
         _ => DeliveryDateStatus.Confirmed
     };
 
-    private static AllocationStatus ParseAllocationStatus(string? value) => Enum.TryParse<AllocationStatus>(value, true, out var v) ? v : AllocationStatus.Active;
+    private static AllocationStatus ParseAllocationStatus(string? value) => Enum.TryParse<AllocationStatus>(value, true, out var v) ? v : AllocationStatus.Enrolled;
     private static OutcomeStatus ParseOutcomeStatus(string? value) => Enum.TryParse<OutcomeStatus>(value, true, out var v) ? v : OutcomeStatus.Pending;
     private static AttendanceStatus ParseAttendanceStatus(string? value) => Enum.TryParse<AttendanceStatus>(value, true, out var v) ? v : AttendanceStatus.NotRecorded;
     private static CreditStatus ParseCreditStatus(string? value) => Enum.TryParse<CreditStatus>(value, true, out var v) ? v : CreditStatus.None;

@@ -18,9 +18,9 @@ public class CourseService
         _audit = audit;
     }
 
-    public async Task<List<CourseDefinition>> GetDefinitionsAsync(string? query = null)
+    public async Task<List<CourseDefinition>> GetDefinitionsAsync(string? query = null, bool includeInactive = false)
     {
-        var q = _context.CourseDefinitions.Where(c => c.IsActive).AsQueryable();
+        var q = _context.CourseDefinitions.Where(c => includeInactive || c.IsActive).AsQueryable();
         if (!string.IsNullOrWhiteSpace(query))
         {
             var lower = query.ToLower();
@@ -48,6 +48,26 @@ public class CourseService
         _audit.Record("Updated", "CourseDefinition", definition.Id, definition.CourseCode);
         await _context.SaveChangesAsync();
         return definition;
+    }
+
+    public async Task SetDefinitionActiveAsync(Guid id, bool active)
+    {
+        var definition = await _context.CourseDefinitions.FindAsync(id) ?? throw new ArgumentException("Course definition not found");
+        if (!active)
+        {
+            var activeDeliveries = await _context.CourseDeliveries.CountAsync(d => d.CourseDefinitionId == id && d.DeliveryStatus != "Cancelled" && d.DeliveryStatus != "Completed");
+            if (activeDeliveries > 0)
+            {
+                _audit.Record("ArchiveBlocked", "CourseDefinition", definition.Id, definition.CourseCode, null, new { ActiveDeliveries = activeDeliveries });
+                await _context.SaveChangesAsync();
+                throw new InvalidOperationException($"Course has {activeDeliveries} active delivery/deliveries. Complete or cancel them before archiving.");
+            }
+        }
+        definition.IsActive = active;
+        definition.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record(active ? "Restored" : "Archived", "CourseDefinition", definition.Id, definition.CourseCode);
+        await _context.SaveChangesAsync();
     }
 
     public async Task<List<CourseDelivery>> GetDeliveriesAsync(string? query = null)
@@ -89,5 +109,24 @@ public class CourseService
         _audit.Record("Updated", "CourseDelivery", delivery.Id, delivery.DisplayId);
         await _context.SaveChangesAsync();
         return delivery;
+    }
+
+    public async Task CancelDeliveryAsync(Guid id)
+    {
+        var delivery = await _context.CourseDeliveries.FindAsync(id) ?? throw new ArgumentException("Delivery not found");
+        var activeAllocations = await _context.Allocations.CountAsync(a => a.CourseDeliveryId == id &&
+            a.AllocationStatus != AllocationStatus.Cancelled && a.AllocationStatus != AllocationStatus.Finalised &&
+            a.AllocationStatus != AllocationStatus.Withdrawn && a.AllocationStatus != AllocationStatus.Transferred);
+        if (activeAllocations > 0)
+        {
+            _audit.Record("CancellationBlocked", "CourseDelivery", delivery.Id, delivery.DisplayId, null, new { ActiveAllocations = activeAllocations });
+            await _context.SaveChangesAsync();
+            throw new InvalidOperationException($"Delivery has {activeAllocations} active allocation(s). Resolve them before cancelling the delivery.");
+        }
+        delivery.DeliveryStatus = "Cancelled";
+        delivery.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        _audit.Record("Cancelled", "CourseDelivery", delivery.Id, delivery.DisplayId);
+        await _context.SaveChangesAsync();
     }
 }

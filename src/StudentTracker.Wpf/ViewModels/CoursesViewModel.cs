@@ -18,54 +18,134 @@ public partial class CoursesViewModel : ViewModelBase
     [ObservableProperty]
     private CourseDefinition? _selectedCourse;
 
+    [ObservableProperty]
+    private string _searchText = string.Empty;
+
+    [ObservableProperty]
+    private bool _showInactive;
+
+    [ObservableProperty]
+    private bool _isInlineEditingEnabled;
+
     public CoursesViewModel(CourseService courseService, IDialogService dialogService)
     {
         _courseService = courseService;
         _dialogService = dialogService;
     }
 
-    protected override async Task InitialiseAsync()
+    private async Task LoadAsync()
     {
-        var list = await _courseService.GetDefinitionsAsync();
+        var query = string.IsNullOrWhiteSpace(SearchText) ? null : SearchText;
+        var list = await _courseService.GetDefinitionsAsync(query: query, includeInactive: ShowInactive);
         Courses = new ObservableCollection<CourseDefinition>(list);
     }
 
     [RelayCommand]
-    private Task AddCourse() => GuardAsync("AddCourse", async () =>
+    private async Task Refresh()
+    {
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task Search()
+    {
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task AddCourse()
     {
         var vm = new CourseEditViewModel(new CourseDefinition(), _courseService, isNew: true);
         if (_dialogService.ShowDialog(vm) == true)
         {
-            await InitialiseAsync();
+            await LoadAsync();
         }
-    });
+    }
 
     [RelayCommand(CanExecute = nameof(CanEditOrDeleteCourse))]
-    private Task EditCourse() => GuardAsync("EditCourse", async () =>
+    private async Task EditCourse()
     {
         if (SelectedCourse == null) return;
         var vm = new CourseEditViewModel(SelectedCourse, _courseService, isNew: false);
         if (_dialogService.ShowDialog(vm) == true)
         {
-            await InitialiseAsync();
+            await LoadAsync();
         }
-    });
+    }
 
     [RelayCommand(CanExecute = nameof(CanEditOrDeleteCourse))]
-    private Task DeleteCourse() => GuardAsync("DeleteCourse", async () =>
+    private async Task AddDelivery()
     {
         if (SelectedCourse == null) return;
-        SelectedCourse.IsActive = false;
-        await _courseService.UpdateDefinitionAsync(SelectedCourse);
-        await InitialiseAsync();
-        SelectedCourse = null;
-    });
+        var delivery = new CourseDelivery { CourseDefinitionId = SelectedCourse.Id, CourseDefinition = SelectedCourse };
+        var vm = new DeliveryEditViewModel(delivery, _courseService, isNew: true);
+        await vm.LoadDataAsync();
+        vm.SelectedCourse = SelectedCourse;
+        if (_dialogService.ShowDialog(vm) == true)
+        {
+            await LoadAsync();
+        }
+    }
+
+    [RelayCommand]
+    private async Task CourseRowEditEnding(CourseDefinition? course)
+    {
+        if (course == null) return;
+        try
+        {
+            await _courseService.UpdateDefinitionAsync(course);
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The course changes could not be saved. The table has been reverted to the saved values.", ex);
+            await LoadAsync();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEditOrDeleteCourse))]
+    private async Task DeleteCourse()
+    {
+        if (SelectedCourse == null || !_dialogService.Confirm($"Archive course {SelectedCourse.CourseCode}? Historical deliveries will be retained.")) return;
+        try
+        {
+            await _courseService.SetDefinitionActiveAsync(SelectedCourse.Id, false);
+            await LoadAsync();
+            SelectedCourse = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The course could not be archived.", ex);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRestoreCourse))]
+    private async Task RestoreCourse()
+    {
+        if (SelectedCourse == null || !_dialogService.Confirm($"Restore course {SelectedCourse.CourseCode}?")) return;
+        try
+        {
+            await _courseService.SetDefinitionActiveAsync(SelectedCourse.Id, true);
+            await LoadAsync();
+            SelectedCourse = null;
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("The course could not be restored.", ex);
+        }
+    }
 
     private bool CanEditOrDeleteCourse => SelectedCourse != null;
+    private bool CanRestoreCourse => SelectedCourse?.IsActive == false;
+
+    partial void OnShowInactiveChanged(bool value) => LoadAsync().ConfigureAwait(false);
 
     partial void OnSelectedCourseChanged(CourseDefinition? value)
     {
         EditCourseCommand.NotifyCanExecuteChanged();
         DeleteCourseCommand.NotifyCanExecuteChanged();
+        RestoreCourseCommand.NotifyCanExecuteChanged();
+        AddDeliveryCommand.NotifyCanExecuteChanged();
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

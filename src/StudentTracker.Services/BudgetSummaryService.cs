@@ -25,12 +25,16 @@ public class BudgetSummaryService
     {
         var pools = await _context.BudgetPools.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
         var transactions = await _context.BudgetTransactions.ToListAsync();
+        var allocations = await _context.Allocations
+            .Where(a => a.BudgetPoolId != null)
+            .ToListAsync();
 
         return pools.Select(pool =>
         {
             var poolTransactions = transactions.Where(t => t.PoolId == pool.Id).ToList();
+            var poolAllocations = allocations.Where(a => a.BudgetPoolId == pool.Id).ToList();
             var added = poolTransactions.Where(t => t.TransactionType == BudgetTransactionType.FundsAdded).Sum(t => t.Amount);
-            var spent = -poolTransactions.Where(t => t.TransactionType == BudgetTransactionType.ExpenseRecognised).Sum(t => t.Amount);
+            var spent = -poolTransactions.Where(t => t.TransactionType == BudgetTransactionType.ExpenseRecognised || t.TransactionType == BudgetTransactionType.ExpenseReversed).Sum(t => t.Amount);
             var committed = -poolTransactions
                 .Where(t => t.TransactionType == BudgetTransactionType.CommitmentCreated || t.TransactionType == BudgetTransactionType.CommitmentReleased)
                 .Sum(t => t.Amount);
@@ -44,7 +48,12 @@ public class BudgetSummaryService
                 Name = pool.Name,
                 FundsAdded = added + adjustments,
                 Spent = spent,
-                Committed = committed
+                Committed = committed,
+                UnassignedPlaceholderPlaces = poolAllocations.Count(a => a.StudentId == null && !string.IsNullOrWhiteSpace(a.PlaceholderName)),
+                AssignedPendingPlaces = poolAllocations.Count(a => a.StudentId != null && a.OutcomeStatus == OutcomeStatus.Pending),
+                CompletedAwaitingManualSpend = poolAllocations.Count(a =>
+                    a.OutcomeStatus == OutcomeStatus.Completed &&
+                    a.CashCommitmentStatus != CashCommitmentStatus.Spent)
             };
         }).ToList();
     }
@@ -56,26 +65,29 @@ public class BudgetSummaryService
     public async Task<List<CompletionsRemaining>> GetCompletionsRemainingAsync(Guid? poolId = null)
     {
         var summaries = await GetPoolSummariesAsync();
-        var free = poolId.HasValue
-            ? summaries.Where(s => s.PoolId == poolId.Value).Sum(s => s.Free)
-            : summaries.Sum(s => s.Free);
+        if (poolId.HasValue)
+            summaries = summaries.Where(s => s.PoolId == poolId.Value).ToList();
 
         var prices = await _pricing.GetCurrentPricesAsync();
         var courses = await _context.CourseDefinitions
             .Where(c => c.IsActive && prices.Keys.Contains(c.Id))
             .ToListAsync();
 
-        return courses
-            .Where(c => prices[c.Id] > 0)
-            .Select(c => new CompletionsRemaining
-            {
-                CourseDefinitionId = c.Id,
-                CourseCode = c.CourseCode,
-                CourseTitle = c.CourseTitle,
-                CompletionPrice = prices[c.Id],
-                Remaining = free <= 0 ? 0 : (int)Math.Floor(free / prices[c.Id])
-            })
-            .OrderBy(c => c.CourseCode)
+        return summaries
+            .SelectMany(pool => courses
+                .Where(c => prices[c.Id] > 0)
+                .Select(c => new CompletionsRemaining
+                {
+                    PoolId = pool.PoolId,
+                    PoolName = pool.Name,
+                    CourseDefinitionId = c.Id,
+                    CourseCode = c.CourseCode,
+                    CourseTitle = c.CourseTitle,
+                    CompletionPrice = prices[c.Id],
+                    Remaining = pool.Free <= 0 ? 0 : (int)Math.Floor(pool.Free / prices[c.Id])
+                }))
+            .OrderBy(c => c.PoolName)
+            .ThenBy(c => c.CourseCode)
             .ToList();
     }
 
@@ -167,10 +179,16 @@ public class PoolSummary
     public decimal Committed { get; init; }
     public decimal Balance => FundsAdded - Spent;
     public decimal Free => Balance - Committed;
+    public decimal Available => Free;
+    public int UnassignedPlaceholderPlaces { get; init; }
+    public int AssignedPendingPlaces { get; init; }
+    public int CompletedAwaitingManualSpend { get; init; }
 }
 
 public class CompletionsRemaining
 {
+    public Guid PoolId { get; init; }
+    public string PoolName { get; init; } = string.Empty;
     public Guid CourseDefinitionId { get; init; }
     public string CourseCode { get; init; } = string.Empty;
     public string CourseTitle { get; init; } = string.Empty;
