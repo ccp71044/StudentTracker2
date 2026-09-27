@@ -6,6 +6,8 @@ namespace StudentTracker.Core.Models;
 public class CourseDelivery : EntityBase, IDisplayId
 {
     public string? DisplayId { get; set; }
+    /// <summary>The provider's own course number, used to match a delivery across provider exports.</summary>
+    public string? ProviderCourseId { get; set; }
     public Guid CourseDefinitionId { get; set; }
     public CourseDefinition? CourseDefinition { get; set; }
     public DateTime? StartDate { get; set; }

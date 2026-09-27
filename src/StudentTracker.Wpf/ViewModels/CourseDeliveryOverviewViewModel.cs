@@ -34,7 +34,6 @@ public partial class CourseDeliveryOverviewViewModel : ViewModelBase
     public CourseDeliveryOverviewViewModel(StudentTrackerDbContext context)
     {
         _context = context;
-        _ = LoadAsync();
     }
 
     private async Task LoadAsync()
@@ -104,6 +103,8 @@ public partial class CourseDeliveryOverviewViewModel : ViewModelBase
         delivery.Notes = CourseNotes;
         await _context.SaveChangesAsync();
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }
 
 public class DeliveryStudentItem

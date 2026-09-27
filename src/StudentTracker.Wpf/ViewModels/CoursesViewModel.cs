@@ -31,7 +31,6 @@ public partial class CoursesViewModel : ViewModelBase
     {
         _courseService = courseService;
         _dialogService = dialogService;
-        LoadAsync().ConfigureAwait(false);
     }
 
     private async Task LoadAsync()
@@ -147,4 +146,6 @@ public partial class CoursesViewModel : ViewModelBase
         RestoreCourseCommand.NotifyCanExecuteChanged();
         AddDeliveryCommand.NotifyCanExecuteChanged();
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

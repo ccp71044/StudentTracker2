@@ -77,7 +77,8 @@ public class BudgetTests
         var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
         var budgetService = new BudgetService(context, gen, audit);
-        var allocationService = new AllocationService(context, gen, audit, budgetService);
+        var creditService = TestServiceFactory.Credits(context, gen, audit);
+        var allocationService = new AllocationService(context, gen, audit, creditService, budgetService);
 
         var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Client Fund", Category = BudgetPoolCategory.ClientFunded, ClientName = "Acme" });
         await budgetService.AddFundsAsync(pool.Id, 1000m);
@@ -104,7 +105,8 @@ public class BudgetTests
         var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
         var budgetService = new BudgetService(context, gen, audit);
-        var allocationService = new AllocationService(context, gen, audit, budgetService);
+        var creditService = TestServiceFactory.Credits(context, gen, audit);
+        var allocationService = new AllocationService(context, gen, audit, creditService, budgetService);
 
         var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Small Budget" });
         await budgetService.AddFundsAsync(pool.Id, 100m);
@@ -126,7 +128,8 @@ public class BudgetTests
         var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
         var budgetService = new BudgetService(context, gen, audit);
-        var allocationService = new AllocationService(context, gen, audit, budgetService);
+        var creditService = TestServiceFactory.Credits(context, gen, audit);
+        var allocationService = new AllocationService(context, gen, audit, creditService, budgetService);
 
         var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" });
         await budgetService.AddFundsAsync(pool.Id, 1000m);
@@ -154,7 +157,8 @@ public class BudgetTests
         var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
         var budgetService = new BudgetService(context, gen, audit);
-        var allocationService = new AllocationService(context, gen, audit, budgetService);
+        var creditService = TestServiceFactory.Credits(context, gen, audit);
+        var allocationService = new AllocationService(context, gen, audit, creditService, budgetService);
 
         var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" });
         await budgetService.AddFundsAsync(pool.Id, 1000m);
@@ -184,7 +188,8 @@ public class BudgetTests
         var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
         var budgetService = new BudgetService(context, gen, audit);
-        var allocationService = new AllocationService(context, gen, audit, budgetService);
+        var creditService = TestServiceFactory.Credits(context, gen, audit);
+        var allocationService = new AllocationService(context, gen, audit, creditService, budgetService);
 
         var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" });
         await budgetService.AddFundsAsync(pool.Id, 1000m);
@@ -215,7 +220,8 @@ public class BudgetTests
         var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
         var budgetService = new BudgetService(context, gen, audit);
-        var allocationService = new AllocationService(context, gen, audit, budgetService);
+        var creditService = TestServiceFactory.Credits(context, gen, audit);
+        var allocationService = new AllocationService(context, gen, audit, creditService, budgetService);
 
         var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" });
         await budgetService.AddFundsAsync(pool.Id, 1000m);
@@ -245,7 +251,8 @@ public class BudgetTests
         var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
         var budgetService = new BudgetService(context, gen, audit);
-        var allocationService = new AllocationService(context, gen, audit, budgetService);
+        var creditService = TestServiceFactory.Credits(context, gen, audit);
+        var allocationService = new AllocationService(context, gen, audit, creditService, budgetService);
 
         var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" });
         await budgetService.AddFundsAsync(pool.Id, 1000m);
@@ -276,7 +283,8 @@ public class BudgetTests
         var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
         var budgetService = new BudgetService(context, gen, audit);
-        var allocationService = new AllocationService(context, gen, audit, budgetService);
+        var creditService = TestServiceFactory.Credits(context, gen, audit);
+        var allocationService = new AllocationService(context, gen, audit, creditService, budgetService);
 
         var pool = await budgetService.CreatePoolAsync(new BudgetPool { Name = "Budget" });
         await budgetService.AddFundsAsync(pool.Id, 1000m);

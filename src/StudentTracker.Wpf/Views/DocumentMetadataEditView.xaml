@@ -7,6 +7,6 @@
         <TextBlock Grid.Row="2" Text="Description:" Margin="0,6"/><TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Description}" Margin="8,4"/>
         <TextBlock Grid.Row="3" Text="Received date:" Margin="0,6"/><DatePicker Grid.Row="3" Grid.Column="1" SelectedDate="{Binding ReceivedDate}" Margin="8,4"/>
         <TextBlock Grid.Row="4" Text="Confidentiality:" Margin="0,6"/><TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Confidentiality}" Margin="8,4"/>
-        <TextBlock Grid.Row="5" Text="Notes:" Margin="0,6"/><StackPanel Grid.Row="5" Grid.Column="1"><TextBox Text="{Binding Notes}" AcceptsReturn="True" Height="70" Margin="8,4"/><StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="Save" Command="{Binding SaveCommand}" Style="{StaticResource ActionButtonStyle}"/><Button Content="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource ActionButtonStyle}"/></StackPanel></StackPanel>
+        <TextBlock Grid.Row="5" Text="Notes:" Margin="0,6"/><StackPanel Grid.Row="5" Grid.Column="1"><TextBox Text="{Binding Notes}" AcceptsReturn="True" Height="70" Margin="8,4"/><StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="Save" Command="{Binding SaveCommand}" Style="{StaticResource ActionButtonStyle}" AutomationProperties.AutomationId="DocumentMetadataEditSaveButton"/><Button Content="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource ActionButtonStyle}" AutomationProperties.AutomationId="DocumentMetadataEditCancelButton"/></StackPanel></StackPanel>
     </Grid>
 </UserControl>

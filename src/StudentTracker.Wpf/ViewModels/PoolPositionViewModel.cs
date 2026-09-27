@@ -36,7 +36,6 @@ public partial class PoolPositionViewModel : ViewModelBase
     public PoolPositionViewModel(ClientPrepaidEntitlementService entitlement)
     {
         _entitlement = entitlement;
-        _ = LoadAsync();
     }
 
     partial void OnSelectedPoolChanged(ClientPrepaidPool? value) => _ = RefreshAsync();
@@ -71,4 +70,6 @@ public partial class PoolPositionViewModel : ViewModelBase
 
         Funding = await _entitlement.CalculateFundingAsync(SelectedPool.Id, RequestedPlaces, NewPlacesToAdd);
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

@@ -57,7 +57,7 @@ public partial class BudgetPoolEditViewModel : ViewModelBase, ICloseable
     }
 
     [RelayCommand]
-    private async Task Save()
+    private Task Save() => GuardAsync("Save", async () =>
     {
         _pool.Name = Name;
         _pool.Description = Description;
@@ -77,7 +77,7 @@ public partial class BudgetPoolEditViewModel : ViewModelBase, ICloseable
         }
 
         RequestClose?.Invoke(true);
-    }
+    });
 
     [RelayCommand]
     private void Cancel()

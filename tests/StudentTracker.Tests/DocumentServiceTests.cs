@@ -46,7 +46,9 @@ public class DocumentServiceTests
         using var context = TestDbContextFactory.Create();
         context.AppSettings.Add(new() { BillableTrigger = "Manual" });
         var student = new Student { FirstName = "Test", LastName = "Student" };
-        var allocation = new Allocation { Student = student };
+        var course = new CourseDefinition { CourseCode = "C1", CourseTitle = "Course" };
+        var courseDelivery = new CourseDelivery { CourseDefinition = course };
+        var allocation = new Allocation { Student = student, CourseDelivery = courseDelivery };
         var order = new CertificateOrder { Allocation = allocation, Provider = "Provider" };
         var document = new Document
         {

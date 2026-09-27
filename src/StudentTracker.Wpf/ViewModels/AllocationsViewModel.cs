@@ -34,7 +34,6 @@ public partial class AllocationsViewModel : ViewModelBase
         _budgetService = budgetService;
         _dialogService = dialogService;
         _context = context;
-        LoadAsync().ConfigureAwait(false);
     }
 
     private async Task LoadAsync()
@@ -263,4 +262,6 @@ public partial class AllocationsViewModel : ViewModelBase
         MarkCostSpentCommand.NotifyCanExecuteChanged();
         ReverseSpentCostCommand.NotifyCanExecuteChanged();
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

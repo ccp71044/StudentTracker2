@@ -13,13 +13,16 @@ public class DisplayIdGeneratorTests
     {
         using var context = TestDbContextFactory.Create();
         var gen = new DisplayIdGenerator(context);
+        var pool = new BudgetPool { Name = "Pool" };
+        context.BudgetPools.Add(pool);
+        context.SaveChanges();
 
         for (int i = 0; i < 5; i++)
         {
             var tx = new BudgetTransaction
             {
                 DisplayId = gen.NextDisplayId<BudgetTransaction>("BTX"),
-                PoolId = Guid.NewGuid(),
+                PoolId = pool.Id,
                 TransactionType = BudgetTransactionType.FundsAdded,
                 Amount = 100m
             };
@@ -41,13 +44,16 @@ public class DisplayIdGeneratorTests
     {
         using var context = TestDbContextFactory.Create();
         var gen = new DisplayIdGenerator(context);
+        var pool = new CertificateCreditPool { Name = "Pool" };
+        context.CertificateCreditPools.Add(pool);
+        context.SaveChanges();
 
         for (int i = 0; i < 5; i++)
         {
             var tx = new CertificateCreditTransaction
             {
                 DisplayId = gen.NextDisplayId<CertificateCreditTransaction>("CTX"),
-                PoolId = Guid.NewGuid(),
+                PoolId = pool.Id,
                 TransactionType = CreditTransactionType.TopUp,
                 Amount = 1m,
                 Quantity = 1m

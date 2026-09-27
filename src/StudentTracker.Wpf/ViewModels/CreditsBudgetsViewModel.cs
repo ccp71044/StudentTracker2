@@ -50,7 +50,6 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
         _budgetSummaryService = budgetSummaryService;
         _reportService = reportService;
         _dialogService = dialogService;
-        LoadAsync().ConfigureAwait(false);
     }
 
     private async Task LoadAsync()
@@ -328,6 +327,8 @@ public partial class CreditsBudgetsViewModel : ViewModelBase
     }
 
     partial void OnShowInactiveChanged(bool value) => LoadAsync().ConfigureAwait(false);
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }
 
 public class BudgetPositionExportRow

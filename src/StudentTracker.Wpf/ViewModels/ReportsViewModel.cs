@@ -137,7 +137,6 @@ public partial class ReportsViewModel : ViewModelBase
         _reportService = reportService;
         _referenceExportService = referenceExportService;
         InitializeReports();
-        LoadAsync().ConfigureAwait(false);
     }
 
     private void InitializeReports()
@@ -444,4 +443,6 @@ public partial class ReportsViewModel : ViewModelBase
     partial void OnIncludeCostsInWithdrawnChanged(bool value) => LoadAsync().ConfigureAwait(false);
     partial void OnIncludeArchivedChanged(bool value) => LoadAsync().ConfigureAwait(false);
     partial void OnReplacementsOnlyChanged(bool value) => LoadAsync().ConfigureAwait(false);
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

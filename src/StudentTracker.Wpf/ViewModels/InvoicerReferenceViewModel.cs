@@ -27,7 +27,6 @@ public partial class InvoicerReferenceViewModel : ViewModelBase
     {
         _importService = importService;
         _exportService = exportService;
-        _ = LoadAsync();
     }
 
     private async Task LoadAsync()
@@ -71,4 +70,6 @@ public partial class InvoicerReferenceViewModel : ViewModelBase
 
         await RefreshAsync();
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

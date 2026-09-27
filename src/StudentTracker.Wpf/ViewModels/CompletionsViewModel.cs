@@ -49,7 +49,6 @@ public partial class CompletionsViewModel : ViewModelBase
         _budgetSummary = budgetSummary;
         _pricing = pricing;
         _courseService = courseService;
-        _ = LoadAsync();
     }
 
     partial void OnSelectedBudgetPoolChanged(PoolSummary? value) => _ = RecalculateAsync();
@@ -106,4 +105,6 @@ public partial class CompletionsViewModel : ViewModelBase
             StatusText = "No available funds for the selected budget.";
         }
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

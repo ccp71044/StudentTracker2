@@ -42,7 +42,6 @@ public partial class DeliveriesViewModel : ViewModelBase
         _documentService = documentService;
         _dialogService = dialogService;
         _context = context;
-        LoadAsync().ConfigureAwait(false);
     }
 
     private async Task LoadAsync()
@@ -176,4 +175,6 @@ public partial class DeliveriesViewModel : ViewModelBase
         AddAllocationCommand.NotifyCanExecuteChanged();
         RecordOfCompletionCommand.NotifyCanExecuteChanged();
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

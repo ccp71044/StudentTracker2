@@ -19,4 +19,9 @@ public class BudgetTransaction : EntityBase, IDisplayId
     public Invoice? Invoice { get; set; }
     public string? Reason { get; set; }
     public string? Notes { get; set; }
+
+    /// <summary>
+    /// Set on a <see cref="BudgetTransactionType.Reversal"/> row to identify the transaction it undoes.
+    /// </summary>
+    public Guid? ReversesTransactionId { get; set; }
 }

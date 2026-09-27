@@ -34,7 +34,6 @@ public partial class StudentOverviewViewModel : ViewModelBase
     public StudentOverviewViewModel(StudentTrackerDbContext context)
     {
         _context = context;
-        _ = LoadAsync();
     }
 
     private async Task LoadAsync()
@@ -115,6 +114,8 @@ public partial class StudentOverviewViewModel : ViewModelBase
         student.Notes = StudentNotes;
         await _context.SaveChangesAsync();
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }
 
 public class StudentCourseItem

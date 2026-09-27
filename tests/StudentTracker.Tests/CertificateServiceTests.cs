@@ -18,8 +18,8 @@ public class CertificateServiceTests
         var audit = new AuditService(context);
         var documentService = new DocumentService(context, new DataLocationService(context.AppSettings.First()), gen, audit);
         var budget = new BudgetService(context, gen, audit);
-        var allocation = new AllocationService(context, gen, audit, budget);
         var credit = new CreditService(context, gen, audit, documentService);
+        var allocation = new AllocationService(context, gen, audit, credit, budget);
         var certificate = new CertificateService(context, gen, credit, audit);
         return (context, credit, allocation, certificate, budget);
     }

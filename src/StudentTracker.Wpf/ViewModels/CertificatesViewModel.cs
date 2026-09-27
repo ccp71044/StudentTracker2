@@ -36,7 +36,6 @@ public partial class CertificatesViewModel : ViewModelBase
         _allocationService = allocationService;
         _documentService = documentService;
         _dialogService = dialogService;
-        LoadAsync().ConfigureAwait(false);
     }
 
     private async Task LoadAsync()
@@ -126,4 +125,6 @@ public partial class CertificatesViewModel : ViewModelBase
         ShowOrderDetailCommand.NotifyCanExecuteChanged();
         LoadDeliveryHistoryAsync().ConfigureAwait(false);
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

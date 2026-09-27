@@ -42,7 +42,6 @@ public partial class StudentsViewModel : ViewModelBase
         _budgetService = budgetService;
         _dialogService = dialogService;
         _context = context;
-        LoadAsync().ConfigureAwait(false);
     }
 
     private async Task LoadAsync()
@@ -167,4 +166,6 @@ public partial class StudentsViewModel : ViewModelBase
         ViewStudentCommand.NotifyCanExecuteChanged();
         AddAllocationCommand.NotifyCanExecuteChanged();
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

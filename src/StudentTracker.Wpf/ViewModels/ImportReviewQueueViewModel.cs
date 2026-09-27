@@ -33,7 +33,6 @@ public partial class ImportReviewQueueViewModel : ViewModelBase
     {
         _importService = importService;
         _dialogService = dialogService;
-        _ = LoadAsync();
     }
 
     private async Task LoadAsync()
@@ -72,4 +71,6 @@ public partial class ImportReviewQueueViewModel : ViewModelBase
         if (SelectedItem == null) return;
         Clipboard.SetText($"{SelectedItem.EntityType} {SelectedItem.SourceFileName} row {SelectedItem.SourceRow}: {SelectedItem.Issue}");
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

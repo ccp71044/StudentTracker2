@@ -14,12 +14,18 @@ public class ReportService
     private readonly StudentTrackerDbContext _context;
     private readonly BudgetSummaryService _budgetSummary;
     private readonly PricingService _pricing;
+    private readonly CreditService _credits;
+    private readonly BudgetService _budgets;
+    private readonly DocumentService _documents;
 
-    public ReportService(StudentTrackerDbContext context, BudgetSummaryService budgetSummary, PricingService pricing)
+    public ReportService(StudentTrackerDbContext context, BudgetSummaryService budgetSummary, PricingService pricing, CreditService credits, BudgetService budgets, DocumentService documents)
     {
         _context = context;
         _budgetSummary = budgetSummary;
         _pricing = pricing;
+        _credits = credits;
+        _budgets = budgets;
+        _documents = documents;
     }
 
     #region Legacy allocation reports
@@ -47,11 +53,18 @@ public class ReportService
         if (to.HasValue) q = q.Where(a => a.OutcomeDate < to.Value.Date.AddDays(1));
         if (!includeArchived) q = q.Where(a => a.Student == null || !a.Student.IsArchived);
         var list = await q.ToListAsync();
-        if (withCosts)
-            list = list.Where(a => a.CertificateCost > 0 && a.CashCommitmentStatus == CashCommitmentStatus.Spent).ToList();
-        else
-            list = list.Where(a => a.CertificateCost == 0 || a.CashCommitmentStatus != CashCommitmentStatus.Spent).ToList();
-        return list;
+        var ids = list.Select(a => a.Id).ToList();
+        var lossAllocationIds = await _context.CertificateCreditTransactions
+            .Where(t => t.IsCreditLoss && t.AllocationId.HasValue && ids.Contains(t.AllocationId.Value))
+            .Select(t => t.AllocationId!.Value)
+            .Distinct()
+            .ToListAsync();
+
+        bool HasCost(Allocation a) =>
+            (a.CertificateCost > 0 && a.CashCommitmentStatus == CashCommitmentStatus.Spent) ||
+            lossAllocationIds.Contains(a.Id);
+
+        return list.Where(a => HasCost(a) == withCosts).ToList();
     }
 
     public async Task<List<Allocation>> GetNonCompletionsAsync(DateTime? from = null, DateTime? to = null, bool includeArchived = false)
@@ -775,4 +788,185 @@ public class ReportService
         return ms.ToArray();
     }
     #endregion
+
+    #region Design-section reports retained from the ledger work
+
+    /// <summary>
+    /// 21. Documents whose managed file is absent from disk (distinct from
+    /// <see cref="GetMissingDocumentsAsync"/>, which lists completed allocations with no paperwork).
+    /// </summary>
+    public async Task<List<Document>> GetMissingDocumentFilesAsync()
+    {
+        var documents = await _context.Documents
+            .Where(d => d.Status != DocumentStatus.Archived)
+            .ToListAsync();
+        return documents
+            .Where(d => d.Status == DocumentStatus.Missing || !File.Exists(_documents.GetFullPath(d)))
+            .ToList();
+    }
+
+    // 25. Audit Activity
+    public async Task<List<AuditLog>> GetAuditActivityAsync(DateTime? from = null, DateTime? to = null, string? entityType = null)
+    {
+        var query = _context.AuditLogs.AsQueryable();
+        if (from.HasValue) query = query.Where(l => l.Timestamp >= from);
+        if (to.HasValue) query = query.Where(l => l.Timestamp <= to);
+        if (!string.IsNullOrWhiteSpace(entityType)) query = query.Where(l => l.EntityType == entityType);
+        return await query.OrderByDescending(l => l.Timestamp).ToListAsync();
+    }
+
+    // 24. Billable Certificates for Invoicer
+    public Task<List<Allocation>> GetBillableCertificatesAsync(bool includeExported = false)
+    {
+        var query = Allocations().Where(a => a.IsBillable);
+        if (!includeExported) query = query.Where(a => a.ExportedInBatchId == null);
+        return query.OrderBy(a => a.BillableDate).ToListAsync();
+    }
+
+    // 17 & 19. Budget Summary / Actual vs Forecast
+    public async Task<List<BudgetSummaryRow>> GetBudgetSummaryAsync()
+    {
+        var pools = await _context.BudgetPools.OrderBy(p => p.Name).ToListAsync();
+        var rows = new List<BudgetSummaryRow>();
+        foreach (var pool in pools)
+        {
+            var balance = await _budgets.GetBalanceAsync(pool.Id);
+            rows.Add(new BudgetSummaryRow(pool.Name, balance.FundsAdded, balance.ActualExpenditure,
+                balance.PendingCommitments, balance.ActualAvailable, balance.ForecastAvailable));
+        }
+        return rows;
+    }
+
+    // 10. Certificates Awaiting Order
+    public Task<List<Allocation>> GetCertificatesAwaitingOrderAsync() =>
+        Allocations()
+            .Where(a => a.OutcomeStatus == OutcomeStatus.Completed
+                        && (a.CertificateOrderStatus == CertificateOrderStatus.NotReady
+                            || a.CertificateOrderStatus == CertificateOrderStatus.Ready))
+            .ToListAsync();
+
+    // 11. Certificates Ordered
+    public async Task<List<CertificateOrder>> GetCertificatesOrderedAsync(DateTime? from = null, DateTime? to = null)
+    {
+        var query = _context.CertificateOrders
+            .Where(o => o.Status == CertificateOrderStatus.Ordered)
+            .AsQueryable();
+        if (from.HasValue) query = query.Where(o => o.OrderedDate >= from);
+        if (to.HasValue) query = query.Where(o => o.OrderedDate <= to);
+        return await query.OrderByDescending(o => o.OrderedDate).ToListAsync();
+    }
+
+    // 14. Certificate Credit Pool Summary
+    public async Task<List<CreditPoolSummaryRow>> GetCreditPoolSummaryAsync()
+    {
+        var pools = await _context.CertificateCreditPools.OrderBy(p => p.Name).ToListAsync();
+        var rows = new List<CreditPoolSummaryRow>();
+        foreach (var pool in pools)
+        {
+            var balance = await _credits.GetBalanceAsync(pool.Id);
+            rows.Add(new CreditPoolSummaryRow(pool.Name, pool.Provider, balance.Loaded, balance.Allocated,
+                balance.Consumed, balance.Expired, balance.Unavailable, balance.Available));
+        }
+        return rows;
+    }
+
+    // 3. Course Delivery Outcomes
+    public Task<List<Allocation>> GetDeliveryOutcomesAsync(Guid deliveryId) =>
+        Allocations()
+            .Where(a => a.CourseDeliveryId == deliveryId && a.OutcomeStatus != OutcomeStatus.Pending)
+            .OrderBy(a => a.OutcomeStatus)
+            .ToListAsync();
+
+    // 21. Invoice Reconciliation
+    public async Task<List<InvoiceReconciliationRow>> GetInvoiceReconciliationAsync()
+    {
+        var invoices = await _context.Invoices.OrderByDescending(i => i.InvoiceDate).ToListAsync();
+        var creditByInvoice = (await _context.CertificateCreditTransactions
+                .Where(t => t.InvoiceId != null)
+                .Select(t => new { t.InvoiceId, t.Amount })
+                .ToListAsync())
+            .GroupBy(t => t.InvoiceId!.Value)
+            .ToDictionary(g => g.Key, g => g.Sum(x => Math.Abs(x.Amount)));
+
+        return invoices.Select(i =>
+        {
+            var matched = creditByInvoice.TryGetValue(i.Id, out var value) ? value : 0m;
+            return new InvoiceReconciliationRow(
+                i.InvoiceNumber,
+                i.Customer,
+                i.InvoiceDate,
+                i.TotalAmount ?? 0m,
+                i.AmountAssignedToStudentTracker ?? 0m,
+                matched,
+                (i.AmountAssignedToStudentTracker ?? 0m) - matched);
+        }).ToList();
+    }
+
+    // 2. Course Delivery Participant List
+    public Task<List<Allocation>> GetParticipantListAsync(Guid deliveryId) =>
+        Allocations().Where(a => a.CourseDeliveryId == deliveryId).OrderBy(a => a.AllocatedAt).ToListAsync();
+
+    // 18. Pending Commitments
+    public Task<List<BudgetTransaction>> GetPendingCommitmentsAsync(Guid? poolId = null)
+    {
+        var query = _context.BudgetTransactions
+            .Where(t => t.TransactionType == BudgetTransactionType.CommitmentCreated);
+        if (poolId.HasValue) query = query.Where(t => t.PoolId == poolId);
+        return query.OrderByDescending(t => t.TransactionDate).ToListAsync();
+    }
+
+    // 1. Student Course History
+    public Task<List<Allocation>> GetStudentCourseHistoryAsync(Guid studentId) =>
+        Allocations().Where(a => a.StudentId == studentId).OrderByDescending(a => a.AllocatedAt).ToListAsync();
+
+    // 23. TBC Course Deliveries
+    public Task<List<CourseDelivery>> GetTbcDeliveriesAsync() =>
+        _context.CourseDeliveries
+            .Include(d => d.CourseDefinition)
+            .Where(d => d.DateStatus == DeliveryDateStatus.TBC
+                        || d.DateStatus == DeliveryDateStatus.Blank
+                        || d.StartDate == null)
+            .OrderBy(d => d.DisplayId)
+            .ToListAsync();
+
+    private IQueryable<Allocation> Allocations() => _context.Allocations
+        .Include(a => a.Student)
+        .Include(a => a.OutcomeReason)
+        .Include(a => a.CourseDelivery).ThenInclude(d => d!.CourseDefinition);
+
+    private static IQueryable<Allocation> ApplyOutcomeDates(IQueryable<Allocation> query, DateTime? from, DateTime? to)
+    {
+        if (from.HasValue) query = query.Where(a => a.OutcomeDate >= from);
+        if (to.HasValue) query = query.Where(a => a.OutcomeDate <= to);
+        return query;
+    }
+
+    #endregion
 }
+
+public record CreditPoolSummaryRow(
+    string PoolName,
+    string? Provider,
+    decimal Loaded,
+    decimal Allocated,
+    decimal Consumed,
+    decimal Expired,
+    decimal Unavailable,
+    decimal Available);
+
+public record BudgetSummaryRow(
+    string PoolName,
+    decimal FundsAdded,
+    decimal ActualExpenditure,
+    decimal PendingCommitments,
+    decimal ActualAvailable,
+    decimal ForecastAvailable);
+
+public record InvoiceReconciliationRow(
+    string? InvoiceNumber,
+    string? Customer,
+    DateTime? InvoiceDate,
+    decimal TotalAmount,
+    decimal AssignedToStudentTracker,
+    decimal MatchedToCredits,
+    decimal Unmatched);

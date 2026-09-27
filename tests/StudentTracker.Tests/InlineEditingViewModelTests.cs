@@ -43,15 +43,6 @@ public class InlineEditingViewModelTests
         }
     }
 
-    private static async Task WaitForAnyItemAsync<T>(Func<IEnumerable<T>> getItems)
-    {
-        for (var i = 0; i < 50; i++)
-        {
-            if (getItems().Any()) return;
-            await Task.Delay(50);
-        }
-    }
-
     [Fact]
     public async Task InlineEditing_IsDisabledByDefault()
     {
@@ -60,10 +51,9 @@ public class InlineEditingViewModelTests
         var dialog = new FakeDialogService();
         var vm = new StudentsViewModel(service, null!, null!, null!, null!, dialog, context);
 
-        Assert.False(vm.IsInlineEditingEnabled);
+        await vm.EnsureInitialisedAsync();
 
-        // Give the view-model's background load a moment to finish before disposing the context.
-        await Task.Delay(200);
+        Assert.False(vm.IsInlineEditingEnabled);
     }
 
     [Fact]
@@ -81,7 +71,7 @@ public class InlineEditingViewModelTests
         var vmService = CreateStudentService(vmContext);
         var dialog = new FakeDialogService();
         var vm = new StudentsViewModel(vmService, null!, null!, null!, null!, dialog, vmContext);
-        await WaitForAnyItemAsync(() => vm.Students);
+        await vm.EnsureInitialisedAsync();
 
         var student = vm.Students.First();
         student.FirstName = "Janet";
@@ -119,7 +109,7 @@ public class InlineEditingViewModelTests
         var vmService = CreateCourseService(vmContext);
         var dialog = new FakeDialogService();
         var vm = new CoursesViewModel(vmService, dialog);
-        await WaitForAnyItemAsync(() => vm.Courses);
+        await vm.EnsureInitialisedAsync();
 
         var course = vm.Courses.First();
         course.CourseTitle = "New Title";
@@ -151,7 +141,7 @@ public class InlineEditingViewModelTests
         var vmService = CreateCourseService(vmContext);
         var dialog = new FakeDialogService();
         var vm = new DeliveriesViewModel(vmService, null!, null!, null!, null!, null!, null!, null!, dialog, vmContext);
-        await WaitForAnyItemAsync(() => vm.Deliveries);
+        await vm.EnsureInitialisedAsync();
 
         var delivery = vm.Deliveries.First();
         delivery.Location = "Melbourne";

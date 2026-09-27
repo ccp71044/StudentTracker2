@@ -98,9 +98,9 @@
                 <TextBlock Text="Participants" FontWeight="Bold" Margin="0,12,0,4" />
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                     <Button Content="Select All" Style="{StaticResource ActionButtonStyle}" Command="{Binding SelectAllCommand}"
-                            IsEnabled="{Binding IsEditable}" />
+                            IsEnabled="{Binding IsEditable}" AutomationProperties.AutomationId="SignOffEditSelectAllButton"/>
                     <Button Content="Select None" Style="{StaticResource ActionButtonStyle}" Command="{Binding SelectNoneCommand}"
-                            IsEnabled="{Binding IsEditable}" />
+                            IsEnabled="{Binding IsEditable}" AutomationProperties.AutomationId="SignOffEditSelectNoneButton"/>
                 </StackPanel>
                 <DataGrid ItemsSource="{Binding Allocations}" AutoGenerateColumns="False"
                           CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="False"
@@ -119,16 +119,16 @@
         <!-- Action Buttons -->
         <WrapPanel HorizontalAlignment="Right" Grid.Row="2" Margin="0,10,0,0">
             <Button Content="Generate PDF" Style="{StaticResource ActionButtonStyle}" Command="{Binding GeneratePdfCommand}"
-                    Visibility="{Binding IsEditable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    Visibility="{Binding IsEditable, Converter={StaticResource BooleanToVisibilityConverter}}" AutomationProperties.AutomationId="SignOffEditGeneratePdfButton"/>
             <Button Content="Import Signed PDF" Style="{StaticResource ActionButtonStyle}" Command="{Binding ImportSignedPdfCommand}"
-                    Visibility="{Binding HasSignOff, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    Visibility="{Binding HasSignOff, Converter={StaticResource BooleanToVisibilityConverter}}" AutomationProperties.AutomationId="SignOffEditImportSignedPdfButton"/>
             <Button Content="Open PDF" Style="{StaticResource ActionButtonStyle}" Command="{Binding OpenPdfCommand}"
-                    Visibility="{Binding HasSignOff, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    Visibility="{Binding HasSignOff, Converter={StaticResource BooleanToVisibilityConverter}}" AutomationProperties.AutomationId="SignOffEditOpenPdfButton"/>
             <Button Content="Save Details" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveDetailsCommand}"
-                    Visibility="{Binding HasSignOff, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    Visibility="{Binding HasSignOff, Converter={StaticResource BooleanToVisibilityConverter}}" AutomationProperties.AutomationId="SignOffEditSaveDetailsButton"/>
             <Button Content="Lock as Signed" Style="{StaticResource ActionButtonStyle}" Command="{Binding LockAsSignedCommand}"
-                    Visibility="{Binding HasSignOff, Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <Button Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" />
+                    Visibility="{Binding HasSignOff, Converter={StaticResource BooleanToVisibilityConverter}}" AutomationProperties.AutomationId="SignOffEditLockAsSignedButton"/>
+            <Button Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" AutomationProperties.AutomationId="SignOffEditCancelButton"/>
         </WrapPanel>
     </Grid>
 </UserControl>

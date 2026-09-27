@@ -17,7 +17,8 @@ public class AllensCostSnapshotTests
         var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
         var budget = new BudgetService(context, gen, audit);
-        var allocation = new AllocationService(context, gen, audit, budget);
+        var credit = TestServiceFactory.Credits(context, gen, audit);
+        var allocation = new AllocationService(context, gen, audit, credit, budget);
         return (context, allocation, budget);
     }
 

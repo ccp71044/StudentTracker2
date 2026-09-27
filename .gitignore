@@ -32,3 +32,5 @@ generate_icon.py
 testdata/
 *.xlsx
 !sample-data/*.xlsx
+release/ui-test-results/
+ui-test-artifacts/

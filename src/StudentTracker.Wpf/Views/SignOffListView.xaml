@@ -10,12 +10,12 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock Text="{Binding Title}" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
+        <TextBlock Text="{Binding Title}" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" AutomationProperties.AutomationId="SignOffListHeader" />
         <TextBlock Text="{Binding DeliveryInfo}" Margin="0,0,0,8" Grid.Row="1" />
         <StackPanel Orientation="Horizontal" Margin="0,4" Grid.Row="2">
-            <Button Content="Generate New" Style="{StaticResource ActionButtonStyle}" Command="{Binding GenerateNewCommand}" />
-            <Button Content="Edit / View" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditSignOffCommand}" />
-            <Button Content="Open PDF" Style="{StaticResource ActionButtonStyle}" Command="{Binding OpenPdfCommand}" />
+            <Button Content="Generate New" Style="{StaticResource ActionButtonStyle}" Command="{Binding GenerateNewCommand}" AutomationProperties.AutomationId="SignOffListGenerateNewButton"/>
+            <Button Content="Edit / View" Style="{StaticResource ActionButtonStyle}" Command="{Binding EditSignOffCommand}" AutomationProperties.AutomationId="SignOffListEditSignOffButton"/>
+            <Button Content="Open PDF" Style="{StaticResource ActionButtonStyle}" Command="{Binding OpenPdfCommand}" AutomationProperties.AutomationId="SignOffListOpenPdfButton"/>
         </StackPanel>
         <DataGrid ItemsSource="{Binding SignOffs}" SelectedItem="{Binding SelectedSignOff}" AutoGenerateColumns="False"
                   IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" Grid.Row="3" Margin="0,4">
@@ -32,7 +32,7 @@
             </DataGrid.Columns>
         </DataGrid>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="4" Margin="0,10,0,0">
-            <Button Content="Close" Style="{StaticResource ActionButtonStyle}" Command="{Binding CloseCommand}" />
+            <Button Content="Close" Style="{StaticResource ActionButtonStyle}" Command="{Binding CloseCommand}" AutomationProperties.AutomationId="SignOffListCloseButton"/>
         </StackPanel>
     </Grid>
 </UserControl>

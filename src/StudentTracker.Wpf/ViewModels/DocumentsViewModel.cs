@@ -32,7 +32,6 @@ public partial class DocumentsViewModel : ViewModelBase
     {
         _documentService = documentService;
         _dialogService = dialogService;
-        LoadAsync().ConfigureAwait(false);
     }
 
     private async Task LoadAsync()
@@ -174,4 +173,6 @@ public partial class DocumentsViewModel : ViewModelBase
         DeleteDocumentCommand.NotifyCanExecuteChanged();
         RestoreDocumentCommand.NotifyCanExecuteChanged();
     }
+
+    protected override Task InitialiseAsync() => LoadAsync();
 }

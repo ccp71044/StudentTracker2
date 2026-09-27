@@ -10,7 +10,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Text="{Binding Title}" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
+        <TextBlock Text="{Binding Title}" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0"  AutomationProperties.AutomationId="DataBrowserHeader"/>
 
         <TextBlock Text="{Binding StatusText}" Grid.Row="1" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8" />
 
@@ -25,7 +25,7 @@
                          SelectedItem="{Binding SelectedTable, Mode=TwoWay}"
                          BorderThickness="0"
                          Background="Transparent"
-                         AutomationProperties.AutomationId="DataBrowserTableList" />
+                        AutomationProperties.AutomationId="DataBrowserTableList" />
             </Border>
 
             <Border Grid.Column="1" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6">
@@ -38,7 +38,7 @@
                           CanUserReorderColumns="True"
                           CanUserResizeColumns="True"
                           GridLinesVisibility="Horizontal"
-                          AutomationProperties.AutomationId="DataBrowserGrid">
+                         AutomationProperties.AutomationId="DataBrowserGrid">
                     <DataGrid.ContextMenu>
                         <ContextMenu>
                             <MenuItem Header="_Add Row" Command="{Binding AddRowCommand}" AutomationProperties.AutomationId="DataBrowserContextMenu_AddRow" />

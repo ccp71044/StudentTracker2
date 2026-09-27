@@ -106,8 +106,14 @@ public partial class StudentEditViewModel : ViewModelBase, ICloseable
     }
 
     [RelayCommand]
-    private async Task Save()
+    private Task Save() => GuardAsync("Save", async () =>
     {
+        if (string.IsNullOrWhiteSpace(FirstName) || string.IsNullOrWhiteSpace(LastName))
+        {
+            ErrorMessage = "First name and last name are required.";
+            return;
+        }
+
         _student.FirstName = FirstName;
         _student.MiddleName = MiddleName;
         _student.LastName = LastName;
@@ -138,7 +144,7 @@ public partial class StudentEditViewModel : ViewModelBase, ICloseable
         }
 
         RequestClose?.Invoke(true);
-    }
+    });
 
     [RelayCommand]
     private void Cancel()

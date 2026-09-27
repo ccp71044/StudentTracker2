@@ -13,7 +13,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Text="{Binding Title}" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0" />
+        <TextBlock Text="{Binding Title}" Style="{StaticResource ViewHeaderStyle}" Grid.Row="0"  AutomationProperties.AutomationId="CarryForwardHeader"/>
 
         <TextBlock Text="Carry this unassigned placeholder to another delivery of the same course." Grid.Row="1"
                    TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8" />
@@ -26,8 +26,8 @@
                   DisplayMemberPath="DisplayId" VerticalAlignment="Top" Margin="0,4" />
 
         <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-            <Button Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveCommand}" />
-            <Button Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" />
+            <Button Content="Save" Style="{StaticResource ActionButtonStyle}" Command="{Binding SaveCommand}" AutomationProperties.AutomationId="CarryForwardSaveButton"/>
+            <Button Content="Cancel" Style="{StaticResource ActionButtonStyle}" Command="{Binding CancelCommand}" AutomationProperties.AutomationId="CarryForwardCancelButton"/>
         </StackPanel>
     </Grid>
 </UserControl>

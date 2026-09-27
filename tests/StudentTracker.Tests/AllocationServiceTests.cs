@@ -17,7 +17,8 @@ public class AllocationServiceTests
         var gen = new DisplayIdGenerator(context);
         var audit = new AuditService(context);
         var budget = new BudgetService(context, gen, audit);
-        var service = new AllocationService(context, gen, audit, budget);
+        var credit = TestServiceFactory.Credits(context, gen, audit);
+        var service = new AllocationService(context, gen, audit, credit, budget);
         return (context, service);
     }
 

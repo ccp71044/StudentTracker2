@@ -38,8 +38,14 @@ public class CertificateService
             .ToListAsync();
     }
 
-    public async Task<CertificateOrder> OrderCertificateAsync(Guid allocationId, string provider, string? externalReference = null, string? notes = null, bool isReplacement = false, string? replacementReason = null, bool overrideEligibility = false)
+    public Task<CertificateOrder> OrderCertificateAsync(Guid allocationId, string provider, string? externalReference = null, string? notes = null, bool isReplacement = false, string? replacementReason = null, bool overrideEligibility = false)
+        => DbTransactionScope.RunAsync(_context, () => OrderCertificateCoreAsync(allocationId, provider, externalReference, notes, isReplacement, replacementReason, overrideEligibility));
+
+    private async Task<CertificateOrder> OrderCertificateCoreAsync(Guid allocationId, string provider, string? externalReference, string? notes, bool isReplacement, string? replacementReason, bool overrideEligibility)
     {
+        if (isReplacement && string.IsNullOrWhiteSpace(replacementReason))
+            throw new InvalidOperationException("A replacement certificate order requires a reason.");
+
         var allocation = await _context.Allocations
             .Include(a => a.CourseDelivery).ThenInclude(d => d!.CourseDefinition)
             .FirstOrDefaultAsync(a => a.Id == allocationId) ?? throw new ArgumentException("Allocation not found");
@@ -56,6 +62,8 @@ public class CertificateService
         if (allocation.CreditPoolId == null) throw new InvalidOperationException("No credit pool linked to allocation.");
 
         var cost = allocation.CertificateCost ?? allocation.CourseDelivery?.CourseDefinition?.DefaultCertificateCost ?? 0m;
+        var reserved = await _creditService.GetReservedForAllocationAsync(allocation.CreditPoolId.Value, allocationId);
+        var creditAmount = reserved > 0m ? reserved : await _creditService.GetUnitAmountAsync(allocation.CreditPoolId.Value, cost);
         var order = new CertificateOrder
         {
             DisplayId = _idGenerator.NextDisplayId<CertificateOrder>("ORD"),
@@ -72,7 +80,7 @@ public class CertificateService
         _context.CertificateOrders.Add(order);
         await _context.SaveChangesAsync();
 
-        await _creditService.ConsumeAsync(allocation.CreditPoolId.Value, allocationId, Math.Abs(cost), 1, notes, CreditTransactionType.OrderConsume);
+        await _creditService.ConsumeAsync(allocation.CreditPoolId.Value, allocationId, creditAmount, 1, notes, CreditTransactionType.OrderConsume);
         allocation.CertificateOrderStatus = CertificateOrderStatus.Ordered;
         allocation.CertificateDeliveryStatus = CertificateDeliveryStatus.Awaiting;
         allocation.UpdatedAt = DateTime.UtcNow;
@@ -90,7 +98,10 @@ public class CertificateService
         return order;
     }
 
-    public async Task<CertificateDelivery> RecordDeliveryAsync(Guid certificateOrderId, DateTime deliveredDate, string method, string deliveredTo, string? notes = null, Guid? evidenceDocumentId = null, string? recipientDetails = null)
+    public Task<CertificateDelivery> RecordDeliveryAsync(Guid certificateOrderId, DateTime deliveredDate, string method, string deliveredTo, string? notes = null, Guid? evidenceDocumentId = null, string? recipientDetails = null)
+        => DbTransactionScope.RunAsync(_context, () => RecordDeliveryCoreAsync(certificateOrderId, deliveredDate, method, deliveredTo, notes, evidenceDocumentId, recipientDetails));
+
+    private async Task<CertificateDelivery> RecordDeliveryCoreAsync(Guid certificateOrderId, DateTime deliveredDate, string method, string deliveredTo, string? notes, Guid? evidenceDocumentId, string? recipientDetails)
     {
         var order = await _context.CertificateOrders
             .Include(o => o.Allocation)
@@ -103,6 +114,9 @@ public class CertificateService
             if (evidenceDocument.Status != DocumentStatus.Active)
                 throw new InvalidOperationException("Certificate evidence must be an active document.");
         }
+
+        if (order.Status != CertificateOrderStatus.Ordered)
+            throw new InvalidOperationException("Only an ordered certificate can be recorded as delivered.");
 
         var delivery = new CertificateDelivery
         {
@@ -157,8 +171,8 @@ public class CertificateService
 
     public async Task UpdateBillableAsync(Allocation allocation)
     {
-        var settings = await _context.AppSettings.FirstAsync();
-        var trigger = settings.BillableTrigger;
+        var settings = await _context.AppSettings.FirstOrDefaultAsync();
+        var trigger = settings?.BillableTrigger ?? "Ordered";
         bool shouldBeBillable = trigger switch
         {
             "Ordered" => allocation.CertificateOrderStatus == CertificateOrderStatus.Ordered,
