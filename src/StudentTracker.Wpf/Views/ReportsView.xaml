@@ -80,6 +80,7 @@
                 <CheckBox Content="Include archived students" IsChecked="{Binding IncludeArchived}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="ReportsIncludeArchivedCheckBox" />
 
                 <Button Content="Apply / Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="ReportsRefreshButton" />
+                <TextBlock Text="{Binding ErrorMessage}" AutomationProperties.AutomationId="ReportsErrorMessage" Foreground="#B00020" TextWrapping="Wrap" MaxWidth="420" VerticalAlignment="Center" Margin="10,0,0,0" />
             </StackPanel>
         </Border>
 

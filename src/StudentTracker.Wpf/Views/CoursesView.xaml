@@ -20,6 +20,7 @@
             <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="RefreshCoursesButton" />
             <CheckBox Content="Show inactive" IsChecked="{Binding ShowInactive}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="CoursesShowInactiveCheckBox" />
             <CheckBox Content="Edit Table" IsChecked="{Binding IsInlineEditingEnabled}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="CoursesEditTableCheckBox" />
+            <TextBlock Text="{Binding ErrorMessage}" AutomationProperties.AutomationId="CoursesErrorMessage" Foreground="#B00020" TextWrapping="Wrap" MaxWidth="420" VerticalAlignment="Center" Margin="10,0,0,0" />
         </StackPanel>
         <DataGrid x:Name="CoursesDataGrid" ItemsSource="{Binding Courses}" SelectedItem="{Binding SelectedCourse}" AutoGenerateColumns="False" Grid.Row="2" Margin="10"
                  IsReadOnly="{Binding IsInlineEditingEnabled, Converter={StaticResource InvertedBooleanConverter}}"

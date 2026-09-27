@@ -27,7 +27,7 @@ public class BackupAndImportTests : UiTest
     });
 
     [Theory]
-    [InlineData("ImportWorkbookButton")]
+    [InlineData("ImportMigrationPackageButton")]
     [InlineData("ImportCompletionPricingButton")]
     [InlineData("ImportCreditHistoryButton")]
     [InlineData("RestoreBackupButton")]
@@ -53,7 +53,7 @@ public class BackupAndImportTests : UiTest
     public void ExportInvoicerBatch_ReportsWhatItDid() => Run(() =>
     {
         Fixture.Navigate("ImportExportButton", "ImportExportHeader");
-        Fixture.Click(Fixture.GetMainWindow(), "ExportInvoicerButton");
+        Fixture.Click(Fixture.GetMainWindow(), "ExportInvoicerBatchButton");
         Thread.Sleep(2000);
 
         DismissDialogs();

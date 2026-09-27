@@ -14,7 +14,10 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Completions" FontSize="20" FontWeight="Bold" Margin="0,0,0,12" AutomationProperties.AutomationId="CompletionsHeader" />
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <TextBlock Text="Completions" FontSize="20" FontWeight="Bold" Margin="0,0,0,12" AutomationProperties.AutomationId="CompletionsHeader" />
+            <TextBlock Text="{Binding ErrorMessage}" AutomationProperties.AutomationId="CompletionsErrorMessage" Foreground="#B00020" TextWrapping="Wrap" MaxWidth="420" VerticalAlignment="Center" Margin="12,0,0,0" />
+        </StackPanel>
 
         <Grid Grid.Row="1" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>

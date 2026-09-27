@@ -15,8 +15,9 @@
             <Button Content="New Order" Style="{StaticResource ActionButtonStyle}" Command="{Binding NewOrderCommand}" AutomationProperties.AutomationId="CertificatesNewOrderButton" ToolTip="Create a new certificate order" />
             <Button Content="Record Delivery" Style="{StaticResource ActionButtonStyle}" Command="{Binding RecordDeliveryCommand}" AutomationProperties.AutomationId="CertificatesRecordDeliveryButton" ToolTip="Record a delivery for the selected order" />
             <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="RefreshCertificatesButton" />
+            <TextBlock Text="{Binding ErrorMessage}" AutomationProperties.AutomationId="CertificatesErrorMessage" Foreground="#B00020" TextWrapping="Wrap" MaxWidth="420" VerticalAlignment="Center" Margin="10,0,0,0" />
         </StackPanel>
-        <DataGrid ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True"
+        <DataGrid x:Name="CertificateOrdersDataGrid" ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder}" AutoGenerateColumns="False" Grid.Row="2" Margin="10" IsReadOnly="True"
                   MouseDoubleClick="DataGrid_MouseDoubleClick">
             <DataGrid.ContextMenu>
                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
@@ -42,7 +43,7 @@
             <TextBlock FontWeight="Bold" Text="Delivery history" VerticalAlignment="Center" />
             <Button Content="View Evidence" Margin="12,0,0,0" Command="{Binding ViewSelectedEvidenceCommand}" AutomationProperties.AutomationId="CertificatesViewSelectedEvidenceButton"/>
         </StackPanel>
-        <DataGrid Grid.Row="4" Margin="10" ItemsSource="{Binding DeliveryHistory}" SelectedItem="{Binding SelectedDelivery}" AutoGenerateColumns="False" IsReadOnly="True">
+        <DataGrid x:Name="CertificateDeliveriesDataGrid" Grid.Row="4" Margin="10" ItemsSource="{Binding DeliveryHistory}" SelectedItem="{Binding SelectedDelivery}" AutoGenerateColumns="False" IsReadOnly="True">
             <DataGrid.ContextMenu>
                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                     <MenuItem Header="View evidence" Command="{Binding ViewSelectedEvidenceCommand}" />

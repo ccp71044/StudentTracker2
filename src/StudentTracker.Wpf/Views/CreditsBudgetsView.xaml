@@ -15,6 +15,7 @@
             <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,0" />
             <ToggleButton Content="Edit Budget Table" IsChecked="{Binding IsBudgetTableEditingEnabled}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="EditBudgetTableToggleButton" />
             <CheckBox Content="Show inactive" IsChecked="{Binding ShowInactive}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="ShowInactiveBudgetPoolsCheckBox" />
+            <TextBlock Text="{Binding ErrorMessage}" AutomationProperties.AutomationId="CreditsBudgetsErrorMessage" Foreground="#B00020" TextWrapping="Wrap" MaxWidth="420" VerticalAlignment="Center" Margin="10,0,0,0" />
         </StackPanel>
         <TabControl Grid.Row="2" Margin="10">
             <TabItem Header="Certificate Credit Pools">

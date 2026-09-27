@@ -17,6 +17,7 @@
             <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,0" />
             <Button Content="Refresh" Style="{StaticResource ActionButtonStyle}" Command="{Binding RefreshCommand}" AutomationProperties.AutomationId="RefreshDeliveriesButton" />
             <CheckBox Content="Edit Table" IsChecked="{Binding IsInlineEditingEnabled}" VerticalAlignment="Center" Margin="10,0" AutomationProperties.AutomationId="DeliveriesEditTableCheckBox" />
+            <TextBlock Text="{Binding ErrorMessage}" AutomationProperties.AutomationId="DeliveriesErrorMessage" Foreground="#B00020" TextWrapping="Wrap" MaxWidth="420" VerticalAlignment="Center" Margin="10,0,0,0" />
         </StackPanel>
         <DataGrid x:Name="DeliveriesDataGrid" ItemsSource="{Binding Deliveries}" SelectedItem="{Binding SelectedDelivery}" AutoGenerateColumns="False" Grid.Row="2" Margin="10"
                  IsReadOnly="{Binding IsInlineEditingEnabled, Converter={StaticResource InvertedBooleanConverter}}"

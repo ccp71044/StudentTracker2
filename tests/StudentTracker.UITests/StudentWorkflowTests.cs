@@ -18,7 +18,7 @@ public class StudentWorkflowTests : UiTest
     public void AddStudent_WithNoName_IsRefusedAndSaysWhy() => Run(() =>
     {
         Fixture.Navigate("StudentsButton", "StudentsHeader");
-        Fixture.Click(Fixture.GetMainWindow(), "StudentsAddStudentButton");
+        Fixture.Click(Fixture.GetMainWindow(), "AddStudentButton");
 
         var dialog = Fixture.ModalDialog(TimeSpan.FromSeconds(10))
             ?? throw new InvalidOperationException("Add Student did not open a dialog.");
@@ -40,7 +40,7 @@ public class StudentWorkflowTests : UiTest
         var firstName = $"Devin{DateTime.Now:HHmmss}";
 
         Fixture.Navigate("StudentsButton", "StudentsHeader");
-        Fixture.Click(Fixture.GetMainWindow(), "StudentsAddStudentButton");
+        Fixture.Click(Fixture.GetMainWindow(), "AddStudentButton");
 
         var dialog = Fixture.ModalDialog(TimeSpan.FromSeconds(10))
             ?? throw new InvalidOperationException("Add Student did not open a dialog.");
@@ -55,11 +55,11 @@ public class StudentWorkflowTests : UiTest
 
         AssertNoError(ErrorText("StudentsErrorMessage"), "Saving a valid student");
 
-        Type(Fixture.GetMainWindow(), "StudentsSearchTextInput", firstName);
+        Type(Fixture.GetMainWindow(), "StudentsSearchTextBox", firstName);
         Fixture.Click(Fixture.GetMainWindow(), "StudentsSearchButton");
         Thread.Sleep(1000);
 
-        var grid = Fixture.WaitFor("StudentsStudentsGrid", TimeSpan.FromSeconds(10)).AsGrid();
+        var grid = Fixture.WaitFor("StudentsDataGrid", TimeSpan.FromSeconds(10)).AsGrid();
         Assert.True(
             grid.Rows.Any(r => r.Cells.Any(c => c.Value?.Contains(firstName, StringComparison.OrdinalIgnoreCase) == true)),
             $"The saved student {firstName} was not found by search.");
@@ -70,12 +70,12 @@ public class StudentWorkflowTests : UiTest
     {
         Fixture.Navigate("StudentsButton", "StudentsHeader");
 
-        var grid = Fixture.WaitFor("StudentsStudentsGrid", TimeSpan.FromSeconds(10)).AsGrid();
+        var grid = Fixture.WaitFor("StudentsDataGrid", TimeSpan.FromSeconds(10)).AsGrid();
         Assert.True(grid.Rows.Length > 0, "No students were loaded, so the profile cannot be opened.");
         grid.Select(0);
         Wait.UntilInputIsProcessed();
 
-        Fixture.Click(Fixture.GetMainWindow(), "StudentsViewStudentButton");
+        Fixture.Click(Fixture.GetMainWindow(), "ViewStudentButton");
 
         var dialog = Fixture.ModalDialog(TimeSpan.FromSeconds(10));
         Assert.True(dialog != null, "View did not open the student profile - this is the dialog lookup that used to throw.");
